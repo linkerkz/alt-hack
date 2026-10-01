@@ -11,6 +11,7 @@ export function parseConsoleState(params: SearchParams): ConsoleState {
     option: first(params.opt) === "A" ? "A" : "B",
     tab: parseTab(first(params.tab), step),
     focus: first(params.focus) !== "off",
+    panel: first(params.panel) !== "off",
   };
 }
 
@@ -23,6 +24,7 @@ export function consoleHref(state: ConsoleState, patch: Partial<ConsoleState>) {
     tab: next.tab,
   });
   if (!next.focus) query.set("focus", "off");
+  if (!next.panel) query.set("panel", "off");
   return `?${query}`;
 }
 

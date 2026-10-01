@@ -38,6 +38,15 @@ export function ConsoleTabs({ state, hasIncident }: Props) {
           </Link>
         );
       })}
+      <Link
+        href={consoleHref(state, { panel: false })}
+        scroll={false}
+        title="Свернуть панель"
+        aria-label="Свернуть панель"
+        className="flex w-11 flex-none items-center justify-center border-line border-l font-heading text-[20px] text-muted hover:bg-ink/4 hover:text-accent-700"
+      >
+        ›
+      </Link>
     </nav>
   );
 }

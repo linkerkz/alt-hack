@@ -20,7 +20,7 @@ export function IncidentBanner({ suggestion, state }: Props) {
       </span>
       <span className="text-[13px] text-neutral-800">{suggestion}</span>
       <ButtonLink
-        href={consoleHref(state, { tab: "incident", focus: true })}
+        href={consoleHref(state, { tab: "incident", focus: true, panel: true })}
         scroll={false}
         variant="primary"
         className="ml-auto"

@@ -1,5 +1,6 @@
 import type { StationConsoleData } from "../queries";
 import type { ConsoleState, Neighbors } from "../types";
+import { CollapsedPanel } from "./CollapsedPanel";
 import { ConsoleBar } from "./ConsoleBar";
 import { ConsoleTabs } from "./ConsoleTabs";
 import { DemoBar } from "./DemoBar";
@@ -29,7 +30,9 @@ export function StationConsole({
   mapHref,
 }: Props) {
   const { incident } = data;
-  const showBanner = incident.isActive && state.tab === "overview";
+  // Баннер напоминает об инциденте, пока его карточка не видна.
+  const showBanner =
+    incident.isActive && (state.tab === "overview" || !state.panel);
 
   return (
     <>
@@ -51,16 +54,20 @@ export function StationConsole({
           />
           <TrackPlan plan={data.plan} />
         </section>
-        <aside className="sticky top-0 flex max-h-screen min-w-0 max-w-full flex-[1_1_380px] flex-col">
-          <ConsoleTabs state={state} hasIncident={state.step > 0} />
-          <div className="flex flex-1 flex-col gap-[18px] overflow-auto px-5 pt-4 pb-[120px]">
-            {state.tab === "incident" ? (
-              <IncidentPanel data={data} state={state} mapHref={mapHref} />
-            ) : (
-              <OverviewPanel incident={incident} state={state} />
-            )}
-          </div>
-        </aside>
+        {state.panel ? (
+          <aside className="sticky top-0 flex max-h-screen min-w-0 max-w-full flex-[1_1_380px] flex-col">
+            <ConsoleTabs state={state} hasIncident={state.step > 0} />
+            <div className="flex flex-1 flex-col gap-[18px] overflow-auto px-5 pt-4 pb-[120px]">
+              {state.tab === "incident" ? (
+                <IncidentPanel data={data} state={state} mapHref={mapHref} />
+              ) : (
+                <OverviewPanel incident={incident} state={state} />
+              )}
+            </div>
+          </aside>
+        ) : (
+          <CollapsedPanel state={state} hasActiveIncident={incident.isActive} />
+        )}
       </main>
       <DemoBar state={state} stepName={data.stepName} />
     </>
