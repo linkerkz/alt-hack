@@ -9,6 +9,7 @@ import { stationSchema } from "./schema";
 import { clockAt } from "./status";
 import type { ConsoleState, Live, Neighbors } from "./types";
 
+export { getApprovalRequests } from "./approval";
 export { getLive } from "./live";
 
 // Пульт станции: ход инцидента из базы (live) и вид экрана из URL (state).

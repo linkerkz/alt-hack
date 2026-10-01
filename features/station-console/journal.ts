@@ -75,8 +75,26 @@ export function journalOf(command: Command, context: Context): JournalEntry[] {
         {
           minute: 11,
           actor: "dnc",
-          text: "ДНЦ согласовал вариант Б. ДСЦС обновил план, задачи переданы ДСП",
+          text: `ДНЦ согласовал вариант Б${quoted(command.comment)}. ДСЦС обновил план, задачи переданы ДСП`,
           level: "normal",
+        },
+      ];
+    case "reject":
+      return [
+        {
+          minute: 10,
+          actor: "dnc",
+          text: `ДНЦ отклонил удержание 2001${quoted(command.comment)}. ДСЦС выбирает другой вариант`,
+          level: "critical",
+        },
+      ];
+    case "reconsider":
+      return [
+        {
+          minute: 10,
+          actor: "dnc",
+          text: "ДНЦ вернул вариант Б на рассмотрение",
+          level: "warning",
         },
       ];
     case "route":
@@ -114,13 +132,9 @@ export function simAt(minute: number) {
   return `${day}T14:${String(minute).padStart(2, "0")}:00+05:00`;
 }
 
-// «14:08» из записи хронологии.
-export function simClock(at: string) {
-  return new Date(at).toLocaleTimeString("ru-RU", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Asia/Almaty",
-  });
+// Комментарий ДНЦ в хронологии: « «текст»», пустой — не пишем.
+function quoted(comment: string | null) {
+  return comment == null ? "" : ` «${comment}»`;
 }
 
 function acceptEntry(option: ChosenOption): JournalEntry {
