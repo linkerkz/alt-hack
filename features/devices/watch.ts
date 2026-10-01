@@ -8,12 +8,12 @@ import type { CameraState } from "./types";
 // Зона объекта — доли кадра; её рамку камера рисует поверх видео.
 export const WATCH_REGION = { x: 0.2, y: 0.22, width: 0.6, height: 0.56 };
 
-// Как часто смотрим кадр: 5 раз в секунду.
-export const TICK_MS = 200;
+// Как часто смотрим кадр: 4 раза в секунду — модель тратит на кадр ~140 мс.
+export const TICK_MS = 250;
 
 // Предмет подтверждаем 3 с (отсчёт 3…2…1 на экране), «свободно» — 2 с.
-const OBSTRUCTION_TICKS = 15;
-const CLEAR_TICKS = 10;
+const OBSTRUCTION_TICKS = 12;
+const CLEAR_TICKS = 8;
 
 const SNAPSHOT_WIDTH = 480;
 

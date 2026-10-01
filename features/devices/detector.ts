@@ -12,8 +12,10 @@ const MODEL =
   "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/int8/1/efficientdet_lite0.tflite";
 export const MODEL_NAME = "EfficientDet-Lite0";
 
-// Ниже этой уверенности модель видит призраков.
-const MIN_SCORE = 0.4;
+// Ниже этой уверенности модель видит призраков. Бутылку на однотонном фоне
+// она узнаёт с уверенностью ~0.35: порог ниже, ложные срабатывания отсекает
+// отсчёт в несколько секунд.
+const MIN_SCORE = 0.3;
 
 // Мебель и техника — фон сцены, а не предмет в стрелке: иначе стол под
 // макетом навсегда держал бы тревогу.
@@ -40,22 +42,20 @@ export type Finding = {
   box: { x: number; y: number; width: number; height: number };
 };
 
-// Модель грузится один раз (~5 МБ, дальше из кэша). Сначала пробуем
-// видеокарту, не вышло — процессор.
+// Модель грузится один раз (~5 МБ, дальше из кэша). Только процессор:
+// через WebGL кадр шёл ~4 с и возвращался пустым, на процессоре — ~140 мс.
 export async function loadDetector() {
   const { FilesetResolver, ObjectDetector } = await import(
     "@mediapipe/tasks-vision"
   );
   const fileset = await FilesetResolver.forVisionTasks(WASM);
-  const create = (delegate: "GPU" | "CPU") =>
-    ObjectDetector.createFromOptions(fileset, {
-      baseOptions: { modelAssetPath: MODEL, delegate },
-      runningMode: "VIDEO",
-      scoreThreshold: MIN_SCORE,
-      categoryDenylist: BACKGROUND,
-      maxResults: 5,
-    });
-  return create("GPU").catch(() => create("CPU"));
+  return ObjectDetector.createFromOptions(fileset, {
+    baseOptions: { modelAssetPath: MODEL, delegate: "CPU" },
+    runningMode: "VIDEO",
+    scoreThreshold: MIN_SCORE,
+    categoryDenylist: BACKGROUND,
+    maxResults: 5,
+  });
 }
 
 // Находки модели на кадре, которые задевают зону объекта.
