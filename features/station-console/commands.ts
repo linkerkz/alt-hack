@@ -1,7 +1,8 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { CREW_CALL, REPAIR } from "./fault";
 import { journalOf } from "./journal";
-import { PAGER_TASKS, STEP } from "./mock";
+import { STEP } from "./mock";
+import { operationById } from "./operations";
 import { closeCall, sendToPager } from "./pager";
 import {
   finishWorkOrder,
@@ -48,6 +49,8 @@ const FRESH_REQUEST: IncidentPatch = {
 };
 
 const DONE: CommandResult = { error: null };
+// Своё поручение длиннее — уже не сообщение на пейджер.
+const NOTE_LIMIT = 200;
 const NOT_NOW = { error: "Ситуация уже изменилась — экран обновлён" };
 const SAVE_FAILED = { error: "Не удалось сохранить, попробуйте ещё раз" };
 
@@ -67,13 +70,8 @@ async function dispatch(context: Context, command: Command) {
   const { incident, workOrder } = live;
   const step = stepOf(live);
 
-  if (command.kind === "page") {
-    // Задача пришла из браузера: неизвестную не отправляем.
-    const task = PAGER_TASKS.find(({ id }) => id === command.task);
-    if (task == null) return NOT_NOW;
-    await sendToPager(context.stationId, task.text, null);
-    return DONE;
-  }
+  if (command.kind === "assign") return assign(context, command.operation);
+  if (command.kind === "note") return note(context, command.text);
   if (command.kind === "advance") {
     const next = nextCommand(live);
     if (next == null) return { error: advanceEnd(step) };
@@ -90,7 +88,11 @@ async function dispatch(context: Context, command: Command) {
   switch (command.kind) {
     case "callCrew":
       if (step !== STEP.suspected) return NOT_NOW;
-      await sendToPager(context.stationId, CREW_CALL, incident.id);
+      await sendToPager(context.stationId, {
+        text: CREW_CALL,
+        incidentId: incident.id,
+        operation: null,
+      });
       return update({ status: "dispatched" });
     case "escalate":
       // Сам инцидент двигает база по ответу на вызов.
@@ -155,6 +157,31 @@ async function dispatch(context: Context, command: Command) {
       if (step !== STEP.restored) return NOT_NOW;
       return update({ status: "closed", closed_at: now() });
   }
+}
+
+// Поручение бригаде по операции плана; уже поручённую и не выполненную
+// второй раз не шлём.
+async function assign({ stationId, live }: Context, id: string) {
+  const operation = operationById(live.plan, id);
+  if (operation == null) return NOT_NOW;
+  const sent = live.pager.find((message) => message.operation === id);
+  if (sent != null && sent.status !== "done") {
+    return { error: "Уже поручено — бригада ещё не ответила" };
+  }
+  await sendToPager(stationId, {
+    text: operation.text,
+    incidentId: null,
+    operation: id,
+  });
+  return DONE;
+}
+
+// Своё поручение ДСП: текст пришёл из браузера — чистим и ограничиваем.
+async function note({ stationId }: Context, raw: unknown) {
+  const text = typeof raw === "string" ? raw.trim().slice(0, NOTE_LIMIT) : "";
+  if (text === "") return { error: "Напишите, что поручить бригаде" };
+  await sendToPager(stationId, { text, incidentId: null, operation: null });
+  return DONE;
 }
 
 // Вариант принят — ИИ составляет план работ и чеклист, по ним выдаётся

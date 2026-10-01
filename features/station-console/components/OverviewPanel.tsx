@@ -7,6 +7,7 @@ import { consoleHref } from "../state";
 import type { ConsoleState, ConsoleViewer } from "../types";
 import { DspObjects } from "./DspObjects";
 import { EventFeed } from "./EventFeed";
+import { OperationsCard } from "./OperationsCard";
 import { PagerCard } from "./PagerCard";
 
 type Props = {
@@ -15,8 +16,8 @@ type Props = {
   viewer: ConsoleViewer;
 };
 
-// Вкладка «Станция»: активный инцидент коротко, объекты, пейджер бригады
-// и лента событий.
+// Вкладка «Станция»: активный инцидент коротко, ближайшие операции по плану
+// с поручениями бригаде, объекты, пейджер и лента событий.
 export function OverviewPanel({ data, state, viewer }: Props) {
   const { incident } = data;
   const { turn } = incident;
@@ -63,6 +64,11 @@ export function OverviewPanel({ data, state, viewer }: Props) {
           </p>
         )}
       </section>
+      <OperationsCard
+        stationId={data.stationId}
+        operations={data.pager.operations}
+        canAssign={viewer === "dsp"}
+      />
       <DspObjects objects={data.objects} />
       <PagerCard
         stationId={data.stationId}
