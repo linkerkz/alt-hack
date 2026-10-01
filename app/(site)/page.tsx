@@ -19,7 +19,10 @@ import {
 } from "@/features/network-map/queries";
 import type { ZoneStation } from "@/features/network-map/types";
 import { ApprovalRequests } from "@/features/station-console/components/ApprovalRequests";
-import { getApprovalRequests } from "@/features/station-console/queries";
+import {
+  getApprovalRequests,
+  getLiveIndexes,
+} from "@/features/station-console/queries";
 
 // Соседа без участка в сети подписываем нейтрально.
 const UNKNOWN_NEIGHBOR = "соседняя";
@@ -31,7 +34,8 @@ export default async function ZoneMapPage() {
     redirect(homePath(user) ?? "/login");
   }
 
-  const zone = await getZoneMap(scope);
+  // Индекс станций с планом путей считает пульт — карта показывает его же.
+  const zone = await getZoneMap(scope, await getLiveIndexes());
   const consoleStations = zone.stations.filter((station) =>
     canOpenStation(user, station),
   );
