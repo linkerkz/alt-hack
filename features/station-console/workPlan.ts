@@ -1,11 +1,11 @@
-import { askVision } from "@/lib/openrouter";
-import { supabaseAdmin } from "@/lib/supabase";
+import { askText } from "@/lib/openrouter";
 import { replanOptions } from "./mock";
-import type { ChosenOption, LiveIncident } from "./types";
+import type { ChosenOption } from "./types";
 
-// План работ ремонтной бригаде от ИИ: модель видит снимок камеры, вывод по
-// нему, доклад путейцев и принятый вариант перепланирования и составляет
-// окно работ, меры безопасности и чеклист для наряда.
+// План работ ремонтной бригаде от ИИ: модель знает сбой по сценарию демо
+// (бутылка в стрелке С3, остряк повреждён) и принятый вариант
+// перепланирования и составляет окно работ, меры безопасности и чеклист.
+// Снимок не шлём: текстом модель отвечает в разы быстрее, а сбой и так известен.
 
 export type WorkPlan = {
   title: string;
@@ -15,13 +15,12 @@ export type WorkPlan = {
   items: string[];
 };
 
-type Params = { incident: LiveIncident; option: ChosenOption };
-
 // Имена соседних станций модели не нужны: окно работ от них не зависит.
 const NEIGHBORS = { odd: "соседней", even: "соседней" };
 
-// План составляют, пока ДСП ждёт на пульте: дольше ждать не стоит.
-const TIMEOUT_MS = 30000;
+// План составляют, пока ДСП ждёт на пульте. Текстом модель отвечает за
+// 15–20 с; запас — на случай, если основная занята и отвечает запасная.
+const TIMEOUT_MS = 45000;
 
 // Чеклист короче — не план, длиннее — бригада не пройдёт его на телефоне.
 const ITEMS = { min: 3, max: 10 };
@@ -48,7 +47,7 @@ const SCHEMA = {
       items: {
         type: "array",
         items: { type: "string" },
-        description: "4–8 пунктов чеклиста по порядку выполнения",
+        description: "5–8 пунктов чеклиста по порядку, без номеров",
       },
     },
     required: ["title", "description", "window", "safety", "items"],
@@ -57,43 +56,29 @@ const SCHEMA = {
 };
 
 // План работ; null — ИИ не подключён, не успел или ответил не по формату.
-export async function generateWorkPlan(params: Params) {
-  const snapshot = await snapshotOf(params.incident.id);
-  if (snapshot == null) return null;
-  const answer = await askVision({
-    prompt: promptFor(params),
-    image: snapshot,
+export async function generateWorkPlan(option: ChosenOption) {
+  const answer = await askText({
+    prompt: promptFor(option),
     schema: SCHEMA,
     timeoutMs: TIMEOUT_MS,
   });
   return parsePlan(answer);
 }
 
-function promptFor({ incident, option }: Params) {
+function promptFor(option: ChosenOption) {
   const chosen = replanOptions(NEIGHBORS)[option];
   const changes = chosen.changes.map(
     (change) => `- поезд ${change.train}: ${change.text}`,
   );
   return [
     "Ты — инженер дистанции пути. Составь план работ для ремонтной бригады по стрелочному переводу С3 в нечётной горловине станции.",
-    "На снимке — кадр камеры над стрелкой в момент обнаружения (на демо — макет стрелки).",
-    `Камера и ИИ: ${incident.analysis ?? "посторонний предмет у остряка стрелки С3"}.`,
-    "Путейцы убрали предмет и доложили: стрелка повреждена, нужен ремонт. Маршруты через С3 на пути 3 и 5 закрыты.",
+    "Камера в горловине заметила пластиковую бутылку у остряка стрелки С3: перевод не доходил до конца.",
+    "Путейцы убрали бутылку и доложили: остряк повреждён, нужен ремонт. Маршруты через С3 на пути 3 и 5 закрыты.",
     `Сейчас 14:11. ДСЦС принял «${chosen.name}», движение идёт в обход С3:`,
     ...changes,
     "Ремонт нужно закончить к 14:27, чтобы к 14:29 вернуть С3 в эксплуатацию и пути 3 и 5 — к исходному плану.",
-    "Пиши по-русски, коротко, языком наряда. Чеклист — конкретные действия по порядку: от разрешения ДСП и записи в журнал ДУ-46 до проверки перевода с пульта и доклада ДСП.",
+    "Пиши по-русски, коротко, языком наряда. Чеклист — 5–8 пунктов, каждый — одно действие до 100 знаков, без нумерации: от разрешения ДСП и записи в журнал ДУ-46 до проверки перевода с пульта и доклада ДСП.",
   ].join("\n");
-}
-
-// Снимок инцидента — data URL JPEG; читаем секретным ключом, как и пишем.
-async function snapshotOf(incidentId: string) {
-  const { data } = await supabaseAdmin()
-    .from("incidents")
-    .select("snapshot")
-    .eq("id", incidentId)
-    .maybeSingle<{ snapshot: string | null }>();
-  return data?.snapshot ?? null;
 }
 
 function parsePlan(answer: unknown): WorkPlan | null {
@@ -120,11 +105,12 @@ function textOf(answer: object, key: string) {
   return value.trim();
 }
 
+// Номера пунктам ставит чеклист сам: «1. » от модели срезаем.
 function listOf(answer: object, key: string) {
   const value: unknown = Reflect.get(answer, key);
   if (!Array.isArray(value)) return null;
   return value
     .filter((item): item is string => typeof item === "string")
-    .map((item) => item.trim())
+    .map((item) => item.replace(/^\s*\d+[.)]\s*/, "").trim())
     .filter((item) => item !== "");
 }

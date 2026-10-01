@@ -7,21 +7,44 @@ const ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 
 type Params = {
   prompt: string;
-  // Картинка — data URL (JPEG, PNG, WebP).
-  image: string;
   // Имя и JSON Schema ответа.
-  schema: { name: string; definition: object };
+  schema: Schema;
   timeoutMs: number;
 };
 
+type Schema = { name: string; definition: object };
+
 // JSON-ответ модели как unknown — проверяет вызывающий. null — ИИ не
 // подключён (нет ключа), не успел или ответил не по формату.
+
+// Запрос со снимком — к vision-моделям. Картинка — data URL (JPEG, PNG, WebP).
 export async function askVision({
-  prompt,
   image,
-  schema,
-  timeoutMs,
-}: Params): Promise<unknown> {
+  ...params
+}: Params & { image: string }) {
+  const { openRouterModel, openRouterFallbackModel } = env;
+  // Текст — перед картинкой, как советует OpenRouter.
+  const content = [
+    { type: "text", text: params.prompt },
+    { type: "image_url", image_url: { url: image } },
+  ];
+  return ask(params, content, [openRouterModel, openRouterFallbackModel]);
+}
+
+// Запрос только текстом: отвечает быстрее и подходит больше моделей.
+export async function askText(params: Params) {
+  const { openRouterTextModel, openRouterTextFallbackModel } = env;
+  return ask(params, params.prompt, [
+    openRouterTextModel,
+    openRouterTextFallbackModel,
+  ]);
+}
+
+async function ask(
+  { schema, timeoutMs }: Params,
+  content: unknown,
+  models: (string | null)[],
+): Promise<unknown> {
   if (env.openRouterApiKey == null) return null;
   try {
     const response = await fetch(ENDPOINT, {
@@ -30,29 +53,36 @@ export async function askVision({
         Authorization: `Bearer ${env.openRouterApiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(requestBody(prompt, image, schema)),
+      body: JSON.stringify(requestBody(content, models, schema)),
       signal: AbortSignal.timeout(timeoutMs),
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.error(
+        `OpenRouter: HTTP ${response.status}`,
+        await response.text(),
+      );
+      return null;
+    }
     return contentOf(await response.json());
-  } catch {
+  } catch (error) {
+    // Таймаут или сеть: в лог, чтобы было видно, почему ИИ молчит.
+    console.error("OpenRouter: запрос не выполнен", error);
     return null;
   }
 }
 
-function requestBody(prompt: string, image: string, schema: Params["schema"]) {
+// models — основная, за ней запасная: следующую OpenRouter берёт сам, если
+// предыдущая вернула ошибку (лимит, простой).
+function requestBody(
+  content: unknown,
+  models: (string | null)[],
+  schema: Schema,
+) {
   return {
-    model: env.openRouterModel,
-    messages: [
-      {
-        role: "user",
-        // Текст — перед картинкой, как советует OpenRouter.
-        content: [
-          { type: "text", text: prompt },
-          { type: "image_url", image_url: { url: image } },
-        ],
-      },
-    ],
+    models: models.filter((model) => model != null),
+    messages: [{ role: "user", content }],
+    // Только провайдеры, которые держат JSON-схему: иначе вернут не тот формат.
+    provider: { require_parameters: true },
     response_format: {
       type: "json_schema",
       json_schema: {
