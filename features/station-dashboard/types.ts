@@ -69,3 +69,20 @@ export type StationDashboard = {
   statistics: StationStatistics;
   efficiencyHistory: EfficiencyPoint[];
 };
+
+export type TrainKind = "passenger" | "freight";
+
+// Куда поезд движется относительно станции — те же категории, что и на
+// карте сети (features/network-map), но без импорта её типов.
+export type TrainFlow = "arriving" | "departing" | "passing";
+
+// Поезд для радара движения — минимум полей диаграммы. Структурный тип:
+// реальный StationTrain из network-map ему соответствует (см. StationSnapshot выше).
+// Время — минуты от текущего момента, ≤ 0 — уже произошло.
+export type RadarTrain = {
+  number: string;
+  kind: TrainKind;
+  flow: TrainFlow;
+  arrival: number;
+  departure: number;
+};

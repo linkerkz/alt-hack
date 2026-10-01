@@ -1,52 +1,52 @@
 import { Card } from "@/components/ui/Card";
+import { Meter } from "@/components/ui/Meter";
 import { Metric } from "@/components/ui/Metric";
-import { TONE_TEXT_CLASS } from "@/components/ui/tone";
-import { toStatus } from "../status";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 type Props = {
-  efficiencyIndex: number;
-  planPercent: number;
   trainCount: number;
   delayCount: number;
   trackLoad: number;
 };
 
-export function SummaryCards({
-  efficiencyIndex,
-  planPercent,
-  trainCount,
-  delayCount,
-  trackLoad,
-}: Props) {
-  const status = toStatus(efficiencyIndex);
+// Высокая загрузка путей — тот же порог, что и в «Требует внимания».
+const TRACK_LOAD_WARNING = 85;
+
+export function SummaryCards({ trainCount, delayCount, trackLoad }: Props) {
+  const isTrackLoadHigh = trackLoad >= TRACK_LOAD_WARNING;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-      <Card className="p-3">
-        <Metric
-          label="Индекс эффективности"
-          value={`${efficiencyIndex}%`}
-          valueClass={TONE_TEXT_CLASS[status]}
-        />
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <Card className="p-4">
+        <Metric label="Поезда за сутки" value={trainCount} />
       </Card>
-      <Card className="p-3">
-        <Metric label="Выполнение плана" value={`${planPercent}%`} />
+
+      <Card className="p-4">
+        <Metric label="Задержки" value={delayCount}>
+          {delayCount === 0 && (
+            <span className="text-[12px] text-normal">Без задержек</span>
+          )}
+        </Metric>
       </Card>
-      <Card className="p-3">
-        <Metric label="Поезда" value={trainCount} />
-      </Card>
-      <Card className="p-3">
-        <Metric
-          label="Задержки"
-          value={delayCount}
-          valueClass={delayCount > 0 ? "text-warning" : undefined}
-        />
-      </Card>
-      <Card className="p-3">
-        <Metric
+
+      <Card className="space-y-2 p-4">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[12px] text-muted">Загрузка путей</span>
+          {isTrackLoadHigh && <StatusBadge tone="warning" label="Высокая" />}
+        </div>
+        <p
+          className={`font-heading font-semibold text-[22px] leading-[1.15] tracking-[-0.01em] ${isTrackLoadHigh ? "text-warning" : "text-ink"}`}
+        >
+          {trackLoad}%
+        </p>
+        <Meter
+          parts={[
+            {
+              value: trackLoad,
+              className: isTrackLoadHigh ? "bg-warning" : "bg-accent",
+            },
+          ]}
           label="Загрузка путей"
-          value={`${trackLoad}%`}
-          valueClass={trackLoad >= 85 ? "text-warning" : undefined}
         />
       </Card>
     </div>

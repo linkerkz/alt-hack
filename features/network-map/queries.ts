@@ -77,6 +77,12 @@ function withIndexes(network: Network, indexes: Map<string, number>) {
   return { ...network, stations };
 }
 
+// Поезда станции за горизонт прогноза — для радара на дашборде.
+export async function getStationTrains(stationId: string) {
+  const network = await getNetwork();
+  return trainsOf(network, stationId);
+}
+
 // Ближайшие события станции сверху: прибытие или отправление.
 function trainsOf(network: Network, stationId: string): StationTrain[] {
   const name = (id: string) => nameOf(network, id);
