@@ -5,7 +5,6 @@ import { TONE_GLYPH, TONE_TEXT_CLASS } from "@/components/ui/tone";
 import type { StationConsoleData } from "../queries";
 import { consoleHref } from "../state";
 import type { ConsoleState, ConsoleViewer } from "../types";
-import { DspObjects } from "./DspObjects";
 import { EventFeed } from "./EventFeed";
 import { OperationsCard } from "./OperationsCard";
 import { PagerCard } from "./PagerCard";
@@ -17,7 +16,7 @@ type Props = {
 };
 
 // Вкладка «Станция»: активный инцидент коротко, ближайшие операции по плану
-// с поручениями бригаде, объекты, пейджер и лента событий.
+// с поручениями бригаде, пейджер и лента событий.
 export function OverviewPanel({ data, state, viewer }: Props) {
   const { incident } = data;
   const { turn } = incident;
@@ -69,7 +68,6 @@ export function OverviewPanel({ data, state, viewer }: Props) {
         operations={data.pager.operations}
         canAssign={viewer === "dsp"}
       />
-      <DspObjects objects={data.objects} />
       <PagerCard
         stationId={data.stationId}
         pager={data.pager}

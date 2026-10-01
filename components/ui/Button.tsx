@@ -6,8 +6,8 @@ type Props = ComponentProps<"button"> & {
   size?: ButtonSize;
 };
 
-// primary — обводка акцентом (не заливка), secondary — тонкая линия,
-// ghost — только текст акцентом.
+// primary — главное действие экрана, единственная заливка в теме;
+// secondary — тонкая линия, ghost — только текст акцентом.
 export type ButtonVariant = "primary" | "secondary" | "ghost";
 export type ButtonSize = "md" | "sm" | "icon";
 
@@ -33,7 +33,7 @@ const BASE =
 
 const VARIANT_CLASS: Record<ButtonVariant, string> = {
   primary:
-    "border-accent text-accent-700 hover:bg-accent/12 active:bg-accent/22",
+    "border-accent-700 bg-accent-700 text-paper shadow-sm hover:border-accent-800 hover:bg-accent-800 active:bg-accent-900",
   secondary: "border-line text-ink hover:bg-ink/7 active:bg-ink/14",
   ghost:
     "border-transparent text-accent-700 hover:bg-accent/10 active:bg-accent/18",

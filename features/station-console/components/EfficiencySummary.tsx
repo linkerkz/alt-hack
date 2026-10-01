@@ -7,14 +7,23 @@ import { TONE_BG_CLASS, TONE_TEXT_CLASS } from "@/components/ui/tone";
 import type { StationConsoleData } from "../queries";
 import { STATUS_LABEL } from "../status";
 
-type Props = { efficiency: StationConsoleData["efficiency"] };
+type Props = {
+  stationName: string;
+  efficiency: StationConsoleData["efficiency"];
+};
 
-// Индекс станции, пять показателей и причина, почему он снизился.
-export function EfficiencySummary({ efficiency }: Props) {
+// Станция, её индекс, пять показателей и причина, почему он снизился.
+export function EfficiencySummary({ stationName, efficiency }: Props) {
   const { index, status, trend, metrics, reason, forecast } = efficiency;
 
   return (
     <div className="flex flex-wrap items-center gap-x-6 gap-y-4 border-line border-b px-5 py-3.5">
+      <div className="flex flex-col gap-1 border-line border-r pr-6">
+        <Kicker>Пульт станции</Kicker>
+        <h1 className="font-heading font-semibold text-[28px] leading-none">
+          {stationName}
+        </h1>
+      </div>
       <div className="flex flex-col gap-1">
         <Kicker>Индекс станции</Kicker>
         <IndexValue

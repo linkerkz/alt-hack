@@ -1,4 +1,3 @@
-import { dspObjects } from "./dspObjects";
 import { stationEfficiency } from "./efficiency";
 import { incidentCard } from "./incident";
 import { STEP_MINUTE } from "./mock";
@@ -29,7 +28,6 @@ export async function getStationConsole(
     plan: trackPlan(state, live),
     incident: incidentCard(state, neighbors, live),
     comparison: optionComparison(state, live, neighbors),
-    objects: dspObjects(state),
     pager: pagerCard(live, clock),
     workOrder: live.workOrder,
   };

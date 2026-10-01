@@ -8,6 +8,7 @@ import type { ChosenOption, ConsoleState, Neighbors, Status } from "./types";
 // закрытые съезды и предпросмотр варианта. Геометрия — в StationSchema.
 
 // Линии поверх путей: предпросмотр варианта (пунктир) или заданный маршрут.
+// Подпись — над путём 1, слева от платформы: ниже пути стоит подпись у входа.
 type Overlay = {
   paths: string[];
   label: string;
@@ -80,8 +81,8 @@ function issuedRoute(state: ConsoleState): Overlay | null {
   return {
     paths: ["M40 170 H200"],
     label: "Маршрут Н → путь 1 задан",
-    labelX: 60,
-    labelY: 196,
+    labelX: 150,
+    labelY: 160,
     dashed: false,
   };
 }
@@ -92,9 +93,9 @@ function previewRoute(option: ChosenOption): Overlay {
       "M0 170 H420",
       option === "B" ? "M0 230 H110 L165 285 H300" : "M0 230 H300",
     ],
-    label: `Предпросмотр: ${option === "B" ? "вариант б" : "вариант а"}`,
-    labelX: 200,
-    labelY: 200,
+    label: `Предпросмотр: вариант ${option === "B" ? "Б" : "А"}`,
+    labelX: 150,
+    labelY: 160,
     dashed: true,
   };
 }

@@ -27,6 +27,8 @@ type Props = {
   consoleStationIds: string[];
   // Станции, которые ждут ответа ДНЦ на запрос на согласование.
   requestStationIds: string[];
+  // Запросы на согласование получает только ДНЦ — остальным счётчик не нужен.
+  showRequests: boolean;
   // Карточки поверх карты слева сверху; их собирает страница.
   overlay?: ReactNode;
 };
@@ -52,7 +54,7 @@ export function ZoneMapView(props: Props) {
         <ZoneSummaryPanel
           title={props.title}
           summary={props.summary}
-          requestCount={requestStationIds.length}
+          requestCount={props.showRequests ? requestStationIds.length : null}
         />
         <StationList
           stations={scopeStations}

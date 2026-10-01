@@ -1,3 +1,4 @@
+import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Disclosure } from "@/components/ui/Disclosure";
 import type { StationConsoleData } from "../queries";
 import type { ConsoleState, ConsoleViewer } from "../types";
@@ -28,9 +29,7 @@ export function IncidentPanel({ data, state, viewer }: Props) {
       <IncidentHeader incident={incident} />
       <IncidentProgress progress={incident.progress} />
       {turn == null ? (
-        <p className="border-line border-y py-3 text-[14px] text-muted">
-          Инцидент закрыт. Отчёт сформирован автоматически.
-        </p>
+        <Closed stationId={data.stationId} code={incident.code} />
       ) : (
         <TurnCard
           stationId={data.stationId}
@@ -40,6 +39,7 @@ export function IncidentPanel({ data, state, viewer }: Props) {
           state={state}
         />
       )}
+      {workOrder != null && <WorkOrderCard workOrder={workOrder} />}
       <div className="border-line border-b">
         <Disclosure title="Снимок камеры и ИИ" open={sections.evidence.open}>
           <IncidentEvidence incident={incident} />
@@ -57,7 +57,6 @@ export function IncidentPanel({ data, state, viewer }: Props) {
             open={sections.participants.open}
           >
             <Participants participants={incident.participants} />
-            {workOrder != null && <WorkOrderCard workOrder={workOrder} />}
           </Disclosure>
         )}
         <Disclosure title="Хронология" meta={String(incident.events.length)}>
@@ -65,5 +64,23 @@ export function IncidentPanel({ data, state, viewer }: Props) {
         </Disclosure>
       </div>
     </div>
+  );
+}
+
+// Инцидент закрыт: дальше нужен только отчёт — для начальника станции.
+function Closed({ stationId, code }: { stationId: string; code: string }) {
+  const number = code.replace(/^И-/, "");
+  return (
+    <section className="flex flex-col items-start gap-2.5 border-line border-y py-3.5">
+      <p className="text-[14px] text-neutral-800">
+        Инцидент закрыт, отчёт сформирован автоматически.
+      </p>
+      <ButtonLink
+        href={`/dashboard/${stationId}/incidents/${number}`}
+        variant="primary"
+      >
+        Открыть отчёт <span aria-hidden>→</span>
+      </ButtonLink>
+    </section>
   );
 }
