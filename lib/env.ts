@@ -12,15 +12,22 @@ export const env = {
     "SUPABASE_SECRET_KEY",
     process.env.SUPABASE_SECRET_KEY,
   ),
-  // ИИ по снимку камеры. Необязателен: без ключа камера работает без анализа,
-  // поэтому старт приложения от него не зависит.
+  // ИИ: анализ снимка камеры и план работ. Необязателен: без ключа камера
+  // работает без анализа, поэтому старт приложения от него не зависит.
   openRouterApiKey: optional(process.env.OPENROUTER_API_KEY),
-  // Vision-модель OpenRouter с поддержкой JSON-схемы.
+  // Модели OpenRouter с поддержкой JSON-схемы. Запасная — на случай, если
+  // основная не ответила (лимит, простой); null — без запасной.
+  // Vision — для снимка камеры.
   openRouterModel:
     optional(process.env.OPENROUTER_MODEL) ?? "google/gemini-2.5-flash",
-  // Запасная модель: OpenRouter переключится на неё, если основная не
-  // ответила (лимит, простой). null — без запасной.
   openRouterFallbackModel: optional(process.env.OPENROUTER_FALLBACK_MODEL),
+  // Текстовая — для плана работ.
+  openRouterTextModel:
+    optional(process.env.OPENROUTER_TEXT_MODEL) ??
+    "nvidia/nemotron-3-super-120b-a12b:free",
+  openRouterTextFallbackModel: optional(
+    process.env.OPENROUTER_TEXT_FALLBACK_MODEL,
+  ),
 };
 
 function optional(value: string | undefined) {

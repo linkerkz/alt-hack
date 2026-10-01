@@ -188,7 +188,7 @@ async function note({ stationId }: Context, raw: unknown) {
 // наряд с QR. Без ответа ИИ наряд не выдаём: ДСП повторит.
 async function planWork(context: Context, incident: LiveIncident) {
   if (incident.option == null) return NOT_NOW;
-  const plan = await generateWorkPlan({ incident, option: incident.option });
+  const plan = await generateWorkPlan(incident.option);
   if (plan == null) {
     return { error: "ИИ не составил план работ — попробуйте ещё раз" };
   }
