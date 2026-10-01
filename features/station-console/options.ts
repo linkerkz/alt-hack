@@ -53,6 +53,11 @@ export function optionComparison(
       recommended: id === RECOMMENDED,
       selected: id === option,
       selectable: id !== "none" && selectable,
+      // Главное для выбора — прямо в плитке варианта.
+      index: options[id].index,
+      status: indexStatus(options[id].index),
+      maxDelay: options[id].maxDelay,
+      dncApproval: options[id].dncApproval,
     })),
     rows: comparisonRows(ORDER.map((id) => options[id])),
     selected: {

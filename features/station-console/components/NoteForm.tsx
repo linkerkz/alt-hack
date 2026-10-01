@@ -58,7 +58,7 @@ export function NoteForm({ stationId }: Props) {
       </div>
       <Button
         type="submit"
-        variant="primary"
+        variant="secondary"
         disabled={isPending || text.trim() === ""}
         className="self-start"
       >

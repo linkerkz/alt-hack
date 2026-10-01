@@ -66,16 +66,11 @@ export const PLAN_BAR_CLASS: Record<PlanBarKind, string> = {
 };
 
 // Этапы прогресса инцидента: сделано, текущий, впереди, не понадобился.
-export const PROGRESS_CLASS: Record<
-  StageState,
-  { bar: string; text: string; mark: string }
-> = {
-  done: { bar: "bg-ink", text: "text-ink", mark: "●" },
-  current: { bar: "bg-accent", text: "text-accent-700", mark: "▲" },
-  todo: { bar: "bg-neutral-300", text: "text-neutral-500", mark: "○" },
+export const PROGRESS_CLASS: Record<StageState, { bar: string }> = {
+  done: { bar: "bg-ink" },
+  current: { bar: "bg-accent" },
+  todo: { bar: "bg-neutral-300" },
   skipped: {
     bar: "bg-[repeating-linear-gradient(90deg,var(--color-neutral-300)_0_3px,transparent_3px_6px)]",
-    text: "text-neutral-500 line-through",
-    mark: "–",
   },
 };

@@ -41,10 +41,7 @@ export function TurnCard(props: Props) {
       </h3>
       <p className="text-[13px] text-neutral-800">{turn.text}</p>
       {turn.form === "option" && (
-        <OptionPicker
-          selected={props.comparison.selected}
-          state={props.state}
-        />
+        <OptionPicker comparison={props.comparison} state={props.state} />
       )}
       {turn.form === "approval" && <ApprovalForm stationId={stationId} />}
       {turn.items.length > 0 && (

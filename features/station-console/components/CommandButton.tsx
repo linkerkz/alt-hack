@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Button, type ButtonVariant } from "@/components/ui/Button";
+import {
+  Button,
+  type ButtonSize,
+  type ButtonVariant,
+} from "@/components/ui/Button";
 import { FIREFOX_NO_RESTORE } from "@/components/ui/noRestore";
 import { runCommand } from "../actions";
 import type { Command } from "../types";
@@ -11,6 +15,7 @@ type Props = {
   command: Command;
   children: string;
   variant?: ButtonVariant;
+  size?: ButtonSize;
   // Своё оформление вместо Button: тёмный демо-пульт.
   unstyledClassName?: string;
   className?: string;
@@ -23,6 +28,7 @@ export function CommandButton({
   command,
   children,
   variant = "secondary",
+  size,
   unstyledClassName,
   className = "",
 }: Props) {
@@ -43,6 +49,7 @@ export function CommandButton({
       {unstyledClassName == null ? (
         <Button
           variant={variant}
+          size={size}
           onClick={run}
           disabled={isPending}
           className={className}
