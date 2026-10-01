@@ -11,6 +11,7 @@ import type { ConsoleState, Live, Neighbors } from "./types";
 
 export { getApprovalRequests } from "./approval";
 export { getLive } from "./live";
+export { getLiveIndexes } from "./networkIndex";
 
 // Пульт станции: ход инцидента из базы (live) и вид экрана из URL (state).
 export async function getStationConsole(

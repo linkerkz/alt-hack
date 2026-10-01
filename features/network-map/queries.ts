@@ -15,8 +15,13 @@ import type {
   ZoneSummary,
 } from "./types";
 
-export async function getZoneMap(scope: MapScope) {
-  const network = await getNetwork();
+// liveIndexes — индексы, посчитанные по плану путей (сейчас — пульт станции);
+// они заменяют записанные в базе, чтобы карта и пульт показывали одно число.
+export async function getZoneMap(
+  scope: MapScope,
+  liveIndexes: Map<string, number>,
+) {
+  const network = withIndexes(await getNetwork(), liveIndexes);
   const scopeIds = stationIdsOf(network, scope);
   const sections = network.sections.filter(
     (section) => scopeIds.has(section.fromId) || scopeIds.has(section.toId),
@@ -59,6 +64,14 @@ export async function getStationNeighbors(stationId: string) {
     odd: incoming == null ? null : nameOf(network, incoming.fromId),
     even: outgoing == null ? null : nameOf(network, outgoing.toId),
   };
+}
+
+function withIndexes(network: Network, indexes: Map<string, number>) {
+  const stations = network.stations.map((station) => ({
+    ...station,
+    efficiencyIndex: indexes.get(station.id) ?? station.efficiencyIndex,
+  }));
+  return { ...network, stations };
 }
 
 // Ближайшие события станции сверху: прибытие или отправление.
