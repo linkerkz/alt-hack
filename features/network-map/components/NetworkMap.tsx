@@ -13,6 +13,7 @@ type Props = {
   stations: ZoneStation[];
   sections: ZoneSection[];
   selectedStationId: string | null;
+  onSelect: (stationId: string | null) => void;
 };
 
 export function NetworkMap(props: Props) {

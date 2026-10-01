@@ -1,8 +1,7 @@
 "use client";
 
 import { type FitBoundsOptions, latLngBounds } from "leaflet";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { MapContainer, TileLayer, useMap, useMapEvent } from "react-leaflet";
 import type { ZoneSection, ZoneStation } from "../types";
 import { SectionLine } from "./SectionLine";
@@ -24,21 +23,27 @@ type Props = {
   stations: ZoneStation[];
   sections: ZoneSection[];
   selectedStationId: string | null;
+  onSelect: (stationId: string | null) => void;
 };
 
-export function MapCanvas({ stations, sections, selectedStationId }: Props) {
-  const router = useRouter();
-  const stationById = new Map(stations.map((station) => [station.id, station]));
+// Маркеры и участки мемоизированы: при выборе станции перерисовываются
+// только те, у кого поменялся признак выбора или подсветки.
+export function MapCanvas({
+  stations,
+  sections,
+  selectedStationId,
+  onSelect,
+}: Props) {
+  const stationById = useMemo(
+    () => new Map(stations.map((station) => [station.id, station])),
+    [stations],
+  );
+  const zoneBounds = useMemo(
+    () => latLngBounds(stations.map((station) => [station.lat, station.lon])),
+    [stations],
+  );
   const selectedStation =
     selectedStationId == null ? null : stationById.get(selectedStationId);
-  const zoneBounds = latLngBounds(
-    stations.map((station) => [station.lat, station.lon]),
-  );
-
-  const selectStation = (stationId: string | null) => {
-    const href = stationId == null ? "/" : `/?station=${stationId}`;
-    router.push(href, { scroll: false });
-  };
 
   return (
     <MapContainer
@@ -71,12 +76,12 @@ export function MapCanvas({ stations, sections, selectedStationId }: Props) {
           key={station.id}
           station={station}
           isSelected={station.id === selectedStationId}
-          onSelect={selectStation}
+          onSelect={onSelect}
         />
       ))}
 
       <SelectedStationFocus station={selectedStation ?? null} />
-      <DeselectOnMapClick onDeselect={() => selectStation(null)} />
+      <DeselectOnMapClick onDeselect={() => onSelect(null)} />
       <LimitZoomOut />
     </MapContainer>
   );

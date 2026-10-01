@@ -105,7 +105,6 @@ export type ZoneStation = Station & { flow: StationFlow; isInScope: boolean };
 export type ZoneSection = Section & { flow: SectionFlow };
 
 export type StationTraffic = {
-  flow: StationFlow;
   directions: Direction[];
   events: TrainEvent[];
 };

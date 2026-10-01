@@ -12,6 +12,7 @@ import { STATUS_ORDER, toStatus } from "./status";
 import type {
   Direction,
   MapScope,
+  Section,
   Station,
   StationTraffic,
   ZoneStation,
@@ -25,36 +26,35 @@ export async function getZoneMap(scope: MapScope) {
   const sections = SECTIONS.filter(
     (section) => scopeIds.has(section.fromId) || scopeIds.has(section.toId),
   );
-  const visibleIds = new Set(sections.flatMap((s) => [s.fromId, s.toId]));
-  for (const id of scopeIds) visibleIds.add(id);
-
-  const stations = sortBySeverity(
-    STATIONS.filter((station) => visibleIds.has(station.id)),
-  ).map((station) => toZoneStation(station, scopeIds));
+  const stations = sortBySeverity(visibleStations(scopeIds, sections)).map(
+    (station) => toZoneStation(station, scopeIds),
+  );
+  const scopeStations = stations.filter((station) => station.isInScope);
 
   return {
     title: titleOf(scope),
     stations,
+    // Карточки всех станций зоны считаем сразу: выбор станции идёт без запроса к серверу.
+    trafficByStation: Object.fromEntries(
+      scopeStations.map((station) => [station.id, trafficOf(station.id)]),
+    ),
     sections: sections.map((section) => ({
       ...section,
       flow: sectionFlow(TRAINS, section),
     })),
-    summary: summarize(stations.filter((station) => station.isInScope)),
-  };
-}
-
-export async function getStationTraffic(
-  stationId: string,
-): Promise<StationTraffic> {
-  return {
-    flow: stationFlow(TRAINS, stationId),
-    directions: directionsOf(stationId),
-    events: stationEvents(TRAINS, stationId, nameOf).slice(0, EVENT_LIMIT),
+    summary: summarize(scopeStations),
   };
 }
 
 export async function getStation(stationId: string) {
   return STATIONS.find((station) => station.id === stationId) ?? null;
+}
+
+function trafficOf(stationId: string): StationTraffic {
+  return {
+    directions: directionsOf(stationId),
+    events: stationEvents(TRAINS, stationId, nameOf).slice(0, EVENT_LIMIT),
+  };
 }
 
 function stationIdsOf(scope: MapScope) {
@@ -64,6 +64,16 @@ function stationIdsOf(scope: MapScope) {
       (station) => station.dispatchAreaId === scope.dispatchAreaId,
     ).map((station) => station.id),
   );
+}
+
+// Станции зоны и их соседи — другие концы участков, выходящих из зоны.
+function visibleStations(scopeIds: Set<string>, sections: Section[]) {
+  const visibleIds = new Set(scopeIds);
+  for (const section of sections) {
+    visibleIds.add(section.fromId);
+    visibleIds.add(section.toId);
+  }
+  return STATIONS.filter((station) => visibleIds.has(station.id));
 }
 
 function titleOf(scope: MapScope) {

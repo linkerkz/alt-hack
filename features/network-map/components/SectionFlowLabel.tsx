@@ -1,6 +1,7 @@
 "use client";
 
 import { divIcon } from "leaflet";
+import { useMemo } from "react";
 import { Marker, useMap } from "react-leaflet";
 import type { SectionFlow, Station } from "../types";
 
@@ -13,17 +14,21 @@ type Props = {
 // Метка посередине участка: стрелки вдоль линии и число поездов в каждую сторону.
 export function SectionFlowLabel({ from, to, flow }: Props) {
   const map = useMap();
-  if (flow.forward === 0 && flow.backward === 0) return null;
+  const icon = useMemo(() => {
+    // Меркатор сохраняет углы, поэтому направление считаем на нулевом зуме.
+    const start = map.project([from.lat, from.lon], 0);
+    const end = map.project([to.lat, to.lon], 0);
+    const angle =
+      (Math.atan2(end.y - start.y, end.x - start.x) * 180) / Math.PI;
+    return labelIcon(flow, angle);
+  }, [map, from, to, flow]);
 
-  // Меркатор сохраняет углы, поэтому направление считаем один раз на нулевом зуме.
-  const start = map.project([from.lat, from.lon], 0);
-  const end = map.project([to.lat, to.lon], 0);
-  const angle = (Math.atan2(end.y - start.y, end.x - start.x) * 180) / Math.PI;
+  if (flow.forward === 0 && flow.backward === 0) return null;
 
   return (
     <Marker
       position={[(from.lat + to.lat) / 2, (from.lon + to.lon) / 2]}
-      icon={labelIcon(flow, angle)}
+      icon={icon}
       interactive={false}
     />
   );

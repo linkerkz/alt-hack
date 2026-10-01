@@ -1,6 +1,7 @@
 "use client";
 
 import { divIcon } from "leaflet";
+import { memo, useMemo } from "react";
 import { Marker } from "react-leaflet";
 import {
   FLOW_LABEL,
@@ -17,12 +18,30 @@ type Props = {
   onSelect: (stationId: string) => void;
 };
 
-export function StationMarker({ station, isSelected, onSelect }: Props) {
+// Новая иконка заставляет Leaflet пересоздать DOM маркера, поэтому
+// и иконку, и обработчики держим стабильными между рендерами.
+export const StationMarker = memo(function StationMarker({
+  station,
+  isSelected,
+  onSelect,
+}: Props) {
+  const icon = useMemo(
+    () =>
+      station.isInScope
+        ? stationIcon(station, isSelected)
+        : neighborIcon(station),
+    [station, isSelected],
+  );
+  const eventHandlers = useMemo(
+    () => ({ click: () => onSelect(station.id) }),
+    [onSelect, station.id],
+  );
+
   if (!station.isInScope) {
     return (
       <Marker
         position={[station.lat, station.lon]}
-        icon={neighborIcon(station)}
+        icon={icon}
         interactive={false}
       />
     );
@@ -31,13 +50,13 @@ export function StationMarker({ station, isSelected, onSelect }: Props) {
   return (
     <Marker
       position={[station.lat, station.lon]}
-      icon={stationIcon(station, isSelected)}
+      icon={icon}
       zIndexOffset={isSelected ? 1000 : 100}
-      eventHandlers={{ click: () => onSelect(station.id) }}
+      eventHandlers={eventHandlers}
       title={station.name}
     />
   );
-}
+});
 
 // Leaflet рисует маркер вне React, поэтому иконка — HTML-строка.
 // Классы Tailwind пишем целиком, чтобы сканер их нашёл.
@@ -59,7 +78,7 @@ function stationIcon(station: ZoneStation, isSelected: boolean) {
   }[status];
   const chip = isSelected
     ? "border-sky-400/70 bg-surface-2 text-white"
-    : "border-line bg-surface-1/90 text-zinc-200";
+    : "border-line bg-surface-1 text-zinc-200";
 
   return divIcon({
     className: "",
@@ -70,7 +89,7 @@ function stationIcon(station: ZoneStation, isSelected: boolean) {
           ${pulse}
           <span class="relative ${size} rounded-full ${dot} ${ring}"></span>
         </span>
-        <span class="absolute left-full ml-2.5 flex flex-col gap-1 whitespace-nowrap rounded-md border px-2 py-1.5 leading-none shadow-lg backdrop-blur-sm group-hover:border-white/40 ${chip}">
+        <span class="absolute left-full ml-2.5 flex flex-col gap-1 whitespace-nowrap rounded-md border px-2 py-1.5 leading-none shadow-lg group-hover:border-white/40 ${chip}">
           <span class="flex items-center justify-between gap-3 font-medium text-[13px]">
             ${station.name}
             <span class="font-mono font-semibold ${indexColor}">${station.efficiencyIndex}</span>

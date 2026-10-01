@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { STATUS_DOT_CLASS, STATUS_TEXT_CLASS, toStatus } from "../status";
 import type { ZoneStation } from "../types";
 import { FlowCounters } from "./FlowCounters";
@@ -6,9 +5,10 @@ import { FlowCounters } from "./FlowCounters";
 type Props = {
   stations: ZoneStation[];
   selectedStationId: string | null;
+  onSelect: (stationId: string) => void;
 };
 
-export function StationList({ stations, selectedStationId }: Props) {
+export function StationList({ stations, selectedStationId, onSelect }: Props) {
   return (
     <section className="flex min-h-0 flex-1 flex-col">
       <header className="flex items-baseline justify-between px-4 pt-4 pb-2">
@@ -23,6 +23,7 @@ export function StationList({ stations, selectedStationId }: Props) {
             <StationRow
               station={station}
               isSelected={station.id === selectedStationId}
+              onSelect={onSelect}
             />
           </li>
         ))}
@@ -34,18 +35,19 @@ export function StationList({ stations, selectedStationId }: Props) {
 type RowProps = {
   station: ZoneStation;
   isSelected: boolean;
+  onSelect: (stationId: string) => void;
 };
 
-function StationRow({ station, isSelected }: RowProps) {
+function StationRow({ station, isSelected, onSelect }: RowProps) {
   const status = toStatus(station.efficiencyIndex);
   const incidentCount = station.incidents.length;
 
   return (
-    <Link
-      href={`/?station=${station.id}`}
-      scroll={false}
+    <button
+      type="button"
+      onClick={() => onSelect(station.id)}
       aria-current={isSelected ? "true" : undefined}
-      className={`flex items-center gap-3 rounded px-2 py-2 transition-colors hover:bg-surface-2 ${isSelected ? "bg-surface-2 ring-1 ring-white/15" : ""}`}
+      className={`flex w-full items-center text-left gap-3 rounded px-2 py-2 transition-colors hover:bg-surface-2 ${isSelected ? "bg-surface-2 ring-1 ring-white/15" : ""}`}
     >
       <span
         className={`size-2 shrink-0 rounded-full ${STATUS_DOT_CLASS[status]}`}
@@ -66,6 +68,6 @@ function StationRow({ station, isSelected }: RowProps) {
       >
         {station.efficiencyIndex}
       </span>
-    </Link>
+    </button>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import type { PathOptions } from "leaflet";
+import { memo } from "react";
 import { Polyline, Tooltip } from "react-leaflet";
 import { STATUS_COLOR, STATUS_LABEL } from "../status";
 import type { Station, Status, ZoneSection } from "../types";
@@ -27,7 +28,12 @@ const PATH_OPTIONS: Record<Status, PathOptions> = {
 // Участки выбранной станции: нормальные — голубым, проблемные — своим цветом, но толще.
 const HIGHLIGHT_COLOR = "#38bdf8";
 
-export function SectionLine({ section, from, to, isHighlighted }: Props) {
+export const SectionLine = memo(function SectionLine({
+  section,
+  from,
+  to,
+  isHighlighted,
+}: Props) {
   if (from == null || to == null) return null;
 
   return (
@@ -53,7 +59,7 @@ export function SectionLine({ section, from, to, isHighlighted }: Props) {
       <SectionFlowLabel from={from} to={to} flow={section.flow} />
     </>
   );
-}
+});
 
 function pathOptions(status: Status, isHighlighted: boolean): PathOptions {
   const base = PATH_OPTIONS[status];
