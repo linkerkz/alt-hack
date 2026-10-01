@@ -2,6 +2,8 @@ export type Station = {
   id: string;
   name: string;
   code: string;
+  // Диспетчерский круг ДНЦ, к которому относится станция.
+  dispatchAreaId: string;
   kind: StationKind;
   lat: number;
   lon: number;

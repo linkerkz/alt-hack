@@ -9,7 +9,12 @@ import {
 import type { Incident, Station } from "../types";
 import { IndexRing } from "./IndexRing";
 
-export function StationPreview({ station }: { station: Station }) {
+type Props = {
+  station: Station;
+  canOpenConsole: boolean;
+};
+
+export function StationPreview({ station, canOpenConsole }: Props) {
   const status = toStatus(station.efficiencyIndex);
 
   return (
@@ -69,13 +74,19 @@ export function StationPreview({ station }: { station: Station }) {
       </div>
 
       <footer className="border-line border-t p-4">
-        <Link
-          href={`/stations/${station.id}`}
-          className="flex w-full items-center justify-center gap-2 rounded bg-sky-500 px-4 py-2.5 font-semibold text-sm text-white transition-colors hover:bg-sky-400"
-        >
-          Открыть пульт станции
-          <span aria-hidden>→</span>
-        </Link>
+        {canOpenConsole ? (
+          <Link
+            href={`/stations/${station.id}`}
+            className="flex w-full items-center justify-center gap-2 rounded bg-sky-500 px-4 py-2.5 font-semibold text-sm text-white transition-colors hover:bg-sky-400"
+          >
+            Открыть пульт станции
+            <span aria-hidden>→</span>
+          </Link>
+        ) : (
+          <p className="text-center text-muted text-xs">
+            Пульт этой станции вне вашей зоны ответственности
+          </p>
+        )}
       </footer>
     </aside>
   );
