@@ -3,14 +3,20 @@ import { SCREEN, SCREEN_INK, SCREEN_WARN } from "@/features/devices/manifest";
 
 // Иконка устройства на домашнем экране: путь с жёлтыми шпалами на тёмном экране.
 // 180 — для iOS, 192 и 512 — для манифеста.
+// Размеров три — рисуем их при сборке, остальные адреса отдают 404.
 const SIZES = [180, 192, 512];
+
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return SIZES.map((size) => ({ size: String(size) }));
+}
 
 export async function GET(
   _request: Request,
   context: RouteContext<"/devices/icon/[size]">,
 ) {
   const size = Number((await context.params).size);
-  if (!SIZES.includes(size)) return new Response("Not found", { status: 404 });
 
   const unit = size / 16;
   return new ImageResponse(
