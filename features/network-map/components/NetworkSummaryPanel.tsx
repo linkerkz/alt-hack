@@ -1,3 +1,4 @@
+import { IndexRing } from "@/components/ui/IndexRing";
 import {
   STATUS_BADGE_CLASS,
   STATUS_DOT_CLASS,
@@ -5,9 +6,8 @@ import {
   STATUS_ORDER,
   STATUS_TEXT_CLASS,
   toStatus,
-} from "../status";
+} from "@/lib/status";
 import type { NetworkSummary } from "../types";
-import { IndexRing } from "./IndexRing";
 
 export function NetworkSummaryPanel({ summary }: { summary: NetworkSummary }) {
   const status = toStatus(summary.avgEfficiencyIndex);

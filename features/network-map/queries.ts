@@ -1,5 +1,5 @@
+import { STATUS_ORDER, toStatus } from "@/lib/status";
 import { SECTIONS, STATIONS } from "./mock";
-import { STATUS_ORDER, toStatus } from "./status";
 import type { NetworkSummary, Station } from "./types";
 
 export async function getNetworkMap() {

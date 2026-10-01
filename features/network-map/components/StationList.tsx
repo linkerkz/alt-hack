@@ -1,10 +1,6 @@
 import Link from "next/link";
-import {
-  STATION_KIND_LABEL,
-  STATUS_DOT_CLASS,
-  STATUS_TEXT_CLASS,
-  toStatus,
-} from "../status";
+import { STATUS_DOT_CLASS, STATUS_TEXT_CLASS, toStatus } from "@/lib/status";
+import { STATION_KIND_LABEL } from "../status";
 import type { Station } from "../types";
 
 type Props = {

@@ -1,13 +1,8 @@
 import Link from "next/link";
-import {
-  INCIDENT_KIND_LABEL,
-  STATION_KIND_LABEL,
-  STATUS_BADGE_CLASS,
-  STATUS_LABEL,
-  toStatus,
-} from "../status";
+import { IndexRing } from "@/components/ui/IndexRing";
+import { STATUS_BADGE_CLASS, STATUS_LABEL, toStatus } from "@/lib/status";
+import { INCIDENT_KIND_LABEL, STATION_KIND_LABEL } from "../status";
 import type { Incident, Station } from "../types";
-import { IndexRing } from "./IndexRing";
 
 export function StationPreview({ station }: { station: Station }) {
   const status = toStatus(station.efficiencyIndex);
@@ -68,10 +63,17 @@ export function StationPreview({ station }: { station: Station }) {
         <IncidentList incidents={station.incidents} />
       </div>
 
-      <footer className="border-line border-t p-4">
+      <footer className="space-y-2 border-line border-t p-4">
+        <Link
+          href={`/dashboard/${station.id}`}
+          className="flex w-full items-center justify-center gap-2 rounded bg-sky-500 px-4 py-2.5 font-semibold text-sm text-white transition-colors hover:bg-sky-400"
+        >
+          Открыть dashboard
+          <span aria-hidden>→</span>
+        </Link>
         <Link
           href={`/stations/${station.id}`}
-          className="flex w-full items-center justify-center gap-2 rounded bg-sky-500 px-4 py-2.5 font-semibold text-sm text-white transition-colors hover:bg-sky-400"
+          className="flex w-full items-center justify-center gap-2 rounded border border-line px-4 py-2.5 font-semibold text-sm text-zinc-300 transition-colors hover:bg-surface-2 hover:text-white"
         >
           Открыть пульт станции
           <span aria-hidden>→</span>

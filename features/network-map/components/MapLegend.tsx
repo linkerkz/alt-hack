@@ -1,4 +1,4 @@
-import { STATUS_DOT_CLASS, STATUS_LABEL, STATUS_ORDER } from "../status";
+import { STATUS_DOT_CLASS, STATUS_LABEL, STATUS_ORDER } from "@/lib/status";
 
 export function MapLegend() {
   return (

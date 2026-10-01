@@ -1,4 +1,4 @@
-import { STATUS_COLOR, STATUS_LABEL, toStatus } from "../status";
+import { STATUS_COLOR, STATUS_LABEL, toStatus } from "@/lib/status";
 
 type Props = {
   value: number;

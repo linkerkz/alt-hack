@@ -1,3 +1,5 @@
+import type { Status } from "@/lib/status";
+
 export type Station = {
   id: string;
   name: string;
@@ -36,8 +38,6 @@ export type Section = {
   status: Status;
   note?: string;
 };
-
-export type Status = "normal" | "warning" | "critical";
 
 export type NetworkSummary = {
   avgEfficiencyIndex: number;

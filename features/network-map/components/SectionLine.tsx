@@ -2,8 +2,9 @@
 
 import type { PathOptions } from "leaflet";
 import { Polyline, Tooltip } from "react-leaflet";
-import { STATUS_COLOR, STATUS_LABEL } from "../status";
-import type { Section, Station, Status } from "../types";
+import type { Status } from "@/lib/status";
+import { STATUS_COLOR, STATUS_LABEL } from "@/lib/status";
+import type { Section, Station } from "../types";
 
 type Props = {
   section: Section;

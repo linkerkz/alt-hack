@@ -2,7 +2,7 @@
 
 import { divIcon } from "leaflet";
 import { Marker } from "react-leaflet";
-import { STATUS_DOT_CLASS, toStatus } from "../status";
+import { STATUS_DOT_CLASS, toStatus } from "@/lib/status";
 import type { Station } from "../types";
 
 type Props = {
