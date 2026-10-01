@@ -47,7 +47,7 @@ function labelIcon(flow: SectionFlow, angle: number) {
     className: "",
     iconSize: [0, 0],
     html: `
-      <div class="absolute flex -translate-x-1/2 -translate-y-1/2 cursor-help items-center gap-2.5 whitespace-nowrap rounded-full border border-line bg-surface-0/90 px-2 py-0.5 font-mono font-semibold text-[12px] text-zinc-200 shadow">
+      <div class="absolute flex -translate-x-1/2 -translate-y-1/2 cursor-help items-center gap-2.5 whitespace-nowrap rounded-full border border-line bg-paper/95 px-2 py-0.5 text-[12px] text-ink shadow-sm">
         ${parts.join("")}
       </div>`,
   });
@@ -56,5 +56,5 @@ function labelIcon(flow: SectionFlow, angle: number) {
 // SVG-стрелка смотрит вправо, поворачиваем её вдоль участка.
 function arrowCount(count: number, angle: number) {
   if (count === 0) return "";
-  return `<span class="flex items-center gap-1"><svg viewBox="0 0 12 12" class="size-3 text-sky-300" style="transform: rotate(${angle.toFixed(0)}deg)" fill="currentColor" aria-hidden="true"><path d="M1 5h6.5V2L12 6l-4.5 4V7H1z"/></svg>${count}</span>`;
+  return `<span class="flex items-center gap-1"><svg viewBox="0 0 12 12" class="size-3 text-accent-700" style="transform: rotate(${angle.toFixed(0)}deg)" fill="currentColor" aria-hidden="true"><path d="M1 5h6.5V2L12 6l-4.5 4V7H1z"/></svg>${count}</span>`;
 }

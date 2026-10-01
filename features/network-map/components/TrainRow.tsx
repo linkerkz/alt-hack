@@ -6,23 +6,23 @@ export function TrainRow({ train }: { train: StationTrain }) {
   const [primary, secondary] = timesOf(train);
 
   return (
-    <div className="flex items-start gap-3 px-3 py-1.5">
+    <div className="flex items-start gap-3 py-1.5">
       <span className="min-w-0 flex-1">
-        <span className="block text-sm text-zinc-100">
-          № {train.number}{" "}
+        <span className="block text-[13px]">
+          <b className="font-semibold">№ {train.number}</b>{" "}
           <span className="text-[11px] text-muted">
             {TRAIN_KIND_LABEL[train.kind]}
           </span>
         </span>
-        <span className="block truncate text-[12px] text-sky-300">
+        <span className="block truncate text-[12px] text-accent-700 italic">
           {pathOf(train)}
         </span>
         <span className="block truncate text-[11px] text-muted">
           {train.originName} — {train.destinationName}
         </span>
       </span>
-      <span className="shrink-0 text-right text-[11px] tabular-nums leading-tight">
-        <span className="block text-zinc-200">{primary}</span>
+      <span className="shrink-0 text-right text-[11px] leading-tight">
+        <span className="block text-ink">{primary}</span>
         <span className="block text-muted">{secondary}</span>
       </span>
     </div>

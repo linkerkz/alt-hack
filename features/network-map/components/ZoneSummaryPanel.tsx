@@ -1,13 +1,12 @@
-import {
-  STATUS_BADGE_CLASS,
-  STATUS_DOT_CLASS,
-  STATUS_LABEL,
-  STATUS_ORDER,
-  STATUS_TEXT_CLASS,
-  toStatus,
-} from "../status";
+import { Heading } from "@/components/ui/Heading";
+import { IndexValue } from "@/components/ui/IndexValue";
+import { Kicker } from "@/components/ui/Kicker";
+import { Meter } from "@/components/ui/Meter";
+import { Metric } from "@/components/ui/Metric";
+import { StatusGlyph } from "@/components/ui/StatusGlyph";
+import { TONE_BG_CLASS, TONE_TEXT_CLASS } from "@/components/ui/tone";
+import { STATUS_LABEL, STATUS_ORDER, toStatus } from "../status";
 import type { ZoneSummary } from "../types";
-import { IndexRing } from "./IndexRing";
 
 type Props = {
   title: string;
@@ -19,36 +18,27 @@ export function ZoneSummaryPanel({ title, summary }: Props) {
 
   return (
     <section className="space-y-4 border-line border-b p-4">
-      <div>
-        <p className="font-mono text-[11px] text-muted uppercase tracking-widest">
-          Зона ответственности
-        </p>
-        <h1 className="mt-0.5 font-semibold text-lg text-white">{title}</h1>
+      <div className="space-y-0.5">
+        <Kicker>Зона ответственности</Kicker>
+        <Heading level={1}>{title}</Heading>
       </div>
 
-      <div className="flex items-center gap-4">
-        <IndexRing value={summary.avgEfficiencyIndex} size={80} />
-        <div className="space-y-2">
-          <p className="text-muted text-xs leading-snug">
-            Средний индекс эффективности зоны
-          </p>
-          <span
-            className={`inline-flex rounded border px-2 py-0.5 font-medium text-xs uppercase tracking-wider ${STATUS_BADGE_CLASS[status]}`}
-          >
-            {STATUS_LABEL[status]}
-          </span>
-        </div>
-      </div>
+      <IndexValue
+        value={summary.avgEfficiencyIndex}
+        tone={status}
+        label={STATUS_LABEL[status]}
+        caption="средний индекс эффективности зоны"
+      />
 
       {summary.stationCount > 1 && <StatusBreakdown summary={summary} />}
 
-      <dl className="grid grid-cols-3 gap-2">
+      <dl className="grid grid-cols-3 gap-3 border-line border-t pt-3">
         <Metric label="Поездов в зоне" value={summary.trainsWithinCount} />
-        <Metric label="Идут к станциям зоны" value={summary.arrivingCount} />
+        <Metric label="Идут к станциям" value={summary.arrivingCount} />
         <Metric
           label="Сбоев"
           value={summary.incidentCount}
-          accent={summary.incidentCount > 0}
+          valueClass={summary.incidentCount > 0 ? "text-critical" : "text-ink"}
         />
       </dl>
     </section>
@@ -57,54 +47,27 @@ export function ZoneSummaryPanel({ title, summary }: Props) {
 
 function StatusBreakdown({ summary }: { summary: ZoneSummary }) {
   const { stationCount, stationCountByStatus } = summary;
+  const parts = STATUS_ORDER.map((status) => ({
+    value: (stationCountByStatus[status] / stationCount) * 100,
+    className: TONE_BG_CLASS[status],
+  }));
 
   return (
     <div className="space-y-2">
-      <div className="flex h-1.5 overflow-hidden rounded-full bg-line">
+      <Meter parts={parts} label="Станции зоны по состояниям" />
+      <ul className="flex justify-between text-[12px]">
         {STATUS_ORDER.map((status) => (
-          <div
-            key={status}
-            className={STATUS_DOT_CLASS[status]}
-            style={{
-              width: `${(stationCountByStatus[status] / stationCount) * 100}%`,
-            }}
-          />
-        ))}
-      </div>
-      <ul className="flex justify-between text-xs">
-        {STATUS_ORDER.map((status) => (
-          <li key={status} className="flex items-center gap-1.5">
-            <span
-              className={`size-2 rounded-full ${STATUS_DOT_CLASS[status]}`}
-            />
+          <li key={status} className="flex items-baseline gap-1.5">
+            <StatusGlyph tone={status} />
             <span className="text-muted">{STATUS_LABEL[status]}</span>
             <span
-              className={`font-mono font-semibold ${STATUS_TEXT_CLASS[status]}`}
+              className={`font-heading text-[17px] ${TONE_TEXT_CLASS[status]}`}
             >
               {stationCountByStatus[status]}
             </span>
           </li>
         ))}
       </ul>
-    </div>
-  );
-}
-
-type MetricProps = {
-  label: string;
-  value: number;
-  accent?: boolean;
-};
-
-function Metric({ label, value, accent = false }: MetricProps) {
-  return (
-    <div className="flex flex-col justify-between gap-1 rounded border border-line bg-surface-1 px-2.5 py-2">
-      <dt className="text-[11px] text-muted leading-tight">{label}</dt>
-      <dd
-        className={`font-mono font-semibold text-xl tabular-nums ${accent ? "text-rose-400" : "text-white"}`}
-      >
-        {value}
-      </dd>
     </div>
   );
 }

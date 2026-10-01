@@ -1,6 +1,7 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AppHeader } from "@/components/ui/AppHeader";
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { Kicker } from "@/components/ui/Kicker";
 import {
   canOpenNetwork,
   canOpenStation,
@@ -29,21 +30,18 @@ export default async function StationPage({
         account={<AccountMenu user={user} />}
       />
       <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-        <p className="font-mono text-muted text-xs uppercase tracking-widest">
-          Пульт станции · ЕСР {station.code}
-        </p>
-        <h1 className="font-semibold text-3xl text-white">{station.name}</h1>
-        <p className="max-w-md text-muted text-sm">
+        <Kicker tone="accent">Пульт станции · ЕСР {station.code}</Kicker>
+        <h1 className="font-heading font-semibold text-[42px] leading-tight">
+          {station.name}
+        </h1>
+        <p className="max-w-md text-[14px] text-muted">
           Здесь будет схема станции, диаграмма Ганта, индекс эффективности и
           рекомендации ИИ-планировщика.
         </p>
         {canOpenNetwork(user) && (
-          <Link
-            href={`/?station=${station.id}`}
-            className="rounded border border-line px-4 py-2 text-sm text-zinc-300 hover:bg-surface-2 hover:text-white"
-          >
+          <ButtonLink href={`/?station=${station.id}`}>
             ← К карте сети
-          </Link>
+          </ButtonLink>
         )}
       </main>
     </>
