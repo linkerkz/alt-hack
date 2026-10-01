@@ -10,9 +10,7 @@ export const getNetwork = cache(async () => {
   const [stations, sections, trains, areas, incidents] = await Promise.all([
     supabase
       .from("stations")
-      .select(
-        "id, name, code, dispatch_area_id, kind, lat, lon, efficiency_index, train_count, track_load, avg_delay_minutes, conflict_count",
-      )
+      .select(STATION_COLUMNS)
       .not("lat", "is", null)
       .overrideTypes<StationRow[], { merge: false }>(),
     supabase
@@ -45,7 +43,13 @@ export const getNetwork = cache(async () => {
 
 export type Network = Awaited<ReturnType<typeof getNetwork>>;
 
-function toStation(row: StationRow, incidents: Station["incidents"]): Station {
+export const STATION_COLUMNS =
+  "id, name, code, dispatch_area_id, kind, lat, lon, efficiency_index, train_count, track_load, avg_delay_minutes, conflict_count";
+
+export function toStation(
+  row: StationRow,
+  incidents: Station["incidents"],
+): Station {
   return {
     id: row.id,
     name: row.name,
@@ -88,7 +92,7 @@ function toTrain(row: TrainRow): Train {
 
 // Строки из базы без сгенерированных типов — форму задаём руками.
 // Станции без координат (lat null) на карту не попадают — их отсекает запрос.
-type StationRow = {
+export type StationRow = {
   id: string;
   name: string;
   code: string;
