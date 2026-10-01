@@ -1,8 +1,11 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { LiveClock } from "./LiveClock";
 
 type Props = {
   current: Section;
+  // Блок пользователя справа: его собирает страница, шапка о входе не знает.
+  account?: ReactNode;
 };
 
 type Section = "network" | "station";
@@ -22,7 +25,7 @@ const NAV: NavItem[] = [
   { id: "settings", label: "Настройки индекса" },
 ];
 
-export function AppHeader({ current }: Props) {
+export function AppHeader({ current, account }: Props) {
   return (
     <header className="flex h-12 shrink-0 items-center gap-6 border-line border-b bg-surface-1 px-4">
       <Link href="/" className="flex items-center gap-2.5">
@@ -47,6 +50,7 @@ export function AppHeader({ current }: Props) {
           Симулятор · онлайн
         </span>
         <LiveClock />
+        {account}
       </div>
     </header>
   );

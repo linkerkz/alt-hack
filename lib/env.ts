@@ -7,6 +7,8 @@ export const env = {
     "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
   ),
+  // Пароль демо-аккаунтов из supabase/seed.sql; без него нет быстрого входа.
+  demoPassword: process.env.DEMO_PASSWORD ?? null,
 };
 
 function required(name: string, value: string | undefined) {
