@@ -141,6 +141,23 @@ export async function log(
   if (error != null) throw error;
 }
 
+// ДСП дал отправление: событие станции с ключом операции плана.
+export async function logDeparture(
+  stationId: string,
+  operation: string,
+  text: string,
+) {
+  const { error } = await supabaseAdmin().from("timeline_events").insert({
+    station_id: stationId,
+    incident_id: null,
+    at: now(),
+    actor: "dsp",
+    text,
+    operation,
+  });
+  if (error != null) throw error;
+}
+
 export function now() {
   return new Date().toISOString();
 }

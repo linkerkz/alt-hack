@@ -1,4 +1,5 @@
 import { toClock } from "@/lib/clock";
+import { departureKey } from "./departure";
 import type { PagerMessage, PlannedTrain } from "./types";
 
 // Ближайшие операции станции по плану путей: прибытия и отправления, по
@@ -7,6 +8,7 @@ import type { PagerMessage, PlannedTrain } from "./types";
 export type Operation = {
   // Ключ операции на пейджере: «101-arrival».
   id: string;
+  kind: "arrival" | "departure";
   // Минуты плана, как у PlannedTrain.
   time: number;
   train: string;
@@ -58,6 +60,7 @@ function arrivalOf({ train, kind, track, arrival }: PlannedTrain): Operation {
       : "закрепить состав тормозными башмаками";
   return {
     id: `${train}-arrival`,
+    kind: "arrival",
     time: arrival,
     train,
     text: `Встретить ${train} на пути ${track} в ${toClock(arrival)}: ${work}`,
@@ -74,5 +77,11 @@ function departureOf({
     kind === "passenger"
       ? `Проводить ${train} с пути ${track} в ${toClock(departure)}: осмотреть состав, нет ли людей на путях`
       : `Подготовить ${train} к отправлению с пути ${track} в ${toClock(departure)}: сцепить вагоны, опробовать тормоза к ${toClock(departure - PREPARE_MINUTES)}`;
-  return { id: `${train}-departure`, time: departure, train, text };
+  return {
+    id: departureKey(train),
+    kind: "departure",
+    time: departure,
+    train,
+    text,
+  };
 }

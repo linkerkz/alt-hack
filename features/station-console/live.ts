@@ -1,11 +1,13 @@
 import { cache } from "react";
 import { simClock } from "@/lib/clock";
+import { currentMinute } from "@/lib/simulation/network";
 import { createSupabaseClient, supabaseAdmin } from "@/lib/supabase";
 import { stationPager } from "./pager";
 import { planSourceOf } from "./planSource";
 import { stepOf } from "./scenario";
 import type {
   ChosenOption,
+  GivenDeparture,
   IncidentStatus,
   JournalEvent,
   Live,
@@ -19,6 +21,10 @@ import type {
 // Сколько событий хронологии держим в ленте.
 const FEED_LIMIT = 40;
 
+// Номера поездов симуляции повторяются по суткам: отправления старше
+// этого — уже другие поезда.
+const DEPARTURES_HOURS = 3;
+
 // Поля инцидента, из которых складывается ход сценария.
 export const INCIDENT_COLUMNS =
   "id, code, station_id, status, option, route_tasks, dnc_rejected_at, dnc_comment, analysis, detected_at";
@@ -28,16 +34,24 @@ export const INCIDENT_COLUMNS =
 // читают по разу. Наряд и план — следом за инцидентом: от наряда зависит
 // шаг сценария, а от шага — откуда план (planSource.ts).
 export const getLive = cache(async (stationId: string): Promise<Live> => {
-  const [incident, pager, events] = await Promise.all([
+  const [incident, pager, events, departures] = await Promise.all([
     lastIncident(stationId),
     stationPager(stationId),
     stationEvents(stationId),
+    stationDepartures(stationId),
   ]);
   const workOrder = incident == null ? null : await incidentWorkOrder(incident);
   const step = stepOf({ incident, workOrder });
   const source = await planSourceOf(stationId, step, incident);
 
-  return { incident, workOrder, pager, events, ...source };
+  return {
+    incident,
+    workOrder,
+    pager,
+    events,
+    departures: departures.map((row) => toDeparture(row, source.now)),
+    ...source,
+  };
 });
 
 async function lastIncident(stationId: string) {
@@ -98,6 +112,28 @@ async function stationEvents(stationId: string) {
     .limit(FEED_LIMIT);
 
   return (data ?? []).map(toEvent);
+}
+
+// Отправления, которые ДСП дал за последние часы: ключи операций.
+async function stationDepartures(stationId: string) {
+  const since = new Date(Date.now() - DEPARTURES_HOURS * 3_600_000);
+  const supabase = await createSupabaseClient();
+  const { data } = await supabase
+    .from("timeline_events")
+    .select("operation, at")
+    .eq("station_id", stationId)
+    .not("operation", "is", null)
+    .gte("at", since.toISOString())
+    .overrideTypes<DepartureRow[], { merge: false }>();
+
+  return data ?? [];
+}
+
+// Время события — в минуты плана станции, как у planSourceOf: от текущей
+// минуты назад.
+function toDeparture(row: DepartureRow, now: number): GivenDeparture {
+  const minute = Math.floor(new Date(row.at).getTime() / 60_000);
+  return { operation: row.operation, at: now - (currentMinute() - minute) };
 }
 
 // Строки из базы без сгенерированных типов — форму задаём руками.
@@ -173,3 +209,5 @@ type EventRow = {
   text: string;
   level: Status | null;
 };
+
+type DepartureRow = { operation: string; at: string };

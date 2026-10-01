@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { activePlan } from "./activePlan";
 import { recommendedFor } from "./advice";
+import { departingTrain, departureState, departureText } from "./departure";
 import { CREW_CALL, REPAIR } from "./fault";
 import { journalOf } from "./journal";
 import { STEP } from "./mock";
@@ -10,6 +11,7 @@ import {
   finishWorkOrder,
   issueWorkOrder,
   log,
+  logDeparture,
   now,
   resetStation,
   updateWorkOrder,
@@ -74,6 +76,7 @@ async function dispatch(context: Context, command: Command) {
   const step = stepOf(live);
 
   if (command.kind === "assign") return assign(context, command.operation);
+  if (command.kind === "depart") return depart(context, command.operation);
   if (command.kind === "note") return note(context, command.text);
   if (command.kind === "advance") {
     const next = nextCommand(live, recommendedFor(live));
@@ -176,6 +179,18 @@ async function assign({ stationId, live }: Context, id: string) {
     incidentId: null,
     operation: id,
   });
+  return DONE;
+}
+
+// Отправление поезда действующего плана: только стоящему на пути и не
+// раньше, чем состав готов; второй раз не даём.
+async function depart({ stationId, live }: Context, key: string) {
+  const train = departingTrain(activePlan(live), key);
+  if (train == null) return NOT_NOW;
+  const state = departureState(train, live);
+  if (state === "given") return { error: "Отправление уже дано" };
+  if (state === "early") return NOT_NOW;
+  await logDeparture(stationId, key, departureText(train));
   return DONE;
 }
 

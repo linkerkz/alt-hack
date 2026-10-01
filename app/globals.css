@@ -70,6 +70,31 @@
       opacity: 0;
     }
   }
+
+  /* Поезд уходит со схемы станции в горловину: трогается и разгоняется.
+     Сдвиг — в единицах схемы 1000×360, его хватает уйти с любого места. */
+  --animate-leave-odd: leave-odd 5s cubic-bezier(0.55, 0, 0.9, 0.6) forwards;
+  --animate-leave-even: leave-even 5s cubic-bezier(0.55, 0, 0.9, 0.6) forwards;
+
+  @keyframes leave-odd {
+    85% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(-1000px);
+      opacity: 0;
+    }
+  }
+
+  @keyframes leave-even {
+    85% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(1000px);
+      opacity: 0;
+    }
+  }
 }
 
 @theme inline {

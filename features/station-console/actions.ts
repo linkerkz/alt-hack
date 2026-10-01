@@ -31,6 +31,7 @@ const ROLES: Record<Command["kind"], ConsoleRole[]> = {
   restore: ["dsp"],
   close: ["dscs"],
   assign: ["dsp"],
+  depart: ["dsp"],
   note: ["dsp"],
   advance: BOTH,
   reset: BOTH,
