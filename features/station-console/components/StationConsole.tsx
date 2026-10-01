@@ -1,17 +1,17 @@
 import type { StationConsoleData } from "../queries";
-import type { ConsoleState, Neighbors } from "../types";
-import { CollapsedPanel } from "./CollapsedPanel";
+import type { ConsoleRole, ConsoleState, Neighbors } from "../types";
 import { ConsoleBar } from "./ConsoleBar";
-import { ConsoleTabs } from "./ConsoleTabs";
 import { DemoBar } from "./DemoBar";
 import { EfficiencySummary } from "./EfficiencySummary";
 import { IncidentBanner } from "./IncidentBanner";
-import { IncidentPanel } from "./IncidentPanel";
-import { OverviewPanel } from "./OverviewPanel";
+import { ReturnToServiceDialog } from "./ReturnToServiceDialog";
+import { SidePanel } from "./SidePanel";
 import { StationSchema } from "./StationSchema";
 import { TrackPlan } from "./TrackPlan";
 
 type Props = {
+  role: ConsoleRole;
+  operatorName: string;
   stationName: string;
   data: StationConsoleData;
   state: ConsoleState;
@@ -20,19 +20,15 @@ type Props = {
   mapHref: string | null;
 };
 
-// Пульт станции ДСЦС: слева индекс, схема и план путей, справа — обзор
-// или карточка инцидента.
-export function StationConsole({
-  stationName,
-  data,
-  state,
-  neighbors,
-  mapHref,
-}: Props) {
-  const { incident } = data;
-  // Баннер напоминает об инциденте, пока его карточка не видна.
+// Пульт станции: слева индекс, схема и план путей, справа — панель роли.
+export function StationConsole(props: Props) {
+  const { role, stationName, data, state, neighbors, mapHref } = props;
+  const { incident, dsp } = data;
+  // Баннер напоминает ДСЦС об инциденте, пока его карточка не видна.
   const showBanner =
-    incident.isActive && (state.tab === "overview" || !state.panel);
+    role === "dscs" &&
+    incident.isActive &&
+    (state.tab === "overview" || !state.panel);
 
   return (
     <>
@@ -54,22 +50,18 @@ export function StationConsole({
           />
           <TrackPlan plan={data.plan} />
         </section>
-        {state.panel ? (
-          <aside className="sticky top-0 flex max-h-screen min-w-0 max-w-full flex-[1_1_380px] flex-col">
-            <ConsoleTabs state={state} hasIncident={state.step > 0} />
-            <div className="flex flex-1 flex-col gap-[18px] overflow-auto px-5 pt-4 pb-[120px]">
-              {state.tab === "incident" ? (
-                <IncidentPanel data={data} state={state} mapHref={mapHref} />
-              ) : (
-                <OverviewPanel incident={incident} state={state} />
-              )}
-            </div>
-          </aside>
-        ) : (
-          <CollapsedPanel state={state} hasActiveIncident={incident.isActive} />
-        )}
+        <SidePanel
+          role={role}
+          operatorName={props.operatorName}
+          data={data}
+          state={state}
+          mapHref={mapHref}
+        />
       </main>
       <DemoBar state={state} stepName={data.stepName} />
+      {role === "dsp" && dsp.confirmOpen && (
+        <ReturnToServiceDialog state={state} />
+      )}
     </>
   );
 }

@@ -42,8 +42,8 @@ export default async function StationPage({
     />
   );
 
-  // Пока готов только пульт ДСЦС; остальные роли видят заглушку.
-  if (user.role !== "dscs") {
+  // Готовы пульты ДСЦС и ДСП; остальные роли видят заглушку.
+  if (user.role !== "dscs" && user.role !== "dsp") {
     return (
       <>
         {header}
@@ -64,6 +64,8 @@ export default async function StationPage({
     <>
       {header}
       <StationConsole
+        role={user.role}
+        operatorName={shortName(user.fullName)}
         stationName={station.name}
         data={data}
         state={state}
@@ -72,6 +74,13 @@ export default async function StationPage({
       />
     </>
   );
+}
+
+// «Ерлан Ахметов» → «Ахметов Е.»: так подписаны роли в макете.
+function shortName(fullName: string) {
+  const [first, last] = fullName.split(" ");
+  if (last == null) return fullName;
+  return `${last} ${first[0]}.`;
 }
 
 type StubProps = {

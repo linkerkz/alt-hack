@@ -8,7 +8,20 @@ export type ConsoleState = {
   focus: boolean;
   // Правая панель (обзор, инцидент) открыта; свёрнутая — освобождает место схеме.
   panel: boolean;
+  // Задачи ДСП, которые он уже выполнил на шаге «Решение принято».
+  done: RouteTask[];
+  // Открыт диалог «Вернуть стрелку в эксплуатацию».
+  confirm: boolean;
 };
+
+// Роль, для которой собран пульт: правая панель у ДСЦС и ДСП разная.
+export type ConsoleRole = "dscs" | "dsp";
+
+// Приём поезда по новому плану: id задачи ДСП и поезда.
+export type RouteTask = "r101" | "r2001";
+
+// Действие кнопки: что поменять в состоянии пульта.
+export type ActionLink = { label: string; patch: Partial<ConsoleState> };
 
 // Вариант перепланирования; none — исходный сценарий «ничего не менять».
 export type OptionId = "none" | ChosenOption;
