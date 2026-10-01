@@ -37,5 +37,5 @@ export function deviceManifest(device: Device): MetadataRoute.Manifest {
 
 const DESCRIPTION: Record<Device["kind"], string> = {
   camera: "Камера горловины: замечает предмет в стрелке и сообщает на станцию",
-  pager: "Пейджер бригады: наряды службы и чеклист работ",
+  pager: "Пейджер бригады: вызовы и задачи ДСП",
 };
