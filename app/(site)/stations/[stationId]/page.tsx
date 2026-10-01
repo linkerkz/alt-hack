@@ -42,10 +42,10 @@ export default async function StationPage({
     />
   );
 
-  // Пульт готов для ДСЦС, ДСП и ДНЦ (согласует вариант Б прямо на пульте);
-  // остальные роли видят заглушку.
+  // Пульт готов для ДСЦС, ДСП, ДНЦ (согласует вариант Б прямо на пульте)
+  // и ДС (наблюдает без команд); остальные роли видят заглушку.
   const { role } = user;
-  if (role !== "dscs" && role !== "dsp" && role !== "dnc") {
+  if (role !== "dscs" && role !== "dsp" && role !== "dnc" && role !== "ds") {
     return (
       <>
         {header}
@@ -95,7 +95,7 @@ function ConsoleStub({ station, mapHref }: StubProps) {
       </h1>
       <p className="max-w-md text-[14px] text-muted">
         Пульт для вашей роли ещё в работе. Сейчас готовы экраны ДСЦС и ДСП, ДНЦ
-        смотрит пульт станции своего круга.
+        смотрит пульт станции своего круга, ДС — своей станции.
       </p>
       {mapHref != null && (
         <ButtonLink href={mapHref}>← К карте сети</ButtonLink>

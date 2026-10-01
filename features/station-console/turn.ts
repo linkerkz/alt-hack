@@ -3,8 +3,8 @@ import { replanOptions, STEP } from "./mock";
 import { routeDone } from "./routing";
 import type {
   Command,
+  ConsoleRole,
   ConsoleState,
-  ConsoleViewer,
   Live,
   LiveIncident,
   LiveWorkOrder,
@@ -28,7 +28,8 @@ export type Turn = {
   waiting: string;
 };
 
-export type TurnOwner = ConsoleViewer | "crew" | "repair";
+// ДС ход не получает: он только наблюдает за пультом.
+export type TurnOwner = ConsoleRole | "dnc" | "crew" | "repair";
 
 export type TurnItem = {
   text: string;
