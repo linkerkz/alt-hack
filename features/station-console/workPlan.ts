@@ -3,9 +3,10 @@ import { replanOptions } from "./mock";
 import type { ChosenOption } from "./types";
 
 // План работ ремонтной бригаде от ИИ: модель знает сбой по сценарию демо
-// (бутылка в стрелке С3, остряк повреждён) и принятый вариант
-// перепланирования и составляет окно работ, меры безопасности и чеклист.
-// Снимок не шлём: текстом модель отвечает в разы быстрее, а сбой и так известен.
+// (предмет в стрелке С3, остряк повреждён), вывод камеры и ИИ о предмете и
+// принятый вариант перепланирования и составляет окно работ, меры
+// безопасности и чеклист. Снимок не шлём: текстом модель отвечает в разы
+// быстрее, а что на нём — уже есть в выводе камеры.
 
 export type WorkPlan = {
   title: string;
@@ -55,25 +56,33 @@ const SCHEMA = {
   },
 };
 
+// Что увидела камера, если вывода нет: предмет по сценарию демо.
+const DEMO_OBSTRUCTION = "пластиковая бутылка у остряка стрелки С3";
+
 // План работ; null — ИИ не подключён, не успел или ответил не по формату.
-export async function generateWorkPlan(option: ChosenOption) {
+// analysis — вывод камеры и ИИ по снимку инцидента.
+export async function generateWorkPlan(
+  option: ChosenOption,
+  analysis: string | null,
+) {
   const answer = await askText({
-    prompt: promptFor(option),
+    prompt: promptFor(option, analysis),
     schema: SCHEMA,
     timeoutMs: TIMEOUT_MS,
   });
   return parsePlan(answer);
 }
 
-function promptFor(option: ChosenOption) {
+function promptFor(option: ChosenOption, analysis: string | null) {
   const chosen = replanOptions(NEIGHBORS)[option];
   const changes = chosen.changes.map(
     (change) => `- поезд ${change.train}: ${change.text}`,
   );
   return [
     "Ты — инженер дистанции пути. Составь план работ для ремонтной бригады по стрелочному переводу С3 в нечётной горловине станции.",
-    "Камера в горловине заметила пластиковую бутылку у остряка стрелки С3: перевод не доходил до конца.",
-    "Путейцы убрали бутылку и доложили: остряк повреждён, нужен ремонт. Маршруты через С3 на пути 3 и 5 закрыты.",
+    "Камера в горловине заметила посторонний предмет у остряка стрелки С3: перевод не доходил до конца.",
+    `Камера и ИИ: ${analysis ?? DEMO_OBSTRUCTION}.`,
+    "Путейцы убрали предмет и доложили: остряк повреждён, нужен ремонт. Маршруты через С3 на пути 3 и 5 закрыты.",
     `Сейчас 14:11. ДСЦС принял «${chosen.name}», движение идёт в обход С3:`,
     ...changes,
     "Ремонт нужно закончить к 14:27, чтобы к 14:29 вернуть С3 в эксплуатацию и пути 3 и 5 — к исходному плану.",
@@ -105,12 +114,13 @@ function textOf(answer: object, key: string) {
   return value.trim();
 }
 
-// Номера пунктам ставит чеклист сам: «1. » от модели срезаем.
+// Номера пунктам ставит чеклист сам: «1. » от модели срезаем, а дробь
+// в начале пункта («2.5 мм …») оставляем.
 function listOf(answer: object, key: string) {
   const value: unknown = Reflect.get(answer, key);
   if (!Array.isArray(value)) return null;
   return value
     .filter((item): item is string => typeof item === "string")
-    .map((item) => item.replace(/^\s*\d+[.)]\s*/, "").trim())
+    .map((item) => item.replace(/^\s*\d+[.)](?!\d)\s*/, "").trim())
     .filter((item) => item !== "");
 }
