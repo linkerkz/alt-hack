@@ -1,5 +1,6 @@
-// Что показывает пульт: шаг сценария, выбранный вариант, вкладка панели.
-// Всё хранится в URL, чтобы экран открывался в том же состоянии.
+// Что показывает пульт. Ход инцидента (шаг, принятый вариант, принятые ДСП
+// поезда) приходит из базы; вид экрана (вкладка, фокус, панель, диалог и
+// вариант, который ДСЦС пока только смотрит) — из URL.
 export type ConsoleState = {
   step: number;
   option: ChosenOption;
@@ -8,7 +9,7 @@ export type ConsoleState = {
   focus: boolean;
   // Правая панель (обзор, инцидент) открыта; свёрнутая — освобождает место схеме.
   panel: boolean;
-  // Задачи ДСП, которые он уже выполнил на шаге «Решение принято».
+  // Поезда, приём которых ДСП уже подтвердил по новому плану.
   done: RouteTask[];
   // Открыт диалог «Вернуть стрелку в эксплуатацию».
   confirm: boolean;
@@ -20,8 +21,74 @@ export type ConsoleRole = "dscs" | "dsp";
 // Приём поезда по новому плану: id задачи ДСП и поезда.
 export type RouteTask = "r101" | "r2001";
 
-// Действие кнопки: что поменять в состоянии пульта.
-export type ActionLink = { label: string; patch: Partial<ConsoleState> };
+// Ход сценария в базе: последний инцидент станции, его наряд и хронология.
+export type Live = {
+  incident: LiveIncident | null;
+  workOrder: LiveWorkOrder | null;
+  // Хронология станции, свежие сверху.
+  events: JournalEvent[];
+};
+
+export type LiveIncident = {
+  id: string;
+  code: string;
+  status: IncidentStatus;
+  option: ChosenOption | null;
+  routeTasks: RouteTask[];
+};
+
+// Совпадает с enum public.incident_status.
+export type IncidentStatus =
+  | "suspected"
+  | "confirmed"
+  | "decided"
+  | "repairing"
+  | "restored"
+  | "closed";
+
+export type LiveWorkOrder = {
+  id: string;
+  status: WorkOrderStatus;
+  // Отмечено пунктов чеклиста из общего числа.
+  checked: number;
+  total: number;
+  startedAt: string | null;
+  doneAt: string | null;
+  resultNote: string | null;
+};
+
+// Совпадает с enum public.work_order_status.
+export type WorkOrderStatus = "issued" | "in_progress" | "done" | "returned";
+
+export type JournalEvent = ScenarioEvent & {
+  // Порядок записи: время симуляции у повторных инцидентов совпадает.
+  id: number;
+  // Событие инцидента; null — событие станции.
+  incidentId: string | null;
+};
+
+// Команда пульта: действие участника, которое меняет ход инцидента в базе.
+// Команды датчика, ДНЦ и службы — симуляция участников без своего экрана.
+export type Command =
+  | { kind: "detect" }
+  | { kind: "confirm" }
+  | { kind: "dismiss" }
+  | { kind: "accept"; option: ChosenOption }
+  | { kind: "approve" }
+  | { kind: "route"; task: RouteTask }
+  | { kind: "startWork" }
+  | { kind: "finishWork" }
+  | { kind: "restore" }
+  | { kind: "close"; keepPlan: boolean }
+  | { kind: "advance" }
+  | { kind: "reset" };
+
+export type CommandResult = { error: string | null };
+
+// Кнопка задачи: команда в базу или смена вида пульта (открыть диалог).
+export type ActionLink =
+  | { label: string; command: Command }
+  | { label: string; patch: Partial<ConsoleState> };
 
 // Вариант перепланирования; none — исходный сценарий «ничего не менять».
 export type OptionId = "none" | ChosenOption;
@@ -34,13 +101,11 @@ export type Status = "normal" | "warning" | "critical";
 // Соседние станции: нечётная горловина — от кого поезда идут к нам, чётная — к кому.
 export type Neighbors = { odd: string; even: string };
 
+// Событие ленты: время симуляции «14:08», текст и уровень.
 export type ScenarioEvent = {
-  step: number;
   time: string;
   text: string;
   level?: Status;
-  // Событие относится к инциденту и попадает в его хронологию.
-  incident?: boolean;
 };
 
 export type ReplanOption = {

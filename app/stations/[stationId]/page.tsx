@@ -16,7 +16,7 @@ import {
   getStationNeighbors,
 } from "@/features/network-map/queries";
 import { StationConsole } from "@/features/station-console/components/StationConsole";
-import { getStationConsole } from "@/features/station-console/queries";
+import { getLive, getStationConsole } from "@/features/station-console/queries";
 import { parseConsoleState } from "@/features/station-console/state";
 
 // Соседа без участка в сети подписываем нейтрально.
@@ -52,13 +52,14 @@ export default async function StationPage({
     );
   }
 
-  const state = parseConsoleState(await searchParams);
+  const live = await getLive(station.id);
+  const state = parseConsoleState(await searchParams, live);
   const found = await getStationNeighbors(station.id);
   const neighbors = {
     odd: found.odd ?? UNKNOWN_NEIGHBOR,
     even: found.even ?? UNKNOWN_NEIGHBOR,
   };
-  const data = await getStationConsole(state, neighbors);
+  const data = await getStationConsole(station.id, state, neighbors, live);
 
   return (
     <>

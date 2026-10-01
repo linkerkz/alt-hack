@@ -1,19 +1,18 @@
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import type { ConsoleAction } from "../incident";
-import { consoleHref } from "../state";
-import type { ConsoleState } from "../types";
+import { CommandButton } from "./CommandButton";
 
 type Props = {
+  stationId: string;
   action: ConsoleAction;
   statusName: string;
-  state: ConsoleState;
   // Карта участка; null — роли карта недоступна.
   mapHref: string | null;
 };
 
 // «Сейчас»: что ДСЦС делает на этом этапе или чьего решения ждёт.
 // Закреплена сверху панели, пока карточку прокручивают.
-export function ActionCard({ action, statusName, state, mapHref }: Props) {
+export function ActionCard({ stationId, action, statusName, mapHref }: Props) {
   const { text, primary, secondary, waiting, showMap } = action;
 
   return (
@@ -24,21 +23,18 @@ export function ActionCard({ action, statusName, state, mapHref }: Props) {
       <p className="text-justify text-[14px]">{text}</p>
       <div className="flex flex-wrap items-center gap-2">
         {primary != null && (
-          <ButtonLink
-            href={consoleHref(state, { step: primary.step })}
-            scroll={false}
+          <CommandButton
+            stationId={stationId}
+            command={primary.command}
             variant="primary"
           >
             {primary.label}
-          </ButtonLink>
+          </CommandButton>
         )}
         {secondary != null && (
-          <ButtonLink
-            href={consoleHref(state, { step: secondary.step })}
-            scroll={false}
-          >
+          <CommandButton stationId={stationId} command={secondary.command}>
             {secondary.label}
-          </ButtonLink>
+          </CommandButton>
         )}
         {showMap && mapHref != null && (
           <ButtonLink href={mapHref}>Открыть карту участка</ButtonLink>

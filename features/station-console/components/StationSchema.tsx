@@ -2,7 +2,6 @@ import Link from "next/link";
 import { buttonClass } from "@/components/ui/Button";
 import { Heading } from "@/components/ui/Heading";
 import { Tag } from "@/components/ui/Tag";
-import { INCIDENT } from "../mock";
 import type { StationConsoleData } from "../queries";
 import { consoleHref } from "../state";
 import type { ConsoleState, Neighbors } from "../types";
@@ -14,19 +13,27 @@ import { SchemaTrains } from "./SchemaTrains";
 
 type Props = {
   schema: StationConsoleData["schema"];
+  incidentCode: string;
   state: ConsoleState;
   neighbors: Neighbors;
 };
 
 // Схема станции: пути, стрелки, поезда; при инциденте — фокус на горловине.
-export function StationSchema({ schema, state, neighbors }: Props) {
+export function StationSchema({
+  schema,
+  incidentCode,
+  state,
+  neighbors,
+}: Props) {
   return (
     <div className="flex flex-col gap-1.5 px-5 pt-3 pb-1">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <Heading note={schema.note}>Схема станции</Heading>
         {schema.focusAvailable && (
           <div className="ml-auto flex flex-none items-center gap-2.5">
-            {schema.focus && <Tag variant="outline">Фокус · {INCIDENT.id}</Tag>}
+            {schema.focus && (
+              <Tag variant="outline">Фокус · {incidentCode}</Tag>
+            )}
             <Link
               href={consoleHref(state, { focus: !state.focus })}
               scroll={false}

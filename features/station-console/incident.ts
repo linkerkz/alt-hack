@@ -1,36 +1,49 @@
 import type { ChainState } from "./chain";
 import {
+  baselineEvents,
+  INCIDENT,
   INCIDENT_STATUS,
   replanOptions,
   STEP,
   STEP_INCIDENT_STATUS,
-  scenarioEvents,
 } from "./mock";
 import { routeDone } from "./routing";
-import type { ConsoleState, Neighbors, Status } from "./types";
+import type {
+  Command,
+  ConsoleState,
+  Live,
+  LiveWorkOrder,
+  Neighbors,
+  ScenarioEvent,
+  Status,
+} from "./types";
 
 // Карточка инцидента для ДСЦС: что делать сейчас, кто чем занят, хронология.
 
 export type ConsoleAction = {
   text: string;
-  primary?: StepLink;
-  secondary?: StepLink;
+  primary?: CommandLink;
+  secondary?: CommandLink;
   // Решение за другим участником — ДСЦС ждёт.
   waiting?: string;
   // Показать ссылку на карту участка: следить за поездами у соседей.
   showMap?: boolean;
 };
 
-type StepLink = { label: string; step: number };
+type CommandLink = { label: string; command: Command };
 
-export function incidentCard(state: ConsoleState, neighbors: Neighbors) {
-  const { step, option } = state;
+export function incidentCard(
+  state: ConsoleState,
+  neighbors: Neighbors,
+  live: Live,
+) {
+  const { step } = state;
   const statusIndex = STEP_INCIDENT_STATUS[step];
-  const events = scenarioEvents(option, neighbors).filter(
-    (event) => event.step <= step,
-  );
+  const incidentId = live.incident?.id;
+  const feed: ScenarioEvent[] = [...live.events, ...baselineEvents(neighbors)];
 
   return {
+    code: live.incident?.code ?? INCIDENT.id,
     isActive: step >= STEP.suspected && step <= STEP.restored,
     statusName: INCIDENT_STATUS[statusIndex],
     statusSteps: INCIDENT_STATUS.map((label, i) => ({
@@ -40,9 +53,9 @@ export function incidentCard(state: ConsoleState, neighbors: Neighbors) {
     dncBadge: dncBadgeAt(state),
     suggestion: suggestionAt(step, neighbors),
     action: actionAt(state, neighbors),
-    tasks: tasksAt(state, neighbors),
-    events: events.filter((event) => event.incident).reverse(),
-    feed: events.slice().reverse(),
+    tasks: tasksAt(state, neighbors, live.workOrder),
+    events: live.events.filter((event) => event.incidentId === incidentId),
+    feed,
   };
 }
 
@@ -79,7 +92,7 @@ function actionAt(state: ConsoleState, neighbors: Neighbors): ConsoleAction {
         text: `Выбран ${name}. ${needsDnc ? "После выбора запрос уйдёт ДНЦ на согласование." : "Согласование ДНЦ не требуется."}`,
         primary: {
           label: `Принять ${name}`,
-          step: needsDnc ? STEP.approval : STEP.decided,
+          command: { kind: "accept", option },
         },
       };
     case STEP.approval:
@@ -112,21 +125,32 @@ function actionAt(state: ConsoleState, neighbors: Neighbors): ConsoleAction {
     case STEP.restored:
       return {
         text: "С3 снова в работе. Система предлагает вернуть оставшиеся поезда к исходному плану: 2236 на путь 2 в 14:26 уже по графику, пути 3 и 5 снова доступны.",
-        primary: { label: "Вернуться к исходному плану", step: STEP.closed },
-        secondary: { label: "Оставить текущий план", step: STEP.closed },
+        primary: {
+          label: "Вернуться к исходному плану",
+          command: { kind: "close", keepPlan: false },
+        },
+        secondary: {
+          label: "Оставить текущий план",
+          command: { kind: "close", keepPlan: true },
+        },
       };
     default:
       return { text: "Инцидент закрыт. Отчёт сформирован автоматически." };
   }
 }
 
-function tasksAt(state: ConsoleState, { odd }: Neighbors) {
+function tasksAt(
+  state: ConsoleState,
+  { odd }: Neighbors,
+  workOrder: LiveWorkOrder | null,
+) {
   const { step, option } = state;
   const tasks: { who: string; what: string; status: string; tone: Status }[] =
     [];
   const isB = option === "B";
   const routed = routeDone(state);
-  const acknowledged = step >= STEP.repairing;
+  // Машинисты подтверждают, когда ДСП принял оба поезда.
+  const acknowledged = routed.r101 && routed.r2001;
   const pending = { status: "Ожидает…", tone: "warning" as const };
 
   if (isB && step >= STEP.approval) {
@@ -171,17 +195,21 @@ function tasksAt(state: ConsoleState, { odd }: Neighbors) {
     {
       who: "Электромеханик",
       what: "Восстановить контроль С3",
-      status: repairStatusAt(step),
+      status: repairStatusOf(workOrder),
       tone: step >= STEP.restored ? "normal" : "warning",
     },
   );
   return tasks;
 }
 
-function repairStatusAt(step: number) {
-  if (step === STEP.decided) return "Назначена";
-  if (step === STEP.repairing) return "Работы идут";
-  if (step === STEP.repaired) return "Выполнено, ждёт ДСП";
+// Этап наряда: служба взяла его в работу сама, по QR.
+function repairStatusOf(workOrder: LiveWorkOrder | null) {
+  const status = workOrder?.status;
+  if (workOrder == null || status === "issued") return "Наряд выдан, не взят";
+  if (status === "in_progress") {
+    return `В работе · ${workOrder.checked} из ${workOrder.total}`;
+  }
+  if (status === "done") return "Выполнено, ждёт ДСП";
   return "Закрыта";
 }
 
