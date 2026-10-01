@@ -19,25 +19,26 @@ export const STATUS_LABEL: Record<Status, string> = {
 
 // Цвета для Leaflet (там нужны значения, а не классы Tailwind).
 export const STATUS_COLOR: Record<Status, string> = {
-  normal: "#34d399",
-  warning: "#fbbf24",
-  critical: "#f43f5e",
+  normal: "oklch(0.5 0.1 150)",
+  warning: "#a06f24",
+  critical: "oklch(0.52 0.17 28)",
 };
 
 export const STATUS_TEXT_CLASS: Record<Status, string> = {
-  normal: "text-emerald-400",
-  warning: "text-amber-400",
-  critical: "text-rose-500",
+  normal: "text-status-normal",
+  warning: "text-status-warning",
+  critical: "text-status-critical",
 };
 
+// Цвет — обводка, не заливка: так принято в редакторской теме проекта.
 export const STATUS_BADGE_CLASS: Record<Status, string> = {
-  normal: "border-emerald-400/30 bg-emerald-400/10 text-emerald-300",
-  warning: "border-amber-400/30 bg-amber-400/10 text-amber-300",
-  critical: "border-rose-500/40 bg-rose-500/15 text-rose-300",
+  normal: "border-status-normal text-status-normal",
+  warning: "border-status-warning text-status-warning",
+  critical: "border-status-critical text-status-critical",
 };
 
 export const STATUS_DOT_CLASS: Record<Status, string> = {
-  normal: "bg-emerald-400",
-  warning: "bg-amber-400",
-  critical: "bg-rose-500",
+  normal: "bg-status-normal",
+  warning: "bg-status-warning",
+  critical: "bg-status-critical",
 };

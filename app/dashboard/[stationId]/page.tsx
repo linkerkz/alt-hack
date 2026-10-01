@@ -1,5 +1,13 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AppHeader } from "@/components/ui/AppHeader";
+import {
+  canOpenStation,
+  homePath,
+  ownConsolePath,
+  ownDashboardPath,
+} from "@/features/auth/access";
+import { AccountMenu } from "@/features/auth/components/AccountMenu";
+import { requireUser } from "@/features/auth/queries";
 import { getStation } from "@/features/network-map/queries";
 import { AttentionList } from "@/features/station-console/components/AttentionList";
 import { EfficiencyHistoryChart } from "@/features/station-console/components/EfficiencyHistoryChart";
@@ -14,9 +22,11 @@ import { getStationDashboard } from "@/features/station-console/queries";
 export default async function StationDashboardPage({
   params,
 }: PageProps<"/dashboard/[stationId]">) {
+  const user = await requireUser();
   const { stationId } = await params;
   const station = await getStation(stationId);
   if (station == null) notFound();
+  if (!canOpenStation(user, station)) redirect(homePath(user) ?? "/login");
 
   const dashboard = await getStationDashboard(station);
   const {
@@ -33,7 +43,12 @@ export default async function StationDashboardPage({
 
   return (
     <>
-      <AppHeader current="station" />
+      <AppHeader
+        current="analytics"
+        stationHref={ownConsolePath(user)}
+        dashboardHref={ownDashboardPath(user)}
+        account={<AccountMenu user={user} />}
+      />
       <main className="mx-auto w-full max-w-5xl flex-1 space-y-4 overflow-y-auto p-6">
         <ReportHeader
           stationId={station.id}

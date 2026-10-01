@@ -1,10 +1,10 @@
 import type { Operation, OperationStatus } from "../types";
 
 const STATUS_BAR_CLASS: Record<OperationStatus, string> = {
-  completed: "bg-emerald-400/70",
-  "in-progress": "bg-sky-400/80",
-  planned: "bg-zinc-600/70",
-  delayed: "bg-rose-500/80",
+  completed: "bg-status-normal/70",
+  "in-progress": "bg-accent",
+  planned: "bg-muted/30",
+  delayed: "bg-status-critical/80",
 };
 
 type Bounds = { min: number; max: number };
@@ -14,8 +14,8 @@ export function OperationsGantt({ operations }: { operations: Operation[] }) {
   const hours = getHourTicks(bounds);
 
   return (
-    <section className="space-y-3 rounded-lg border border-line bg-surface-1 p-5">
-      <p className="text-[11px] text-muted uppercase tracking-widest">
+    <section className="space-y-3 rounded-md border border-line p-5">
+      <p className="text-[10px] text-muted uppercase tracking-widest">
         Операции · временная шкала
       </p>
 
@@ -34,10 +34,10 @@ export function OperationsGantt({ operations }: { operations: Operation[] }) {
       <ul className="space-y-2">
         {operations.map((operation) => (
           <li key={operation.id} className="flex items-center gap-3">
-            <span className="w-40 shrink-0 truncate text-sm text-zinc-300">
+            <span className="w-40 shrink-0 truncate text-ink text-sm">
               {operation.title}
             </span>
-            <div className="relative h-5 flex-1 rounded bg-surface-0/60">
+            <div className="relative h-5 flex-1 rounded bg-surface-2">
               <div
                 className={`absolute inset-y-0 rounded ${STATUS_BAR_CLASS[operation.status]}`}
                 style={barStyle(operation, bounds)}
@@ -45,7 +45,7 @@ export function OperationsGantt({ operations }: { operations: Operation[] }) {
               />
             </div>
             {operation.delayMinutes != null && (
-              <span className="w-16 shrink-0 text-right font-mono text-rose-300 text-xs">
+              <span className="w-16 shrink-0 text-right text-status-critical text-xs tabular-nums">
                 +{operation.delayMinutes} мин
               </span>
             )}

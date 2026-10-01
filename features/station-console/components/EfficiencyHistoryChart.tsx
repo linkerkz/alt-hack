@@ -16,8 +16,8 @@ export function EfficiencyHistoryChart({
   const color = STATUS_COLOR[toStatus(lastValue)];
 
   return (
-    <section className="space-y-3 rounded-lg border border-line bg-surface-1 p-5">
-      <p className="text-[11px] text-muted uppercase tracking-widest">
+    <section className="space-y-3 rounded-md border border-line p-5">
+      <p className="text-[10px] text-muted uppercase tracking-widest">
         Динамика индекса эффективности
       </p>
       <svg

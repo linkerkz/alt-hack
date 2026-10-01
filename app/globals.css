@@ -1,30 +1,54 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
-/* Диспетчерский интерфейс — всегда тёмная тема. */
+/* Редакторская светлая тема по референсу design/handoff.zip: Cormorant
+   Garamond на заголовках, Lora в тексте, золотой акцент, цвет — как обводка. */
 @theme {
-  --color-surface-0: #07090d;
-  --color-surface-1: #0d1117;
-  --color-surface-2: #161b22;
-  --color-line: #232a35;
-  --color-muted: #8b95a5;
+  --color-surface-0: #f3f2f2;
+  --color-surface-1: #f3f2f2;
+  --color-surface-2: #eae9e9;
+  --color-line: color-mix(in srgb, #201f1d 16%, transparent);
+  --color-muted: #605d5d;
+  --color-ink: #201f1d;
+
+  --color-accent: #b68235;
+  --color-accent-100: #fff3e4;
+  --color-accent-600: #a06f24;
+  --color-accent-700: #7d5411;
+  --color-accent-800: #5a3b0a;
+
+  --color-status-normal: oklch(0.5 0.1 150);
+  --color-status-warning: #a06f24;
+  --color-status-critical: oklch(0.52 0.17 28);
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-cormorant);
+  --font-body: var(--font-lora);
+  --font-sans: var(--font-lora);
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
   background: var(--color-surface-0);
-  color: #e4e7ec;
+  color: var(--color-ink);
 }
 
-/* Leaflet: подгоняем стандартные элементы под тёмную тему. */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Leaflet: подгоняем стандартные элементы под светлую тему. */
 .leaflet-container {
   background: var(--color-surface-0);
   font-family: inherit;
@@ -40,11 +64,11 @@ body {
 }
 
 .leaflet-tooltip.map-tooltip {
-  background: var(--color-surface-2);
+  background: var(--color-surface-1);
   border: 1px solid var(--color-line);
   border-radius: 6px;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.5);
-  color: #e4e7ec;
+  box-shadow: 0 8px 24px rgb(32 31 29 / 0.14);
+  color: var(--color-ink);
   font-size: 12px;
   padding: 6px 10px;
 }

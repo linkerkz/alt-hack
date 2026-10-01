@@ -1,39 +1,68 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { LiveClock } from "./LiveClock";
 
 type Props = {
   current: Section;
+  // Пульт и dashboard своей станции; null — у роли нет своей станции (ДНЦ выбирает на карте).
+  stationHref: string | null;
+  dashboardHref: string | null;
+  // Блок пользователя справа: его собирает страница, шапка о входе не знает.
+  account?: ReactNode;
 };
 
-type Section = "network" | "station";
+type Section = "network" | "station" | "analytics";
 
 type NavItem = {
-  id: Section | "analytics" | "scenarios" | "settings";
+  id: Section | "scenarios" | "settings";
   label: string;
   href?: string;
+  // Подсказка для неактивного пункта.
+  hint?: string;
 };
 
-// Пункты без href ещё не реализованы — показываем их, чтобы было видно план продукта.
-const NAV: NavItem[] = [
-  { id: "network", label: "Карта сети", href: "/" },
-  { id: "station", label: "Пульт станции" },
-  { id: "analytics", label: "Эффективность" },
-  { id: "scenarios", label: "Сценарии сбоев" },
-  { id: "settings", label: "Настройки индекса" },
-];
+// Пункты без href неактивны: ещё не реализованы или недоступны роли —
+// показываем их, чтобы было видно план продукта.
+function navItems(
+  stationHref: string | null,
+  dashboardHref: string | null,
+): NavItem[] {
+  return [
+    { id: "network", label: "Карта сети", href: "/" },
+    {
+      id: "station",
+      label: "Пульт станции",
+      href: stationHref ?? undefined,
+      hint: "Откройте пульт из карточки станции на карте",
+    },
+    {
+      id: "analytics",
+      label: "Эффективность",
+      href: dashboardHref ?? undefined,
+      hint: "Откройте dashboard из карточки станции на карте",
+    },
+    { id: "scenarios", label: "Сценарии сбоев" },
+    { id: "settings", label: "Настройки индекса" },
+  ];
+}
 
-export function AppHeader({ current }: Props) {
+export function AppHeader({
+  current,
+  stationHref,
+  dashboardHref,
+  account,
+}: Props) {
   return (
-    <header className="flex h-12 shrink-0 items-center gap-6 border-line border-b bg-surface-1 px-4">
+    <header className="flex h-14 shrink-0 items-center gap-6 border-line border-b px-5">
       <Link href="/" className="flex items-center gap-2.5">
         <Logo />
-        <span className="font-semibold text-sm text-white tracking-tight">
+        <span className="font-heading font-semibold text-ink text-lg tracking-tight">
           Цифровая станция
         </span>
       </Link>
 
       <nav className="flex h-full items-stretch gap-1">
-        {NAV.map((item) => (
+        {navItems(stationHref, dashboardHref).map((item) => (
           <NavLink key={item.id} item={item} isCurrent={item.id === current} />
         ))}
       </nav>
@@ -41,12 +70,13 @@ export function AppHeader({ current }: Props) {
       <div className="ml-auto flex items-center gap-5">
         <span className="flex items-center gap-2 text-muted text-xs">
           <span className="relative flex size-2">
-            <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-60" />
-            <span className="relative size-2 rounded-full bg-emerald-400" />
+            <span className="absolute inset-0 animate-ping rounded-full bg-status-normal opacity-60" />
+            <span className="relative size-2 rounded-full bg-status-normal" />
           </span>
           Симулятор · онлайн
         </span>
         <LiveClock />
+        {account}
       </div>
     </header>
   );
@@ -59,7 +89,7 @@ function NavLink({ item, isCurrent }: { item: NavItem; isCurrent: boolean }) {
     return (
       <span
         aria-current="page"
-        className={`${base} border-sky-400 font-medium text-white`}
+        className={`${base} border-accent font-medium text-accent-700`}
       >
         {item.label}
       </span>
@@ -68,8 +98,8 @@ function NavLink({ item, isCurrent }: { item: NavItem; isCurrent: boolean }) {
   if (item.href == null) {
     return (
       <span
-        title="В разработке"
-        className={`${base} cursor-not-allowed border-transparent text-zinc-600`}
+        title={item.hint ?? "В разработке"}
+        className={`${base} cursor-not-allowed border-transparent text-muted/50`}
       >
         {item.label}
       </span>
@@ -78,7 +108,7 @@ function NavLink({ item, isCurrent }: { item: NavItem; isCurrent: boolean }) {
   return (
     <Link
       href={item.href}
-      className={`${base} border-transparent text-zinc-400 hover:text-white`}
+      className={`${base} border-transparent text-muted hover:text-accent-700`}
     >
       {item.label}
     </Link>
@@ -89,7 +119,7 @@ function Logo() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="size-6 text-sky-400"
+      className="size-6 text-accent"
       fill="none"
       stroke="currentColor"
       strokeWidth={2}

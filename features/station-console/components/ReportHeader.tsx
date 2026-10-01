@@ -24,15 +24,13 @@ export function ReportHeader({
   const status = toStatus(efficiencyIndex);
 
   return (
-    <header className="flex flex-wrap items-start justify-between gap-4 border-line border-b pb-4">
-      <div>
-        <p className="font-mono text-[11px] text-muted uppercase tracking-widest">
+    <header className="flex flex-wrap items-end justify-between gap-4 border-line border-b pb-5">
+      <div className="space-y-1">
+        <p className="text-[11px] text-accent-700 uppercase tracking-widest">
           Оперативный отчёт · ЕСР {stationCode}
         </p>
-        <h1 className="mt-1 font-semibold text-2xl text-white">
-          {stationName}
-        </h1>
-        <p className="mt-1 text-muted text-sm">
+        <h1 className="font-normal text-4xl text-ink">{stationName}</h1>
+        <p className="text-muted text-sm">
           {REPORT_DATE_FORMAT.format(new Date())}
         </p>
       </div>
@@ -46,7 +44,7 @@ export function ReportHeader({
         <LiveClock />
         <Link
           href={`/?station=${stationId}`}
-          className="rounded border border-line px-3 py-1.5 text-sm text-zinc-300 hover:bg-surface-2 hover:text-white"
+          className="rounded border border-line px-3 py-1.5 text-muted text-sm hover:bg-surface-2 hover:text-ink"
         >
           ← К карте сети
         </Link>

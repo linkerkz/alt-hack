@@ -12,10 +12,10 @@ export function EfficiencyPanel({ value }: { value: number }) {
   const status = toStatus(value);
 
   return (
-    <section className="flex items-center gap-5 rounded-lg border border-line bg-surface-1 p-5">
+    <section className="flex items-center gap-5 rounded-md border border-line p-5">
       <IndexRing value={value} size={100} />
       <div className="space-y-2">
-        <p className="text-[11px] text-muted uppercase tracking-widest">
+        <p className="text-[10px] text-muted uppercase tracking-widest">
           Индекс эффективности
         </p>
         <span
@@ -23,7 +23,7 @@ export function EfficiencyPanel({ value }: { value: number }) {
         >
           {STATUS_LABEL[status]}
         </span>
-        <p className="max-w-xs text-sm text-zinc-300">
+        <p className="max-w-xs text-ink/80 text-sm">
           {STATUS_EXPLANATION[status]}
         </p>
       </div>

@@ -29,12 +29,12 @@ export function SummaryCards({
       <Card
         label="Задержки"
         value={`${delayCount}`}
-        valueClass={delayCount > 0 ? "text-amber-300" : undefined}
+        valueClass={delayCount > 0 ? "text-status-warning" : undefined}
       />
       <Card
         label="Загрузка путей"
         value={`${trackLoad}%`}
-        valueClass={trackLoad >= 85 ? "text-amber-300" : undefined}
+        valueClass={trackLoad >= 85 ? "text-status-warning" : undefined}
       />
     </div>
   );
@@ -48,10 +48,12 @@ type CardProps = {
 
 function Card({ label, value, valueClass }: CardProps) {
   return (
-    <div className="rounded-lg border border-line bg-surface-1 px-4 py-3">
-      <p className="text-[11px] text-muted uppercase tracking-wider">{label}</p>
+    <div className="rounded-md border border-line px-4 py-3">
+      <p className="text-[10px] text-muted uppercase tracking-widest">
+        {label}
+      </p>
       <p
-        className={`mt-1 font-mono font-semibold text-2xl tabular-nums ${valueClass ?? "text-white"}`}
+        className={`mt-1 font-heading text-2xl tabular-nums ${valueClass ?? "text-ink"}`}
       >
         {value}
       </p>

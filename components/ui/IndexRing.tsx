@@ -43,7 +43,7 @@ export function IndexRing({ value, size = 96 }: Props) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-mono font-semibold text-2xl text-white tabular-nums leading-none">
+        <span className="font-heading font-semibold text-2xl text-ink tabular-nums leading-none">
           {value}
         </span>
         <span className="mt-1 text-[10px] text-muted uppercase tracking-wider">
