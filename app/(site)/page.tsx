@@ -39,6 +39,7 @@ export default async function ZoneMapPage() {
   const consoleStations = zone.stations.filter((station) =>
     canOpenStation(user, station),
   );
+  const consoleStationIds = consoleStations.map((station) => station.id);
   const requests = await approvalRequestsOf(user, consoleStations);
   const requestStationIds = requests
     .filter((request) => request.state === "pending")
@@ -51,11 +52,12 @@ export default async function ZoneMapPage() {
         stationHref={ownConsolePath(user)}
         dashboardHref={ownDashboardPath(user)}
         account={<AccountMenu user={user} />}
+        selectableStationIds={consoleStationIds}
       />
       <ZoneMapView
         {...zone}
         defaultStationId={scope.kind === "station" ? scope.stationId : null}
-        consoleStationIds={consoleStations.map((station) => station.id)}
+        consoleStationIds={consoleStationIds}
         requestStationIds={requestStationIds}
         showRequests={user.role === "dnc"}
         overlay={
