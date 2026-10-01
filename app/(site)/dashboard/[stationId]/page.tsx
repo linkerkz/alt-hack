@@ -1,11 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { AppHeader } from "@/components/ui/AppHeader";
-import {
-  canOpenStation,
-  homePath,
-  ownConsolePath,
-  ownDashboardPath,
-} from "@/features/auth/access";
+import { canOpenStation, homePath } from "@/features/auth/access";
 import { AccountMenu } from "@/features/auth/components/AccountMenu";
 import { requireUser } from "@/features/auth/queries";
 import { getStation } from "@/features/network-map/queries";
@@ -48,8 +43,8 @@ export default async function StationDashboardPage({
     <>
       <AppHeader
         current="analytics"
-        stationHref={ownConsolePath(user)}
-        dashboardHref={ownDashboardPath(user)}
+        stationHref={`/stations/${station.id}`}
+        dashboardHref={`/dashboard/${station.id}`}
         account={<AccountMenu user={user} />}
       />
       <main className="mx-auto w-full max-w-5xl flex-1 space-y-4 overflow-y-auto p-6">
