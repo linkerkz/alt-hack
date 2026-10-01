@@ -2,7 +2,14 @@ import { Card } from "@/components/ui/Card";
 import { LegendItem } from "@/components/ui/LegendItem";
 import { StatusGlyph } from "@/components/ui/StatusGlyph";
 import { HORIZON_MINUTES } from "../flows";
-import { FLOW_LABEL, FLOW_ORDER, STATUS_LABEL, STATUS_ORDER } from "../status";
+import {
+  FLOW_LABEL,
+  FLOW_ORDER,
+  STATUS_LABEL,
+  STATUS_ORDER,
+  TRAIN_KIND_FILL,
+} from "../status";
+import type { TrainKind } from "../types";
 
 export function MapLegend() {
   return (
@@ -36,18 +43,10 @@ export function MapLegend() {
           <LegendItem swatch={<span className="h-[3px] w-full bg-accent" />}>
             Участки выбранной станции
           </LegendItem>
-          <LegendItem
-            swatch={
-              <span className="size-2.5 rounded-full border border-paper bg-accent-700" />
-            }
-          >
+          <LegendItem swatch={<TrainSwatch kind="passenger" />}>
             Пассажирский поезд в пути
           </LegendItem>
-          <LegendItem
-            swatch={
-              <span className="size-2.5 rounded-full border border-paper bg-ink" />
-            }
-          >
+          <LegendItem swatch={<TrainSwatch kind="freight" />}>
             Грузовой поезд в пути — по расписанию, в реальном времени
           </LegendItem>
         </ul>
@@ -69,5 +68,14 @@ export function MapLegend() {
         </p>
       </details>
     </Card>
+  );
+}
+
+// Образец значка поезда — та же заливка, что у маркера на карте.
+function TrainSwatch({ kind }: { kind: TrainKind }) {
+  return (
+    <span
+      className={`size-2.5 rounded-full border border-paper ${TRAIN_KIND_FILL[kind]}`}
+    />
   );
 }

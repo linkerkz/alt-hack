@@ -62,3 +62,9 @@ export const TRAIN_KIND_LABEL: Record<TrainKind, string> = {
   freight: "Грузовой",
   passenger: "Пассажирский",
 };
+
+// Заливка значка поезда на карте и в легенде.
+export const TRAIN_KIND_FILL: Record<TrainKind, string> = {
+  passenger: "bg-accent-700",
+  freight: "bg-ink",
+};
