@@ -8,10 +8,16 @@ import { FlowCounters } from "./FlowCounters";
 type Props = {
   stations: ZoneStation[];
   selectedStationId: string | null;
+  requestStationIds: string[];
   onSelect: (stationId: string) => void;
 };
 
-export function StationList({ stations, selectedStationId, onSelect }: Props) {
+export function StationList({
+  stations,
+  selectedStationId,
+  requestStationIds,
+  onSelect,
+}: Props) {
   return (
     <section className="flex min-h-0 flex-1 flex-col">
       <header className="flex items-baseline justify-between px-4 pt-4 pb-2">
@@ -29,6 +35,7 @@ export function StationList({ stations, selectedStationId, onSelect }: Props) {
             <StationRow
               station={station}
               isSelected={station.id === selectedStationId}
+              hasRequest={requestStationIds.includes(station.id)}
               onSelect={onSelect}
             />
           </li>
@@ -41,10 +48,11 @@ export function StationList({ stations, selectedStationId, onSelect }: Props) {
 type RowProps = {
   station: ZoneStation;
   isSelected: boolean;
+  hasRequest: boolean;
   onSelect: (stationId: string) => void;
 };
 
-function StationRow({ station, isSelected, onSelect }: RowProps) {
+function StationRow({ station, isSelected, hasRequest, onSelect }: RowProps) {
   const status = toStatus(station.efficiencyIndex);
   const incidentCount = station.incidents.length;
 
@@ -64,6 +72,11 @@ function StationRow({ station, isSelected, onSelect }: RowProps) {
           {incidentCount > 0 && (
             <span className="text-[11px] text-critical">
               сбоев: {incidentCount}
+            </span>
+          )}
+          {hasRequest && (
+            <span className="text-[11px] text-accent-700">
+              <StatusGlyph tone="warning" /> запрос
             </span>
           )}
         </span>

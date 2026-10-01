@@ -14,22 +14,27 @@ import type { ZoneStation } from "../types";
 type Props = {
   station: ZoneStation;
   isSelected: boolean;
+  // Станция ждёт ответа ДНЦ на запрос на согласование.
+  hasRequest: boolean;
   onSelect: (stationId: string) => void;
 };
 
 // Новая иконка заставляет Leaflet пересоздать DOM маркера, поэтому
-// и иконку, и обработчики держим стабильными между рендерами.
+// и иконку, и обработчики держим стабильными между рендерами. Автообновление
+// присылает новые объекты станций — иконку пересоздаём, только если
+// изменилась её разметка.
 export const StationMarker = memo(function StationMarker({
   station,
   isSelected,
+  hasRequest,
   onSelect,
 }: Props) {
+  const html = station.isInScope
+    ? stationHtml(station, isSelected, hasRequest)
+    : neighborHtml(station);
   const icon = useMemo(
-    () =>
-      station.isInScope
-        ? stationIcon(station, isSelected)
-        : neighborIcon(station),
-    [station, isSelected],
+    () => divIcon({ className: "", iconSize: [0, 0], html }),
+    [html],
   );
   const eventHandlers = useMemo(
     () => ({ click: () => onSelect(station.id) }),
@@ -59,16 +64,18 @@ export const StationMarker = memo(function StationMarker({
 
 // Leaflet рисует маркер вне React, поэтому иконка — HTML-строка.
 // Классы Tailwind пишем целиком, чтобы сканер их нашёл.
-function stationIcon(station: ZoneStation, isSelected: boolean) {
+function stationHtml(
+  station: ZoneStation,
+  isSelected: boolean,
+  hasRequest: boolean,
+) {
   const status = toStatus(station.efficiencyIndex);
-  const chip = isSelected
-    ? "border-accent shadow-md"
-    : "border-line shadow-sm group-hover:border-accent";
+  const chip =
+    isSelected || hasRequest
+      ? "border-accent shadow-md"
+      : "border-line shadow-sm group-hover:border-accent";
 
-  return divIcon({
-    className: "",
-    iconSize: [0, 0],
-    html: `
+  return `
       <div class="group absolute flex -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center">
         ${stationDot(station, isSelected)}
         <span class="absolute left-full ml-2.5 flex flex-col gap-1 whitespace-nowrap rounded border bg-paper px-2 py-1.5 leading-none text-ink ${chip}">
@@ -77,10 +84,12 @@ function stationIcon(station: ZoneStation, isSelected: boolean) {
             <span class="font-heading text-[17px] ${TONE_TEXT_CLASS[status]}"><span class="text-[10px]">${TONE_GLYPH[status]}</span> ${station.efficiencyIndex}</span>
           </span>
           <span class="flex gap-2.5 text-[12px]">${flowCounters(station)}</span>
+          ${hasRequest ? REQUEST_LINE : ""}
         </span>
-      </div>`,
-  });
+      </div>`;
 }
+
+const REQUEST_LINE = `<span class="text-[11px] text-accent-700">${TONE_GLYPH.warning} Запрос на согласование</span>`;
 
 // Точка станции: кольцо на бумаге, внутри — цвет состояния.
 // Выбранная — с акцентным ореолом, как «наша станция» в дизайне.
@@ -112,16 +121,12 @@ function flowCounters(station: ZoneStation) {
 }
 
 // Соседняя станция вне зоны: серая точка и подпись с ореолом бумаги, как на схеме сети.
-function neighborIcon(station: ZoneStation) {
-  return divIcon({
-    className: "",
-    iconSize: [0, 0],
-    html: `
+function neighborHtml(station: ZoneStation) {
+  return `
       <div class="absolute flex -translate-x-1/2 -translate-y-1/2 items-center">
         <span class="size-2 rounded-full bg-neutral-500"></span>
         <span class="absolute left-full ml-1.5 whitespace-nowrap rounded-sm bg-paper/80 px-1 text-[11px] text-neutral-600 italic">
           ${station.name}
         </span>
-      </div>`,
-  });
+      </div>`;
 }

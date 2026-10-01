@@ -13,6 +13,7 @@ type Props = {
   stations: ZoneStation[];
   sections: ZoneSection[];
   selectedStationId: string | null;
+  requestStationIds: string[];
   onSelect: (stationId: string | null) => void;
 };
 

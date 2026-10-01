@@ -11,9 +11,11 @@ import type { ZoneSummary } from "../types";
 type Props = {
   title: string;
   summary: ZoneSummary;
+  // Запросы на согласование, которые ждут ответа ДНЦ.
+  requestCount: number;
 };
 
-export function ZoneSummaryPanel({ title, summary }: Props) {
+export function ZoneSummaryPanel({ title, summary, requestCount }: Props) {
   const status = toStatus(summary.avgEfficiencyIndex);
 
   return (
@@ -32,13 +34,18 @@ export function ZoneSummaryPanel({ title, summary }: Props) {
 
       {summary.stationCount > 1 && <StatusBreakdown summary={summary} />}
 
-      <dl className="grid grid-cols-3 gap-3 border-line border-t pt-3">
+      <dl className="grid grid-cols-2 gap-3 border-line border-t pt-3">
         <Metric label="Поездов в зоне" value={summary.trainsWithinCount} />
         <Metric label="Идут к станциям" value={summary.arrivingCount} />
         <Metric
           label="Сбоев"
           value={summary.incidentCount}
           valueClass={summary.incidentCount > 0 ? "text-critical" : "text-ink"}
+        />
+        <Metric
+          label="Запросы ДНЦ"
+          value={requestCount}
+          valueClass={requestCount > 0 ? "text-accent-700" : "text-ink"}
         />
       </dl>
     </section>

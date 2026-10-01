@@ -1,6 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import type { ReactNode } from "react";
 import type {
   StationTrain,
   ZoneSection,
@@ -22,12 +23,17 @@ type Props = {
   // Станция, выбранная по умолчанию: у ДСП/ДСЦС/ДС — своя.
   defaultStationId: string | null;
   consoleStationIds: string[];
+  // Станции, которые ждут ответа ДНЦ на запрос на согласование.
+  requestStationIds: string[];
+  // Карточки поверх карты слева сверху; их собирает страница.
+  overlay?: ReactNode;
 };
 
 // Выбранная станция живёт в URL (?station=), но меняется через History API:
 // Next синхронизирует useSearchParams без запроса к серверу.
 export function ZoneMapView(props: Props) {
-  const { stations, trainsByStation, defaultStationId } = props;
+  const { stations, trainsByStation, defaultStationId, requestStationIds } =
+    props;
   const searchParams = useSearchParams();
   const selectedId = searchParams.get("station") ?? defaultStationId;
 
@@ -41,10 +47,15 @@ export function ZoneMapView(props: Props) {
   return (
     <div className="flex min-h-0 flex-1">
       <aside className="flex w-80 shrink-0 flex-col border-line border-r bg-paper">
-        <ZoneSummaryPanel title={props.title} summary={props.summary} />
+        <ZoneSummaryPanel
+          title={props.title}
+          summary={props.summary}
+          requestCount={requestStationIds.length}
+        />
         <StationList
           stations={scopeStations}
           selectedStationId={selectedStationId}
+          requestStationIds={requestStationIds}
           onSelect={selectStation}
         />
       </aside>
@@ -54,8 +65,17 @@ export function ZoneMapView(props: Props) {
           stations={stations}
           sections={props.sections}
           selectedStationId={selectedStationId}
+          requestStationIds={requestStationIds}
           onSelect={selectStation}
         />
+        {props.overlay && (
+          // Пустые места слоя пропускают клики к карте; справа — место карточке станции.
+          <div
+            className={`pointer-events-none absolute top-4 left-4 z-[1000] *:pointer-events-auto ${selectedStation == null ? "right-4" : "right-[412px]"}`}
+          >
+            {props.overlay}
+          </div>
+        )}
         {selectedStation != null && trains != null && (
           <div className="absolute top-4 right-4 bottom-4 z-[1000] flex items-start">
             <StationPreview

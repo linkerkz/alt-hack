@@ -4,10 +4,12 @@ import {
   stationFlow,
   stationTrains,
 } from "./flows";
+import { liveIncidents } from "./live";
 import { DISPATCH_AREA_NAMES, SECTIONS, STATIONS } from "./mock";
 import { TRAINS } from "./mock-trains";
 import { STATUS_ORDER, toStatus } from "./status";
 import type {
+  Incident,
   MapScope,
   Section,
   Station,
@@ -21,8 +23,9 @@ export async function getZoneMap(scope: MapScope) {
   const sections = SECTIONS.filter(
     (section) => scopeIds.has(section.fromId) || scopeIds.has(section.toId),
   );
+  const live = await liveIncidents([...scopeIds]);
   const stations = sortBySeverity(visibleStations(scopeIds, sections)).map(
-    (station) => toZoneStation(station, scopeIds),
+    (station) => toZoneStation(station, scopeIds, live.get(station.id) ?? []),
   );
   const scopeStations = stations.filter((station) => station.isInScope);
 
@@ -103,9 +106,15 @@ function titleOf(scope: MapScope) {
   return DISPATCH_AREA_NAMES[scope.dispatchAreaId] ?? "Диспетчерский круг";
 }
 
-function toZoneStation(station: Station, scopeIds: Set<string>): ZoneStation {
+// Сбои из базы — сверху: их сейчас ведёт станция.
+function toZoneStation(
+  station: Station,
+  scopeIds: Set<string>,
+  live: Incident[],
+): ZoneStation {
   return {
     ...station,
+    incidents: [...live, ...station.incidents],
     flow: stationFlow(TRAINS, station.id),
     isInScope: scopeIds.has(station.id),
   };

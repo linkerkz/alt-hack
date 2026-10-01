@@ -24,15 +24,17 @@ type Props = {
   stations: ZoneStation[];
   sections: ZoneSection[];
   selectedStationId: string | null;
+  requestStationIds: string[];
   onSelect: (stationId: string | null) => void;
 };
 
-// Маркеры и участки мемоизированы: при выборе станции перерисовываются
-// только те, у кого поменялся признак выбора или подсветки.
+// Маркеры и участки мемоизированы: при выборе станции и автообновлении
+// перерисовываются только те, у кого что-то поменялось.
 export function MapCanvas({
   stations,
   sections,
   selectedStationId,
+  requestStationIds,
   onSelect,
 }: Props) {
   const stationById = useMemo(
@@ -77,6 +79,7 @@ export function MapCanvas({
           key={station.id}
           station={station}
           isSelected={station.id === selectedStationId}
+          hasRequest={requestStationIds.includes(station.id)}
           onSelect={onSelect}
         />
       ))}
