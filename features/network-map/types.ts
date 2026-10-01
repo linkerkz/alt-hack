@@ -99,6 +99,18 @@ export type StationTrain = {
   isTerminal: boolean;
 };
 
+// Поезд в пути по участку fromId → toId. Время — минуты от текущего момента:
+// отправился (departure ≤ 0) и ещё не прибыл (arrival > 0).
+export type MovingTrain = {
+  trainId: string;
+  number: string;
+  kind: TrainKind;
+  fromId: string;
+  toId: string;
+  departure: number;
+  arrival: number;
+};
+
 // Зона ответственности, которую показывает карта.
 export type MapScope =
   | { kind: "dispatch-area"; dispatchAreaId: string }

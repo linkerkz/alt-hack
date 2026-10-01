@@ -36,6 +36,20 @@ export function MapLegend() {
           <LegendItem swatch={<span className="h-[3px] w-full bg-accent" />}>
             Участки выбранной станции
           </LegendItem>
+          <LegendItem
+            swatch={
+              <span className="size-2.5 rounded-full border border-paper bg-accent-700" />
+            }
+          >
+            Пассажирский поезд в пути
+          </LegendItem>
+          <LegendItem
+            swatch={
+              <span className="size-2.5 rounded-full border border-paper bg-ink" />
+            }
+          >
+            Грузовой поезд в пути — по расписанию, в реальном времени
+          </LegendItem>
         </ul>
         <p className="mt-2 border-line border-t pt-2">
           Поезда станции в пути или выйдут за {HORIZON_MINUTES / 60} ч, каждый —

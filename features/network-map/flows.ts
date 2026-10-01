@@ -63,12 +63,15 @@ export function isTrainWithin(train: Train, stationIds: Set<string>) {
   );
   if (standing != null) return stationIds.has(standing.stationId);
 
-  const moving = legsOf(train).find(
-    (leg) => leg.from.departure <= 0 && leg.to.arrival > 0,
-  );
+  const moving = legsOf(train).find(isMoving);
   if (moving == null) return false;
   const { from, to } = moving;
   return stationIds.has(from.stationId) || stationIds.has(to.stationId);
+}
+
+// Движения поездов, которые прямо сейчас идут по участку.
+export function movingLegs(trains: Train[]) {
+  return trains.flatMap(legsOf).filter(isMoving);
 }
 
 // Проездом — не останавливается у нас, где бы поезд ни был. Иначе по тому,
@@ -90,6 +93,10 @@ function activeLegs(trains: Train[]) {
 
 function isActive(leg: Leg) {
   return leg.to.arrival > 0 && leg.from.departure <= HORIZON_MINUTES;
+}
+
+function isMoving(leg: Leg) {
+  return leg.from.departure <= 0 && leg.to.arrival > 0;
 }
 
 function legsOf(train: Train): Leg[] {

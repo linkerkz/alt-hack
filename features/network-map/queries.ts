@@ -1,5 +1,6 @@
 import {
   isTrainWithin,
+  movingLegs,
   sectionFlow,
   stationFlow,
   stationTrains,
@@ -8,6 +9,7 @@ import { getNetwork, type Network } from "./network";
 import { STATUS_ORDER, toStatus } from "./status";
 import type {
   MapScope,
+  MovingTrain,
   Section,
   Station,
   StationTrain,
@@ -40,6 +42,7 @@ export async function getZoneMap(scope: MapScope) {
       ...section,
       flow: sectionFlow(network.trains, section),
     })),
+    movingTrains: movingTrainsOn(network, sections),
     summary: summarize(network, scopeStations),
   };
 }
@@ -80,6 +83,31 @@ function trainsOf(network: Network, stationId: string): StationTrain[] {
       isTerminal: train.route[train.route.length - 1] === stop,
     }))
     .toSorted((a, b) => eventTime(a) - eventTime(b));
+}
+
+// Поезда в пути по участкам зоны — в любую сторону.
+function movingTrainsOn({ trains }: Network, sections: Section[]) {
+  const sectionKeys = new Set(
+    sections.flatMap(({ fromId, toId }) => [
+      `${fromId}>${toId}`,
+      `${toId}>${fromId}`,
+    ]),
+  );
+  return movingLegs(trains)
+    .filter(({ from, to }) =>
+      sectionKeys.has(`${from.stationId}>${to.stationId}`),
+    )
+    .map(
+      ({ train, from, to }): MovingTrain => ({
+        trainId: train.id,
+        number: train.number,
+        kind: train.kind,
+        fromId: from.stationId,
+        toId: to.stationId,
+        departure: from.departure,
+        arrival: to.arrival,
+      }),
+    );
 }
 
 function eventTime(train: StationTrain) {

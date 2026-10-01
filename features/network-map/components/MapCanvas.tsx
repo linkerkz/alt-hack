@@ -3,10 +3,11 @@
 import { type FitBoundsOptions, latLngBounds } from "leaflet";
 import { useEffect, useMemo } from "react";
 import { MapContainer, TileLayer, useMap, useMapEvent } from "react-leaflet";
-import type { ZoneSection, ZoneStation } from "../types";
+import type { MovingTrain, ZoneSection, ZoneStation } from "../types";
 import { SectionLine } from "./SectionLine";
 import { SelectedStationFocus } from "./SelectedStationFocus";
 import { StationMarker } from "./StationMarker";
+import { TrainLayer } from "./TrainLayer";
 
 // Светлая подложка Esri без подписей: работает без API-ключа (CARTO теперь его требует).
 // В тёплый серый её переводит фильтр в globals.css.
@@ -23,6 +24,7 @@ const FIT_PADDING: FitBoundsOptions = {
 type Props = {
   stations: ZoneStation[];
   sections: ZoneSection[];
+  movingTrains: MovingTrain[];
   selectedStationId: string | null;
   requestStationIds: string[];
   onSelect: (stationId: string | null) => void;
@@ -33,6 +35,7 @@ type Props = {
 export function MapCanvas({
   stations,
   sections,
+  movingTrains,
   selectedStationId,
   requestStationIds,
   onSelect,
@@ -73,6 +76,8 @@ export function MapCanvas({
           }
         />
       ))}
+
+      <TrainLayer trains={movingTrains} stationById={stationById} />
 
       {stations.map((station) => (
         <StationMarker

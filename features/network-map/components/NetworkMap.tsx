@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { ZoneSection, ZoneStation } from "../types";
+import type { MovingTrain, ZoneSection, ZoneStation } from "../types";
 
 // Leaflet обращается к window при импорте, поэтому карту грузим только в браузере.
 const MapCanvas = dynamic(
@@ -12,6 +12,7 @@ const MapCanvas = dynamic(
 type Props = {
   stations: ZoneStation[];
   sections: ZoneSection[];
+  movingTrains: MovingTrain[];
   selectedStationId: string | null;
   requestStationIds: string[];
   onSelect: (stationId: string | null) => void;

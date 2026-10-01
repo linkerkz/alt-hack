@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 import type {
+  MovingTrain,
   StationTrain,
   ZoneSection,
   ZoneStation,
@@ -19,6 +20,7 @@ type Props = {
   summary: ZoneSummary;
   stations: ZoneStation[];
   sections: ZoneSection[];
+  movingTrains: MovingTrain[];
   trainsByStation: Record<string, StationTrain[]>;
   // Станция, выбранная по умолчанию: у ДСП/ДСЦС/ДС — своя.
   defaultStationId: string | null;
@@ -64,6 +66,7 @@ export function ZoneMapView(props: Props) {
         <NetworkMap
           stations={stations}
           sections={props.sections}
+          movingTrains={props.movingTrains}
           selectedStationId={selectedStationId}
           requestStationIds={requestStationIds}
           onSelect={selectStation}
