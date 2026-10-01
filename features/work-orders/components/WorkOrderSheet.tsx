@@ -44,6 +44,24 @@ export function WorkOrderSheet({ order, stationName, checklistUrl }: Props) {
         <p className="text-[14px]">{order.description}</p>
       </section>
 
+      {order.window != null && (
+        <section className="space-y-1.5">
+          <Kicker>Окно работ</Kicker>
+          <p className="text-[14px]">{order.window}</p>
+        </section>
+      )}
+
+      {order.safety.length > 0 && (
+        <section className="space-y-1.5">
+          <Kicker>Меры безопасности</Kicker>
+          <ul className="list-disc space-y-1 pl-5 text-[14px]">
+            {order.safety.map((rule) => (
+              <li key={rule}>{rule}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section className="space-y-2">
         <Kicker>Что сделать</Kicker>
         <ol className="divide-y divide-line border-line border-y">
