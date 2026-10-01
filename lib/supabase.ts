@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import { env } from "@/lib/env";
@@ -18,6 +19,14 @@ export async function createSupabaseClient() {
         } catch {}
       },
     },
+  });
+}
+
+// Секретный ключ: обходит RLS. Только для серверного кода, который сам решает,
+// что можно, — например, наряды, открытые по ссылке без входа.
+export function createSupabaseAdminClient() {
+  return createClient(env.supabaseUrl, env.supabaseSecretKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
   });
 }
 
