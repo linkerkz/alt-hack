@@ -1,9 +1,9 @@
+import { LiveRefresh } from "@/components/ui/LiveRefresh";
 import type { StationConsoleData } from "../queries";
 import type { ConsoleRole, ConsoleState, Neighbors } from "../types";
 import { ConsoleBar } from "./ConsoleBar";
 import { EfficiencySummary } from "./EfficiencySummary";
 import { IncidentBanner } from "./IncidentBanner";
-import { LiveRefresh } from "./LiveRefresh";
 import { ReturnToServiceDialog } from "./ReturnToServiceDialog";
 import { SidePanel } from "./SidePanel";
 import { StationSchema } from "./StationSchema";
