@@ -40,7 +40,7 @@ export function ZoneMapView(props: Props) {
 
   return (
     <div className="flex min-h-0 flex-1">
-      <aside className="flex w-80 shrink-0 flex-col border-line border-r bg-surface-1">
+      <aside className="flex w-80 shrink-0 flex-col border-line border-r bg-paper">
         <ZoneSummaryPanel title={props.title} summary={props.summary} />
         <StationList
           stations={scopeStations}

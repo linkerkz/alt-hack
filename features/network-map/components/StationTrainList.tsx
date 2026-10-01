@@ -1,3 +1,4 @@
+import { Kicker } from "@/components/ui/Kicker";
 import { HORIZON_MINUTES } from "../flows";
 import { FLOW_LABEL, FLOW_ORDER } from "../status";
 import type { StationTrain, TrainFlow } from "../types";
@@ -8,11 +9,9 @@ import { TrainRow } from "./TrainRow";
 export function StationTrainList({ trains }: { trains: StationTrain[] }) {
   return (
     <section className="space-y-3">
-      <h3 className="font-semibold text-[11px] text-muted uppercase tracking-widest">
-        Поезда · в пути или выйдут за {HORIZON_MINUTES / 60} ч
-      </h3>
+      <Kicker>Поезда · в пути или выйдут за {HORIZON_MINUTES / 60} ч</Kicker>
       {trains.length === 0 ? (
-        <p className="text-muted text-xs">Поездов нет</p>
+        <p className="text-[13px] text-muted">Поездов нет</p>
       ) : (
         FLOW_ORDER.map((flow) => (
           <FlowGroup
@@ -37,13 +36,15 @@ function FlowGroup({
   const { icon, label, hint } = FLOW_LABEL[flow];
 
   return (
-    <div className="rounded border border-line">
-      <header className="flex items-baseline justify-between gap-3 border-line border-b bg-surface-0/60 px-3 py-2">
-        <span className="font-medium text-sm text-white">
+    <div>
+      <header className="flex items-baseline justify-between gap-3 border-line border-b pb-1">
+        <span className="font-heading font-semibold text-[17px]">
           {icon} {label}{" "}
-          <span className="font-normal text-[11px] text-muted">{hint}</span>
+          <span className="font-normal font-sans text-[11px] text-muted">
+            {hint}
+          </span>
         </span>
-        <span className="font-mono text-sky-300 text-xs tabular-nums">
+        <span className="font-heading text-[17px] text-accent-700">
           {trains.length}
         </span>
       </header>

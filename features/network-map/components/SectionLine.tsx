@@ -3,7 +3,7 @@
 import type { PathOptions } from "leaflet";
 import { memo } from "react";
 import { Polyline } from "react-leaflet";
-import { STATUS_COLOR } from "../status";
+import { TONE_COLOR } from "@/components/ui/tone";
 import type { Station, Status, ZoneSection } from "../types";
 import { SectionFlowLabel } from "./SectionFlowLabel";
 import { SectionTooltip } from "./SectionTooltip";
@@ -16,18 +16,18 @@ type Props = {
 };
 
 const PATH_OPTIONS: Record<Status, PathOptions> = {
-  normal: { color: "#64748b", weight: 2, opacity: 0.6 },
-  warning: { color: STATUS_COLOR.warning, weight: 3, opacity: 0.85 },
+  normal: { color: "#605d5d", weight: 1.5, opacity: 0.85 },
+  warning: { color: TONE_COLOR.warning, weight: 3, opacity: 0.9 },
   critical: {
-    color: STATUS_COLOR.critical,
+    color: TONE_COLOR.critical,
     weight: 4,
     opacity: 0.95,
     dashArray: "8 6",
   },
 };
 
-// Участки выбранной станции: нормальные — голубым, проблемные — своим цветом, но толще.
-const HIGHLIGHT_COLOR = "#38bdf8";
+// Участки выбранной станции: нормальные — акцентом, проблемные — своим цветом, но толще.
+const HIGHLIGHT_COLOR = "#b68235";
 
 export const SectionLine = memo(function SectionLine({
   section,
@@ -59,5 +59,5 @@ function pathOptions(status: Status, isHighlighted: boolean): PathOptions {
   if (!isHighlighted) return base;
 
   const color = status === "normal" ? HIGHLIGHT_COLOR : base.color;
-  return { ...base, color, opacity: 1, weight: (base.weight ?? 2) + 2 };
+  return { ...base, color, opacity: 1, weight: (base.weight ?? 2) + 1.5 };
 }

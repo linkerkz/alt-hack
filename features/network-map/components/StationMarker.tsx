@@ -4,12 +4,11 @@ import { divIcon } from "leaflet";
 import { memo, useMemo } from "react";
 import { Marker } from "react-leaflet";
 import {
-  FLOW_LABEL,
-  FLOW_ORDER,
-  flowCounterClass,
-  STATUS_DOT_CLASS,
-  toStatus,
-} from "../status";
+  TONE_BG_CLASS,
+  TONE_GLYPH,
+  TONE_TEXT_CLASS,
+} from "@/components/ui/tone";
+import { FLOW_LABEL, FLOW_ORDER, flowCounterClass, toStatus } from "../status";
 import type { ZoneStation } from "../types";
 
 type Props = {
@@ -62,42 +61,46 @@ export const StationMarker = memo(function StationMarker({
 // Классы Tailwind пишем целиком, чтобы сканер их нашёл.
 function stationIcon(station: ZoneStation, isSelected: boolean) {
   const status = toStatus(station.efficiencyIndex);
-  const dot = STATUS_DOT_CLASS[status];
-  const size = station.kind === "sorting" ? "size-4" : "size-3";
-  const ring = isSelected
-    ? "ring-2 ring-white ring-offset-2 ring-offset-surface-0"
-    : "ring-2 ring-surface-0";
-  const pulse =
-    status === "critical"
-      ? `<span class="absolute inset-0 animate-ping rounded-full ${dot} opacity-60"></span>`
-      : "";
-  const indexColor = {
-    normal: "text-emerald-400",
-    warning: "text-amber-300",
-    critical: "text-rose-400",
-  }[status];
   const chip = isSelected
-    ? "border-sky-400/70 bg-surface-2 text-white"
-    : "border-line bg-surface-1 text-zinc-200";
+    ? "border-accent shadow-md"
+    : "border-line shadow-sm group-hover:border-accent";
 
   return divIcon({
     className: "",
     iconSize: [0, 0],
     html: `
       <div class="group absolute flex -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center">
-        <span class="relative flex ${size} items-center justify-center">
-          ${pulse}
-          <span class="relative ${size} rounded-full ${dot} ${ring}"></span>
-        </span>
-        <span class="absolute left-full ml-2.5 flex flex-col gap-1 whitespace-nowrap rounded-md border px-2 py-1.5 leading-none shadow-lg group-hover:border-white/40 ${chip}">
-          <span class="flex items-center justify-between gap-3 font-medium text-[13px]">
-            ${station.name}
-            <span class="font-mono font-semibold ${indexColor}">${station.efficiencyIndex}</span>
+        ${stationDot(station, isSelected)}
+        <span class="absolute left-full ml-2.5 flex flex-col gap-1 whitespace-nowrap rounded border bg-paper px-2 py-1.5 leading-none text-ink ${chip}">
+          <span class="flex items-baseline justify-between gap-3">
+            <span class="font-heading font-semibold text-[16px]">${station.name}</span>
+            <span class="font-heading text-[17px] ${TONE_TEXT_CLASS[status]}"><span class="text-[10px]">${TONE_GLYPH[status]}</span> ${station.efficiencyIndex}</span>
           </span>
-          <span class="flex gap-2.5 font-mono text-[12px]">${flowCounters(station)}</span>
+          <span class="flex gap-2.5 text-[12px]">${flowCounters(station)}</span>
         </span>
       </div>`,
   });
+}
+
+// Точка станции: кольцо на бумаге, внутри — цвет состояния.
+// Выбранная — с акцентным ореолом, как «наша станция» в дизайне.
+function stationDot(station: ZoneStation, isSelected: boolean) {
+  const status = toStatus(station.efficiencyIndex);
+  const fill = TONE_BG_CLASS[status];
+  const size = station.kind === "sorting" ? "size-4" : "size-3.5";
+  const ring = isSelected
+    ? "border-2 border-accent ring-[6px] ring-accent/20"
+    : "border-2 border-paper ring-1 ring-ink/60";
+  const pulse =
+    status === "critical"
+      ? `<span class="absolute inset-0 animate-ping rounded-full ${fill} opacity-50"></span>`
+      : "";
+
+  return `
+    <span class="relative flex ${size} items-center justify-center">
+      ${pulse}
+      <span class="relative ${size} rounded-full ${fill} ${ring}"></span>
+    </span>`;
 }
 
 function flowCounters(station: ZoneStation) {
@@ -108,14 +111,15 @@ function flowCounters(station: ZoneStation) {
   }).join("");
 }
 
+// Соседняя станция вне зоны: серая точка и подпись с ореолом бумаги, как на схеме сети.
 function neighborIcon(station: ZoneStation) {
   return divIcon({
     className: "",
     iconSize: [0, 0],
     html: `
-      <div class="absolute flex -translate-x-1/2 -translate-y-1/2 items-center opacity-60">
-        <span class="size-2 rounded-full bg-zinc-500 ring-2 ring-surface-0"></span>
-        <span class="absolute left-full ml-1.5 whitespace-nowrap rounded bg-surface-0/80 px-1 text-[11px] text-zinc-400">
+      <div class="absolute flex -translate-x-1/2 -translate-y-1/2 items-center">
+        <span class="size-2 rounded-full bg-neutral-500"></span>
+        <span class="absolute left-full ml-1.5 whitespace-nowrap rounded-sm bg-paper/80 px-1 text-[11px] text-neutral-600 italic">
           ${station.name}
         </span>
       </div>`,
