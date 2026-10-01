@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { ButtonVariant } from "@/components/ui/Button";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Card } from "@/components/ui/Card";
@@ -10,7 +11,8 @@ type Props = { stationId: string; task: DspTask; state: ConsoleState };
 
 // Входящая задача ДСП: от кого, что сделать и кнопки; выполненная — с итогом.
 export function DspTaskCard({ stationId, task, state }: Props) {
-  const { from, time, title, detail, result, done, primary, secondary } = task;
+  const { from, time, title, detail, result, done, evidence } = task;
+  const { primary, secondary } = task;
 
   return (
     <Card
@@ -33,6 +35,24 @@ export function DspTaskCard({ stationId, task, state }: Props) {
       ) : (
         <>
           <p className="text-justify text-[13px] text-neutral-800">{detail}</p>
+          {evidence != null && (
+            <figure className="flex flex-col gap-1">
+              <Image
+                src={evidence.snapshot}
+                alt="Снимок камеры в момент обнаружения"
+                width={480}
+                height={360}
+                unoptimized
+                className="h-auto w-full rounded-[3px] border border-line"
+              />
+              {evidence.analysis != null && (
+                <figcaption className="border-accent border-l-2 pl-2.5 text-[13px]">
+                  <span className="text-accent-700">ИИ:</span>{" "}
+                  {evidence.analysis}
+                </figcaption>
+              )}
+            </figure>
+          )}
           <div className="flex flex-wrap gap-2">
             {primary != null && (
               <TaskButton

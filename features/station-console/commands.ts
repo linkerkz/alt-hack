@@ -1,12 +1,13 @@
 import { supabaseAdmin } from "@/lib/supabase";
+import { CREW_CALL } from "./fault";
 import { journalOf } from "./journal";
-import { STEP } from "./mock";
+import { PAGER_TASKS, STEP } from "./mock";
+import { closeCall, sendToPager } from "./pager";
 import {
   finishWorkOrder,
   issueWorkOrder,
   log,
   now,
-  openIncident,
   resetStation,
   updateWorkOrder,
 } from "./records";
@@ -65,14 +66,16 @@ async function dispatch(context: Context, command: Command) {
   const { incident, workOrder } = live;
   const step = stepOf(live);
 
-  if (command.kind === "detect") {
-    if (step !== STEP.normal && step !== STEP.closed) return NOT_NOW;
-    await openIncident(context.stationId, { device: null });
+  if (command.kind === "page") {
+    // Задача пришла из браузера: неизвестную не отправляем.
+    const task = PAGER_TASKS.find(({ id }) => id === command.task);
+    if (task == null) return NOT_NOW;
+    await sendToPager(context.stationId, task.text, null);
     return DONE;
   }
   if (command.kind === "advance") {
     const next = nextCommand(live);
-    if (next == null) return { error: "Сценарий пройден — нажмите «Сброс»" };
+    if (next == null) return { error: advanceEnd(step) };
     return dispatch(context, next);
   }
   if (command.kind === "reset") {
@@ -84,8 +87,17 @@ async function dispatch(context: Context, command: Command) {
   const update = (patch: IncidentPatch) =>
     updateIncident(context, incident, command, patch);
   switch (command.kind) {
-    case "confirm":
+    case "callCrew":
       if (step !== STEP.suspected) return NOT_NOW;
+      await sendToPager(context.stationId, CREW_CALL, incident.id);
+      return update({ status: "dispatched" });
+    case "escalate":
+      // Сам инцидент двигает база по ответу на вызов.
+      if (step !== STEP.dispatched) return NOT_NOW;
+      await closeCall(incident.id, "escalated");
+      return DONE;
+    case "sendRepair":
+      if (step !== STEP.escalated) return NOT_NOW;
       await issueWorkOrder(context, incident);
       return update({ status: "confirmed" });
     case "dismiss":
@@ -157,10 +169,16 @@ async function updateIncident(
 
   const entries = journalOf(command, {
     code: incident.code,
-    detection: incident.detection,
     option: patch.option === undefined ? incident.option : patch.option,
     routed: patch.route_tasks ?? incident.routeTasks,
   });
   await log(stationId, incident.id, entries);
   return DONE;
+}
+
+// «Далее» больше нечего делать: инцидент ещё не открыт или сценарий пройден.
+function advanceEnd(step: number) {
+  return step === STEP.normal
+    ? "Инцидент открывает камера — поставьте предмет перед ней"
+    : "Сценарий пройден — нажмите «Сброс»";
 }

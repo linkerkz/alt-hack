@@ -1,17 +1,21 @@
-import { type Detection, detectionOf } from "./detection";
 import { dspObjects } from "./dspObjects";
 import { dspReports } from "./dspReports";
+import { OBSTRUCTION, REPAIR } from "./fault";
 import { STEP } from "./mock";
+import { pagerCard } from "./pagerCard";
 import { routeDone } from "./routing";
+import { snapshotOf } from "./snapshot";
 import type {
   ActionLink,
   ConsoleState,
   Live,
+  LiveIncident,
   LiveWorkOrder,
   Neighbors,
 } from "./types";
 
-// Панель исполнения ДСП: входящие задачи, состояние объектов и отправленные донесения.
+// Панель исполнения ДСП: входящие задачи, пейджер бригады, состояние
+// объектов и отправленные донесения.
 
 export type DspTask = {
   from: string;
@@ -22,26 +26,29 @@ export type DspTask = {
   // Итог выполненной задачи.
   result: string;
   done: boolean;
+  // Снимок камеры и вывод ИИ по нему: ДСП проверяет предмет сам.
+  evidence?: { snapshot: string; analysis: string | null };
   primary?: ActionLink;
   secondary?: ActionLink;
 };
 
 const DSCS = "ДСЦС";
+const CREW = "Путейцы";
 
 export function dspPanel(
   state: ConsoleState,
   neighbors: Neighbors,
   live: Live,
 ) {
-  const detection = detectionOf(live.incident);
-  const tasks = tasksAt(state, live.workOrder, detection);
+  const tasks = tasksAt(state, live);
   const pending = tasks.filter((task) => !task.done);
 
   return {
     // Невыполненные сверху, выполненные — от свежих к старым.
     tasks: [...pending, ...tasks.filter((task) => task.done).reverse()],
     pendingCount: pending.length,
-    idleText: idleTextAt(state.step, detection.crew),
+    idleText: idleTextAt(state.step),
+    pager: pagerCard(live.pager),
     objects: dspObjects(state),
     reports: dspReports(state, neighbors),
     // Диалог «Вернуть в эксплуатацию» открыт только на своём шаге.
@@ -49,44 +56,15 @@ export function dspPanel(
   };
 }
 
-function tasksAt(
-  state: ConsoleState,
-  workOrder: LiveWorkOrder | null,
-  detection: Detection,
-): DspTask[] {
+function tasksAt(state: ConsoleState, { incident, workOrder }: Live) {
   const { step, option } = state;
   const routed = routeDone(state);
   const isB = option === "B";
   const track2001 = isB
     ? { path: 4, time: "14:27" }
     : { path: 1, time: "14:32" };
-  const tasks: DspTask[] = [];
+  const tasks = faultTasks(step, incident);
 
-  if (step === STEP.suspected) {
-    tasks.push({
-      from: detection.from,
-      time: "14:08",
-      title: detection.check,
-      detail: `Проверьте на пульте. Если неисправность подтверждается, закройте стрелку и ${detection.callCrew}.`,
-      result: "",
-      done: false,
-      primary: {
-        label: "Подтвердить, закрыть С3, вызвать службу",
-        command: { kind: "confirm" },
-      },
-      secondary: { label: "Ложная тревога", command: { kind: "dismiss" } },
-    });
-  }
-  if (step >= STEP.choosing) {
-    tasks.push({
-      from: detection.from,
-      time: "14:08",
-      title: "Закрыть стрелку С3, вызвать службу",
-      detail: "",
-      result: `14:09 · С3 закрыта, ${detection.crewCalled}`,
-      done: true,
-    });
-  }
   if (step >= STEP.decided) {
     tasks.push(
       {
@@ -121,7 +99,7 @@ function tasksAt(
   }
   if (step === STEP.repaired) {
     tasks.push({
-      from: detection.crew,
+      from: REPAIR.crew,
       time: "14:27",
       title: "Вернуть С3 в эксплуатацию",
       detail: `Работы выполнены, ${checklistText(workOrder)}. Проверьте контроль положения на пульте.`,
@@ -132,11 +110,71 @@ function tasksAt(
   }
   if (step >= STEP.restored) {
     tasks.push({
-      from: detection.crew,
+      from: REPAIR.crew,
       time: "14:27",
       title: "Вернуть С3 в эксплуатацию",
       detail: "",
       result: "14:29 · С3 в работе, ДСЦС обновляет план",
+      done: true,
+    });
+  }
+  return tasks;
+}
+
+// Задачи по самой стрелке: проверить снимок и вызвать путейцев, а если
+// стрелка повреждена — отправить ремонтную бригаду.
+function faultTasks(step: number, incident: LiveIncident | null) {
+  const tasks: DspTask[] = [];
+  const snapshot = snapshotOf(incident);
+  if (step === STEP.suspected) {
+    tasks.push({
+      from: OBSTRUCTION.from,
+      time: "14:08",
+      title: "Предмет в стрелке С3",
+      detail:
+        "Проверьте снимок камеры. Если предмет есть, вызовите путейцев на пейджер: маршруты через С3 закрыты, пока его не уберут.",
+      result: "",
+      done: false,
+      evidence:
+        snapshot == null
+          ? undefined
+          : { snapshot, analysis: incident?.analysis ?? null },
+      primary: { label: "Вызвать путейцев", command: { kind: "callCrew" } },
+      secondary: { label: "Ложная тревога", command: { kind: "dismiss" } },
+    });
+  }
+  if (step >= STEP.dispatched) {
+    tasks.push({
+      from: OBSTRUCTION.from,
+      time: "14:08",
+      title: "Вызвать путейцев к С3",
+      detail: "",
+      result: "14:08 · вызов ушёл на пейджер бригады",
+      done: true,
+    });
+  }
+  if (step === STEP.escalated) {
+    tasks.push({
+      from: CREW,
+      time: "14:09",
+      title: "Стрелка С3 повреждена",
+      detail:
+        "Путейцы убрали предмет, но остряк повреждён. Отправьте ремонтную бригаду: наряд с QR на чеклист. ДСЦС получит варианты перепланирования.",
+      result: "",
+      done: false,
+      primary: {
+        label: "Отправить ремонтную бригаду",
+        command: { kind: "sendRepair" },
+      },
+    });
+  }
+  if (step >= STEP.choosing) {
+    tasks.push({
+      from: CREW,
+      time: "14:09",
+      title: "Отправить ремонтную бригаду",
+      detail: "",
+      result: "14:09 · наряд выдан, ДСЦС выбирает вариант",
       done: true,
     });
   }
@@ -151,14 +189,17 @@ export function checklistText(workOrder: LiveWorkOrder | null) {
   return `чеклист ${checked} из ${total}${note}`;
 }
 
-function idleTextAt(step: number, crew: string) {
+function idleTextAt(step: number) {
   if (step === STEP.normal)
     return "Новых задач нет. Станция работает по плану.";
+  if (step === STEP.dispatched) {
+    return "Путейцы идут к С3. Камера следит: как только предмет уберут, инцидент закроется сам.";
+  }
   if (step === STEP.choosing || step === STEP.approval) {
     return "ДСЦС выбирает вариант перепланирования. Задачи придут после решения.";
   }
   if (step === STEP.repairing) {
-    return `${crew} работает на С3. Стрелка закрыта.`;
+    return `${REPAIR.crew} работает на С3. Стрелка закрыта.`;
   }
   return "Новых задач нет.";
 }

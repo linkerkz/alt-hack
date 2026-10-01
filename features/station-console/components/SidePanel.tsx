@@ -1,3 +1,4 @@
+import { TONE_GLYPH, TONE_TEXT_CLASS } from "@/components/ui/tone";
 import type { StationConsoleData } from "../queries";
 import type { ConsoleRole, ConsoleState } from "../types";
 import { CollapsedPanel } from "./CollapsedPanel";
@@ -72,8 +73,11 @@ function Collapsed({ role, data, state }: CollapsedProps) {
       }
       marker={
         data.incident.isActive && (
-          <span className="text-[12px] text-critical" title="Активный инцидент">
-            ■
+          <span
+            className={`text-[12px] ${TONE_TEXT_CLASS[data.incident.tone]}`}
+            title="Активный инцидент"
+          >
+            {TONE_GLYPH[data.incident.tone]}
           </span>
         )
       }

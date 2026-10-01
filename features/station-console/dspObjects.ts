@@ -40,7 +40,11 @@ function switchStatus(step: number): Pick<DspObject, "status" | "tone"> {
   if (step === STEP.normal || step >= STEP.restored) {
     return { status: "В работе", tone: "normal" };
   }
-  if (step === STEP.suspected)
-    return { status: "Нет контроля", tone: "critical" };
-  return { status: "Закрыта", tone: "critical" };
+  if (step === STEP.suspected) {
+    return { status: "Предмет в стрелке", tone: "warning" };
+  }
+  if (step === STEP.dispatched) {
+    return { status: "Закрыта, путейцы вызваны", tone: "warning" };
+  }
+  return { status: "Закрыта, повреждена", tone: "critical" };
 }

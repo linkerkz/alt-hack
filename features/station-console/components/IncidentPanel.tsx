@@ -28,16 +28,15 @@ export function IncidentPanel({ data, state, mapHref }: Props) {
         statusName={incident.statusName}
         mapHref={mapHref}
       />
-      <IncidentImpact />
-      <OptionComparison comparison={comparison} state={state} />
+      {incident.showOptions && (
+        <>
+          <IncidentImpact />
+          <OptionComparison comparison={comparison} state={state} />
+        </>
+      )}
       {chain.length > 0 && <DecisionChain chain={chain} />}
       {incident.tasks.length > 0 && <TaskList tasks={incident.tasks} />}
-      {data.workOrder != null && (
-        <WorkOrderCard
-          workOrder={data.workOrder}
-          order={data.incident.detection.workOrder}
-        />
-      )}
+      {data.workOrder != null && <WorkOrderCard workOrder={data.workOrder} />}
       <IncidentEvents events={incident.events} />
     </div>
   );

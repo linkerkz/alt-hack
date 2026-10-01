@@ -82,11 +82,18 @@ function occupiedTracks(step: number, option: ChosenOption) {
   return occupied;
 }
 
-function switchC3(step: number, fault: boolean) {
+// Пока путейцы не нашли повреждения, стрелка лишь «Внимание»: предмет уберут.
+function switchC3(
+  step: number,
+  fault: boolean,
+): { status: Status | null; label: string } {
   if (!fault) return { status: null, label: "С3" };
+  if (step < STEP.escalated) {
+    return { status: "warning", label: "С3 · предмет" };
+  }
   const label =
-    step === STEP.repaired ? "С3 · проверена, ждёт ДСП" : "С3 · нет контроля";
-  return { status: "critical" as Status, label };
+    step === STEP.repaired ? "С3 · проверена, ждёт ДСП" : "С3 · повреждена";
+  return { status: "critical", label };
 }
 
 // Входной Н запрещает приём, пока маршрут 101 не задан по новому плану.
@@ -158,7 +165,7 @@ function offNoteAt(step: number, option: ChosenOption, { odd }: Neighbors) {
       ? `2001 удержан на ст. ${odd}`
       : "2001 ждёт у входного Н";
   }
-  if (step === STEP.suspected || step === STEP.choosing) {
+  if (step >= STEP.suspected && step <= STEP.choosing) {
     return "101 остановлен у входного Н";
   }
   return "";

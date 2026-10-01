@@ -21,10 +21,13 @@ export type ConsoleRole = "dscs" | "dsp";
 // Приём поезда по новому плану: id задачи ДСП и поезда.
 export type RouteTask = "r101" | "r2001";
 
-// Ход сценария в базе: последний инцидент станции, его наряд и хронология.
+// Ход сценария в базе: последний инцидент станции, его наряд, сообщения
+// пейджера бригады и хронология.
 export type Live = {
   incident: LiveIncident | null;
   workOrder: LiveWorkOrder | null;
+  // Сообщения пейджера станции, свежие сверху.
+  pager: PagerMessage[];
   // Хронология станции, свежие сверху.
   events: JournalEvent[];
 };
@@ -39,17 +42,15 @@ export type LiveIncident = {
   dncRejected: boolean;
   // Комментарий ДНЦ для станции к согласованию или отказу.
   dncComment: string | null;
-  detection: DetectionKind;
   // Вывод ИИ по снимку; null — без анализа.
   analysis: string | null;
 };
 
-// Чем обнаружена проблема: датчиком ЭЦ или камерой в горловине.
-export type DetectionKind = "sensor" | "camera";
-
 // Совпадает с enum public.incident_status.
 export type IncidentStatus =
   | "suspected"
+  | "dispatched"
+  | "escalated"
   | "confirmed"
   | "decided"
   | "repairing"
@@ -70,6 +71,26 @@ export type LiveWorkOrder = {
 // Совпадает с enum public.work_order_status.
 export type WorkOrderStatus = "issued" | "in_progress" | "done" | "returned";
 
+// Сообщение пейджера бригады: вызов по инциденту или обычная задача ДСП.
+export type PagerMessage = {
+  id: string;
+  // Инцидент вызова; null — обычная задача.
+  incidentId: string | null;
+  text: string;
+  status: PagerMessageStatus;
+};
+
+// Совпадает с enum public.pager_message_status.
+export type PagerMessageStatus =
+  | "sent"
+  | "accepted"
+  | "done"
+  | "escalated"
+  | "cancelled";
+
+// Готовая задача, которую ДСП отправляет бригаде на пейджер.
+export type PagerTask = "train" | "unload" | "couple";
+
 export type JournalEvent = ScenarioEvent & {
   // Порядок записи: время симуляции у повторных инцидентов совпадает.
   id: number;
@@ -78,12 +99,14 @@ export type JournalEvent = ScenarioEvent & {
 };
 
 // Команда пульта: действие участника, которое меняет ход инцидента в базе.
-// Команды датчика и службы — симуляция участников без своего экрана; ДНЦ
+// Инцидент открывает только камера. Ответ путейцев и работы бригады —
+// симуляция для «Далее»: у них свои экраны (пейджер, чеклист по QR). ДНЦ
 // отвечает с карты сети, а «Далее» на демо-пульте согласует за него.
 export type Command =
-  | { kind: "detect" }
-  | { kind: "confirm" }
+  | { kind: "callCrew" }
   | { kind: "dismiss" }
+  | { kind: "escalate" }
+  | { kind: "sendRepair" }
   | { kind: "accept"; option: ChosenOption }
   | ApprovalAnswer
   | { kind: "route"; task: RouteTask }
@@ -91,6 +114,7 @@ export type Command =
   | { kind: "finishWork" }
   | { kind: "restore" }
   | { kind: "close"; keepPlan: boolean }
+  | { kind: "page"; task: PagerTask }
   | { kind: "advance" }
   | { kind: "reset" };
 

@@ -95,7 +95,7 @@ function toRequest(
     code: incident.code,
     from: `ДСЦС ст. ${name} · ${APPROVAL.requestedAt}`,
     title: titleOf(state, odd),
-    reason: `На ст. ${name} отказ стрелки С3 (${incident.code}). После удержания 2001 принимается на путь 4 в 14:27.`,
+    reason: `На ст. ${name} повреждена стрелка С3 (${incident.code}). После удержания 2001 принимается на путь 4 в 14:27.`,
     trains: approvalTrains(neighbors),
     unchanged: APPROVAL.unchanged,
     index: [

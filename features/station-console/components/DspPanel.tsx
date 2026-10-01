@@ -6,6 +6,7 @@ import { DecisionChain } from "./DecisionChain";
 import { DspObjects } from "./DspObjects";
 import { DspReports } from "./DspReports";
 import { DspTaskCard } from "./DspTaskCard";
+import { PagerCard } from "./PagerCard";
 import { WorkOrderCard } from "./WorkOrderCard";
 
 type Props = {
@@ -14,9 +15,10 @@ type Props = {
   state: ConsoleState;
 };
 
-// Панель исполнения ДСП: задачи от ДСЦС и системы, объекты, ход решения, донесения.
+// Панель исполнения ДСП: задачи от ДСЦС и системы, пейджер бригады, объекты,
+// ход решения, донесения.
 export function DspPanel({ operatorName, data, state }: Props) {
-  const { tasks, idleText, pendingCount, objects, reports } = data.dsp;
+  const { tasks, idleText, pendingCount, pager, objects, reports } = data.dsp;
   const { chain } = data;
 
   return (
@@ -51,12 +53,8 @@ export function DspPanel({ operatorName, data, state }: Props) {
           ))}
         </section>
         <DspObjects objects={objects} />
-        {data.workOrder != null && (
-          <WorkOrderCard
-            workOrder={data.workOrder}
-            order={data.incident.detection.workOrder}
-          />
-        )}
+        {data.workOrder != null && <WorkOrderCard workOrder={data.workOrder} />}
+        <PagerCard stationId={data.stationId} pager={pager} />
         {chain.length > 0 && <DecisionChain chain={chain} />}
         {reports.length > 0 && <DspReports reports={reports} />}
       </div>

@@ -24,7 +24,7 @@ export function optionComparison(state: ConsoleState, neighbors: Neighbors) {
   const { step, option } = state;
   const options = replanOptions(neighbors);
   const decided = step >= STEP.decided;
-  const selectable = step === STEP.suspected || step === STEP.choosing;
+  const selectable = step === STEP.escalated || step === STEP.choosing;
   const selected = options[option];
 
   return {
@@ -48,8 +48,8 @@ export function optionComparison(state: ConsoleState, neighbors: Neighbors) {
 }
 
 function noteAt(step: number, name: string) {
-  if (step === STEP.suspected) {
-    return "Предварительно: ждёт подтверждения неисправности";
+  if (step === STEP.escalated) {
+    return "Предварительно: ждёт отправки ремонтной бригады";
   }
   if (step >= STEP.decided) return `Решение принято: ${name.toLowerCase()}`;
   return "Нажмите на вариант, чтобы увидеть изменения";

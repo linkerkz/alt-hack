@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { TONE_GLYPH, TONE_TEXT_CLASS } from "@/components/ui/tone";
 import type { StationConsoleData } from "../queries";
 import { PROGRESS_CLASS } from "../status";
 
@@ -6,20 +7,20 @@ type Props = { incident: StationConsoleData["incident"] };
 
 // Шапка карточки инцидента: что случилось, где, когда и на каком он этапе.
 export function IncidentSummary({ incident }: Props) {
-  const { detection, snapshot, analysis } = incident;
-  const facts = [...FACTS, ["Источник", detection.source]];
+  const { fault, tone, snapshot, analysis } = incident;
+  const facts = [["Тип", fault.kind], ...FACTS, ["Источник", fault.source]];
 
   return (
     <>
       <div className="flex flex-col gap-1.5">
         <div className="flex justify-between gap-2.5 text-[11px] uppercase tracking-[0.08em]">
-          <span className="text-critical">
-            ■ Высокая критичность · {incident.code}
+          <span className={TONE_TEXT_CLASS[tone]}>
+            {TONE_GLYPH[tone]} {SEVERITY[tone]} · {incident.code}
           </span>
           <span className="text-muted">{incident.dncBadge}</span>
         </div>
         <h2 className="font-heading font-semibold text-[27px] leading-[1.12]">
-          {detection.title}
+          {fault.title}
         </h2>
         <dl className="grid grid-cols-[auto_1fr] gap-x-3.5 gap-y-0.5 text-[13px]">
           {facts.map(([label, value]) => (
@@ -30,7 +31,7 @@ export function IncidentSummary({ incident }: Props) {
           ))}
         </dl>
         <p className="mt-1 text-justify text-[13px] text-neutral-800">
-          {detection.description}
+          {fault.description}
         </p>
         {snapshot != null && (
           <figure className="mt-1 flex flex-col gap-1">
@@ -53,7 +54,7 @@ export function IncidentSummary({ incident }: Props) {
           </figure>
         )}
       </div>
-      <ol className="grid grid-cols-6 gap-1">
+      <ol className="grid grid-cols-7 gap-1">
         {incident.statusSteps.map((step) => {
           const style = PROGRESS_CLASS[step.state];
           return (
@@ -72,8 +73,14 @@ export function IncidentSummary({ incident }: Props) {
   );
 }
 
+// Пока путейцы не нашли повреждения, инцидент — «Внимание».
+const SEVERITY = {
+  normal: "Норма",
+  warning: "Внимание",
+  critical: "Высокая критичность",
+};
+
 const FACTS = [
-  ["Тип", "Отказ стрелки"],
   ["Объект", "Стрелка С3, нечётная горловина"],
   ["Время", "14:08:12"],
 ];

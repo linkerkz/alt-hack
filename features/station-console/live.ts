@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { simClock } from "@/lib/clock";
 import { createSupabaseClient, supabaseAdmin } from "@/lib/supabase";
+import { stationPager } from "./pager";
 import type {
   ChosenOption,
   IncidentStatus,
@@ -18,19 +19,20 @@ const FEED_LIMIT = 40;
 
 // Поля инцидента, из которых складывается ход сценария.
 export const INCIDENT_COLUMNS =
-  "id, code, station_id, status, option, route_tasks, dnc_rejected_at, dnc_comment, device_id, analysis";
+  "id, code, station_id, status, option, route_tasks, dnc_rejected_at, dnc_comment, analysis";
 
-// Ход сценария станции из базы: последний инцидент, его наряд и хронология.
-// Кэш на запрос: страница и действие читают по разу. Хронология читается
-// параллельно с инцидентом, наряд — следом за ним.
+// Ход сценария станции из базы: последний инцидент, его наряд, пейджер и
+// хронология. Кэш на запрос: страница и действие читают по разу. Пейджер и
+// хронология читаются параллельно с инцидентом, наряд — следом за ним.
 export const getLive = cache(async (stationId: string): Promise<Live> => {
-  const [incident, events] = await Promise.all([
+  const [incident, pager, events] = await Promise.all([
     lastIncident(stationId),
+    stationPager(stationId),
     stationEvents(stationId),
   ]);
   const workOrder = incident == null ? null : await incidentWorkOrder(incident);
 
-  return { incident, workOrder, events };
+  return { incident, workOrder, pager, events };
 });
 
 async function lastIncident(stationId: string) {
@@ -84,7 +86,6 @@ export function toIncident(row: IncidentRow): LiveIncident {
     routeTasks: row.route_tasks.filter(isRouteTask),
     dncRejected: row.dnc_rejected_at != null,
     dncComment: row.dnc_comment,
-    detection: row.device_id == null ? "sensor" : "camera",
     analysis: row.analysis,
   };
 }
@@ -125,7 +126,6 @@ export type IncidentRow = {
   route_tasks: string[];
   dnc_rejected_at: string | null;
   dnc_comment: string | null;
-  device_id: string | null;
   analysis: string | null;
 };
 

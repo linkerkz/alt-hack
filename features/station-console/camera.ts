@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
-import { log, openIncident } from "./records";
+import { closeCall } from "./pager";
+import { log, now, openIncident } from "./records";
 import type { IncidentStatus } from "./types";
 
 // Сигнал камеры горловины над стрелкой С3. Камера приходит без входа, поэтому
@@ -40,11 +41,9 @@ export async function reportCamera(
       return { text: "Инцидент уже открыт", incidentCode: last.code };
     }
     const opened = await openIncident(stationId, {
-      device: {
-        id: signal.deviceId,
-        snapshot: signal.snapshot,
-        analysis: analysisOf(signal),
-      },
+      deviceId: signal.deviceId,
+      snapshot: signal.snapshot,
+      analysis: analysisOf(signal),
     });
     return {
       text:
@@ -65,18 +64,51 @@ export async function reportCamera(
       incidentCode: last.code,
     };
   }
+  if (isPending(last.status)) {
+    await resolve(stationId, last.id, ai != null);
+    return {
+      text: "Стрелка свободна — инцидент закрыт",
+      incidentCode: last.code,
+    };
+  }
   await log(stationId, last.id, [
     {
-      minute: last.status === "suspected" ? 9 : 26,
+      minute: 26,
       actor: "iot",
-      text:
-        ai == null
-          ? "Камера: стрелка С3 свободна, предмет убран"
-          : "Камера и ИИ: стрелка С3 свободна, предмет убран",
+      text: `${seenBy(ai != null)}: стрелка С3 свободна, предмет убран`,
       level: "normal",
     },
   ]);
   return { text: "Стрелка свободна — ДСП видит это", incidentCode: last.code };
+}
+
+// Предмет ещё не оказался серьёзной проблемой: ДСП не вызвал путейцев или
+// они не дошли. Тогда камера сама закрывает инцидент.
+function isPending(status: IncidentStatus) {
+  return status === "suspected" || status === "dispatched";
+}
+
+// Камера видит, что стало свободно: инцидент закрыт, вызов на пейджере —
+// отбой. Перепланирование не понадобилось.
+async function resolve(stationId: string, incidentId: string, withAi: boolean) {
+  const { error } = await supabaseAdmin()
+    .from("incidents")
+    .update({ status: "closed", closed_at: now() })
+    .eq("id", incidentId);
+  if (error != null) throw error;
+  await closeCall(incidentId, "cancelled");
+  await log(stationId, incidentId, [
+    {
+      minute: 9,
+      actor: "iot",
+      text: `${seenBy(withAi)}: стрелка С3 свободна, предмет убран. Инцидент закрыт`,
+      level: "normal",
+    },
+  ]);
+}
+
+function seenBy(withAi: boolean) {
+  return withAi ? "Камера и ИИ" : "Камера";
 }
 
 // Вывод ИИ для ДСП: что распознала камера и что добавил облачный ИИ.
