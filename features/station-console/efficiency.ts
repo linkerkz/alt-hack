@@ -1,7 +1,12 @@
-import { toClock, toMinutes } from "@/lib/clock";
-import { forecastPlan } from "./forecast";
-import { evaluatePlan, WINDOW_MINUTES } from "./metrics";
-import { FAULT, replanOptions, STEP, STEP_MINUTE } from "./mock";
+import { toMinutes } from "@/lib/clock";
+import {
+  activeOption,
+  forecastFor,
+  forecastUntil,
+  type PlanSource,
+} from "./activePlan";
+import { evaluatePlan } from "./metrics";
+import { FAULT, STEP, STEP_MINUTE } from "./mock";
 import {
   clockAt,
   formatNumber,
@@ -10,45 +15,30 @@ import {
   METRICS,
   scoreStatus,
 } from "./status";
-import type { ConsoleState, Live, Neighbors, OptionId } from "./types";
-
-// Для оценки плана из хода станции нужны только план путей и устройство.
-export type PlanSource = Pick<Live, "plan" | "layout">;
-
-type Params = { live: PlanSource; neighbors: Neighbors; option: OptionId };
+import type { ConsoleState, OptionId } from "./types";
 
 // Оценка плана варианта option при закрытой стрелке. Окно — полчаса от
 // обнаружения сбоя: прогноз не «плывёт», пока диспетчеры решают, и после
 // решения показывает то же, что обещало сравнение вариантов.
-export function scorePlan({ live, neighbors, option }: Params) {
-  const runs = forecastPlan({
-    plan: live.plan,
-    layout: live.layout,
-    changes: replanOptions(neighbors)[option].changes,
-    closures: [faultClosure()],
-  });
-  return evaluatePlan(runs, live.layout, toMinutes(FAULT.from));
+export function scorePlan(source: PlanSource, option: OptionId) {
+  const runs = forecastFor(source, option);
+  return evaluatePlan(runs, source.layout, toMinutes(FAULT.from));
 }
 
 // Исходный план без сбоя — с ним сравниваем индекс после сбоя.
-export function scoreBaseline(live: PlanSource) {
-  const runs = forecastPlan({ ...live, changes: [], closures: [] });
+export function scoreBaseline(source: PlanSource) {
   const now = clockAt(STEP_MINUTE[STEP.normal]);
-  return evaluatePlan(runs, live.layout, toMinutes(now));
+  return evaluatePlan(forecastFor(source, null), source.layout, toMinutes(now));
 }
 
 // Индекс эффективности станции на шаге сценария: до сбоя — исходный план,
 // до решения — «ничего не менять», после — принятый вариант.
-export function stationEfficiency(
-  state: ConsoleState,
-  live: Live,
-  neighbors: Neighbors,
-) {
+export function stationEfficiency(state: ConsoleState, source: PlanSource) {
   const { step } = state;
-  const option = step >= STEP.decided ? state.option : "none";
-  const baseline = scoreBaseline(live);
+  const option = activeOption(step, state.option);
+  const baseline = scoreBaseline(source);
   const { values, scores, index } =
-    step === STEP.normal ? baseline : scorePlan({ live, neighbors, option });
+    option == null ? baseline : scorePlan(source, option);
   const metrics = METRICS.map((metric, i) => ({
     label: metric.label,
     value: formatNumber(values[i]) + metric.unit,
@@ -69,16 +59,6 @@ export function stationEfficiency(
         ? `Прогноз до ${forecastUntil()}, если ничего не менять`
         : null,
   };
-}
-
-// Конец окна прогноза после сбоя: «14:38».
-export function forecastUntil() {
-  return toClock(toMinutes(FAULT.from) + WINDOW_MINUTES);
-}
-
-function faultClosure() {
-  const span = { from: toMinutes(FAULT.from), to: toMinutes(FAULT.until) };
-  return { switchId: FAULT.switchId, span };
 }
 
 function trendOf(step: number, index: number, baseline: number) {

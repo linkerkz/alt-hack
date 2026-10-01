@@ -1,5 +1,6 @@
 import { createSupabaseClient } from "@/lib/supabase";
-import { type PlanSource, scoreBaseline } from "./efficiency";
+import type { PlanSource } from "./activePlan";
+import { scoreBaseline } from "./efficiency";
 import { stationLayout } from "./layout";
 import { INCIDENT_COLUMNS, type IncidentRow, toIncident } from "./live";
 import { APPROVAL, approvalTrains } from "./mock";

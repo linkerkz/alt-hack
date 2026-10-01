@@ -9,6 +9,8 @@ export type Run = {
   train: string;
   kind: PlannedTrain["kind"];
   track: number;
+  entryRoute: string;
+  exitRoute: string;
   // Занятость пути по исходному плану и по прогнозу, минуты от полуночи.
   planned: Span;
   forecast: Span;
@@ -81,6 +83,8 @@ function schedule(target: Target, world: World): Run {
     train: target.train,
     kind: target.kind,
     track,
+    entryRoute: target.entryRoute,
+    exitRoute: target.exitRoute,
     planned: target.planned,
     forecast: { from, to },
     waited: from > span.from || to > from + dwell,

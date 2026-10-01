@@ -112,9 +112,12 @@ export type PlannedTrain = {
 // поезда, за которыми закреплены бригады.
 export type StationLayout = {
   tracks: { number: number; kind: TrackKind }[];
-  routes: { id: string; switches: string[] }[];
+  routes: { id: string; track: number; throat: Throat; switches: string[] }[];
   crewTrains: string[];
 };
+
+// Совпадает с enum public.throat: нечётная / чётная горловина.
+export type Throat = "odd" | "even";
 
 // Совпадает с enum public.track_kind.
 export type TrackKind = "main" | "receiving" | "dead_end";
@@ -177,23 +180,21 @@ export type ScenarioEvent = {
   level?: Status;
 };
 
-// Вариант перепланирования: какие поезда он меняет. Показатели варианта
-// считаются по изменённому плану — см. forecast.ts и metrics.ts.
+// Вариант перепланирования словами для диспетчера. Сами изменения плана —
+// PlanChange в OPTION_CHANGES; показатели считаются по ним.
 export type ReplanOption = {
   id: OptionId;
   name: string;
   dncApproval: string;
-  changes: PlanChange[];
+  changes: { train: string; text: string }[];
   why: string;
 };
 
-// Изменение плана одного поезда: новый путь, маршруты и прибытие; стоянка
-// та же. text — то же изменение словами для диспетчера.
+// Изменение плана одного поезда: новый путь, маршруты и прибытие; стоянка та же.
 export type PlanChange = {
   train: string;
   track: number;
   entryRoute: string;
   exitRoute: string;
   arrival: string;
-  text: string;
 };

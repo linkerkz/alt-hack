@@ -1,9 +1,5 @@
-import {
-  forecastUntil,
-  type PlanSource,
-  scoreBaseline,
-  scorePlan,
-} from "./efficiency";
+import { forecastUntil, type PlanSource } from "./activePlan";
+import { scoreBaseline, scorePlan } from "./efficiency";
 import type { PlanScore } from "./metrics";
 import { replanOptions, STEP } from "./mock";
 import { formatNumber, indexStatus } from "./status";
@@ -72,7 +68,7 @@ export function scoredOptions(live: PlanSource, neighbors: Neighbors) {
   const options = replanOptions(neighbors);
   const score = (id: OptionId): ScoredOption => ({
     ...options[id],
-    ...scorePlan({ live, neighbors, option: id }),
+    ...scorePlan(live, id),
   });
   return { none: score("none"), A: score("A"), B: score("B") };
 }

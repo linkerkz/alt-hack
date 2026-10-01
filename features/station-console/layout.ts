@@ -1,5 +1,5 @@
 import { createSupabaseClient } from "@/lib/supabase";
-import type { StationLayout, TrackKind } from "./types";
+import type { StationLayout, Throat, TrackKind } from "./types";
 
 // Устройство станции из базы: пути, маршруты со стрелками и поезда, за
 // которыми закреплены бригады. Нужно, чтобы считать индекс по плану.
@@ -13,7 +13,7 @@ export async function stationLayout(stationId: string): Promise<StationLayout> {
       .overrideTypes<TrackRow[], { merge: false }>(),
     supabase
       .from("routes")
-      .select("id, switches")
+      .select("id, track, throat, switches")
       .eq("station_id", stationId)
       .overrideTypes<RouteRow[], { merge: false }>(),
     supabase
@@ -34,6 +34,11 @@ export async function stationLayout(stationId: string): Promise<StationLayout> {
 
 type TrackRow = { number: number; kind: TrackKind };
 
-type RouteRow = { id: string; switches: string[] };
+type RouteRow = {
+  id: string;
+  track: number;
+  throat: Throat;
+  switches: string[];
+};
 
 type CrewRow = { train_number: string };

@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase";
+import { activePlan } from "./activePlan";
 import { CREW_CALL, REPAIR } from "./fault";
 import { journalOf } from "./journal";
 import { STEP } from "./mock";
@@ -159,10 +160,10 @@ async function dispatch(context: Context, command: Command) {
   }
 }
 
-// Поручение бригаде по операции плана; уже поручённую и не выполненную
-// второй раз не шлём.
+// Поручение бригаде по операции действующего плана; уже поручённую и не
+// выполненную второй раз не шлём.
 async function assign({ stationId, live }: Context, id: string) {
-  const operation = operationById(live.plan, id);
+  const operation = operationById(activePlan(live), id);
   if (operation == null) return NOT_NOW;
   const sent = live.pager.find((message) => message.operation === id);
   if (sent != null && sent.status !== "done") {

@@ -23,9 +23,9 @@ export async function getStationConsole(
   return {
     stationId,
     clock,
-    efficiency: stationEfficiency(state, live, neighbors),
-    schema: stationSchema(state, neighbors),
-    plan: trackPlan(state),
+    efficiency: stationEfficiency(state, live),
+    schema: stationSchema(state, neighbors, live),
+    plan: trackPlan(state, live),
     incident: incidentCard(state, neighbors, live),
     comparison: optionComparison(state, live, neighbors),
     objects: dspObjects(state),

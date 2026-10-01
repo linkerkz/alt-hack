@@ -1,4 +1,10 @@
-import type { Neighbors, OptionId, ReplanOption, ScenarioEvent } from "./types";
+import type {
+  Neighbors,
+  OptionId,
+  PlanChange,
+  ReplanOption,
+  ScenarioEvent,
+} from "./types";
 
 // Демо-сценарий «предмет в стрелке С3», пока нет симулятора. Ход инцидента —
 // в базе, а здесь — что показывать на каждом шаге. Время — минуты после
@@ -32,17 +38,46 @@ export const INCIDENT = {
 // ремонта. Через неё идут маршруты на пути 3 и 5 со стороны нечётной горловины.
 export const FAULT = { switchId: "С3", from: "14:08", until: "14:29" };
 
-// Варианты перепланирования при закрытой С3 как изменения плана путей;
-// показатели каждого считаются по прогнозу — см. options.ts.
+// Варианты перепланирования при закрытой С3 как изменения плана путей:
+// по ним прогнозируется план и считаются показатели.
+const ACCEPT_101: PlanChange = {
+  train: "101",
+  track: 1,
+  entryRoute: "Н-1",
+  exitRoute: "ЧП-1",
+  arrival: "14:15",
+};
+
+export const OPTION_CHANGES: Record<OptionId, PlanChange[]> = {
+  none: [],
+  A: [
+    ACCEPT_101,
+    {
+      train: "2001",
+      track: 2,
+      entryRoute: "НП-2",
+      exitRoute: "Ч-2",
+      arrival: "14:18",
+    },
+  ],
+  B: [
+    ACCEPT_101,
+    {
+      train: "2001",
+      track: 4,
+      entryRoute: "НП-4",
+      exitRoute: "Ч-4",
+      arrival: "14:27",
+    },
+  ],
+};
+
+// Те же варианты словами для диспетчера: тексты — по OPTION_CHANGES.
 export function replanOptions({
   odd,
 }: Neighbors): Record<OptionId, ReplanOption> {
   const accept101 = {
     train: "101",
-    track: 1,
-    entryRoute: "Н-1",
-    exitRoute: "ЧП-1",
-    arrival: "14:15",
     text: "Путь 3 → путь 1 (тоже у платформы), прибытие 14:15",
   };
   return {
@@ -61,10 +96,6 @@ export function replanOptions({
         accept101,
         {
           train: "2001",
-          track: 2,
-          entryRoute: "НП-2",
-          exitRoute: "Ч-2",
-          arrival: "14:18",
           text: "Путь 5 → путь 2 (главный), прибытие по графику 14:18",
         },
       ],
@@ -78,10 +109,6 @@ export function replanOptions({
         accept101,
         {
           train: "2001",
-          track: 4,
-          entryRoute: "НП-4",
-          exitRoute: "Ч-4",
-          arrival: "14:27",
           text: `Удержать на ст. ${odd} 9 мин, затем на путь 4 в 14:27`,
         },
       ],
@@ -89,6 +116,9 @@ export function replanOptions({
     },
   };
 }
+
+// Манёвры ТЭМ2 в тупике: в плане путей поездов их нет — рисуем как есть.
+export const SHUNTING = { track: 6, from: "14:20", until: "14:32" };
 
 // Лента станции до инцидента: штатная работа по графику.
 export function baselineEvents({ odd }: Neighbors): ScenarioEvent[] {

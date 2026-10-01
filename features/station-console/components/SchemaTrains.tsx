@@ -1,5 +1,5 @@
 import type { StationConsoleData } from "../queries";
-import { TRACKS } from "../schema";
+import { TRACKS } from "../schemaTrains";
 
 type Props = { schema: StationConsoleData["schema"] };
 
