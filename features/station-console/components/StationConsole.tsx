@@ -1,9 +1,9 @@
+import { LiveRefresh } from "@/components/ui/LiveRefresh";
 import type { StationConsoleData } from "../queries";
 import type { ConsoleRole, ConsoleState, Neighbors } from "../types";
 import { ConsoleBar } from "./ConsoleBar";
 import { EfficiencySummary } from "./EfficiencySummary";
 import { IncidentBanner } from "./IncidentBanner";
-import { LiveRefresh } from "@/components/ui/LiveRefresh";
 import { ReturnToServiceDialog } from "./ReturnToServiceDialog";
 import { SidePanel } from "./SidePanel";
 import { StationSchema } from "./StationSchema";
@@ -36,6 +36,7 @@ export function StationConsole(props: Props) {
         stationName={stationName}
         clock={data.clock}
         mapHref={mapHref}
+        devicesHref={`/stations/${data.stationId}/devices`}
       />
       {showBanner && (
         <IncidentBanner

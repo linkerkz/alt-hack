@@ -1,8 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { refreshSession } from "@/lib/supabase";
 
-// Чеклист наряда открывают по QR без входа (но не печать наряда).
-const PUBLIC_PATHS = [/^\/login$/, /^\/work-orders\/[^/]+$/];
+// По QR без входа: чеклист наряда (но не его печать) и полевые устройства —
+// страница, её манифест и иконки PWA, приём сигнала камеры. Доступ даёт uuid.
+const PUBLIC_PATHS = [
+  /^\/login$/,
+  /^\/work-orders\/[^/]+$/,
+  /^\/devices\/[0-9a-f-]{36}(\/manifest\.webmanifest)?$/,
+  /^\/devices\/icon\/\d+$/,
+  /^\/api\/devices\/[0-9a-f-]{36}\/observations$/,
+];
 
 // Только вход: без сессии — на /login. Права по роли проверяют страницы.
 export async function proxy(request: NextRequest) {
