@@ -1,5 +1,5 @@
 import { activeOption, forecastFor, type PlanSource } from "./activePlan";
-import { givenAt } from "./departure";
+import { departedAt } from "./departure";
 import type { Run } from "./forecast";
 import type { ConsoleState, Live, Throat } from "./types";
 
@@ -77,10 +77,8 @@ export function schemaTrainsAt(state: ConsoleState, source: Source) {
 // путь уже свободен. Отправлен, когда ДСП дал отправление или по плану.
 function stationTrain(run: Run, source: Source): Train[] {
   const { now } = source;
-  const { from, to } = run.forecast;
-  if (now < from) return [];
-  const given = givenAt(run.train, from, source.departures);
-  const departed = Math.min(given ?? to, to);
+  if (now < run.forecast.from) return [];
+  const departed = departedAt(run.train, run.forecast, source.departures);
   if (now < departed) return [standingTrain(run)];
   if (now >= departed + LEAVE_MINUTES) return [];
   const leaving = exitThroat(run, source);

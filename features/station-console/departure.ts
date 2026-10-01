@@ -35,6 +35,17 @@ export function givenAt(
   return given?.at ?? null;
 }
 
+// Минута, когда поезд освобождает путь: отправление ДСП, но не позже плана.
+// По ней и схема уводит поезд, и план путей обрывает его полосу.
+export function departedAt(
+  train: string,
+  span: { from: number; to: number },
+  departures: GivenDeparture[],
+) {
+  const given = givenAt(train, span.from, departures);
+  return Math.min(given ?? span.to, span.to);
+}
+
 // Ключ операции отправления — тот же, что у поручения бригаде на пейджер.
 export function departureKey(train: string) {
   return `${train}-departure`;
