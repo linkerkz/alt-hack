@@ -107,8 +107,10 @@ export type Status = "normal" | "warning" | "critical";
 // Соседние станции: нечётная горловина — от кого поезда идут к нам, чётная — к кому.
 export type Neighbors = { odd: string; even: string };
 
-// Событие ленты: время симуляции «14:08», текст и уровень.
+// Событие ленты: время симуляции «14:08», текст и уровень. id — ключ строки:
+// время и текст повторяются (камера дважды за минуту сообщила «свободно»).
 export type ScenarioEvent = {
+  id: number | string;
   time: string;
   text: string;
   level?: Status;

@@ -120,7 +120,7 @@ export function replanOptions({
 
 // Лента станции до инцидента: штатная работа по графику.
 export function baselineEvents({ odd }: Neighbors): ScenarioEvent[] {
-  return [
+  const events = [
     {
       time: "14:06",
       text: `ДНЦ: на перегоне от ст. ${odd} путь 2 закрыт до 16:00`,
@@ -133,4 +133,5 @@ export function baselineEvents({ odd }: Neighbors): ScenarioEvent[] {
     { time: "14:05", text: "7015 отправлен с пути 3" },
     { time: "14:04", text: "3307 проследовал по пути 2" },
   ];
+  return events.map((event, index) => ({ ...event, id: `baseline-${index}` }));
 }

@@ -33,7 +33,7 @@ function EventRows({ events }: Props) {
     <ul>
       {events.map((event) => (
         <li
-          key={`${event.time}-${event.text}`}
+          key={event.id}
           className="grid grid-cols-[44px_1fr] gap-2 border-line border-t py-1 text-[12.5px]"
         >
           <span className="text-neutral-600">{event.time}</span>
