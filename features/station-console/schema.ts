@@ -17,7 +17,7 @@ type Overlay = {
   dashed: boolean;
 };
 
-// Поезда инцидента: в фокусе остальные приглушаются.
+// Поезда инцидента; остальные — quiet: в фокусе их приглушаем.
 const INCIDENT_TRAINS = ["101", "2001"];
 
 export function stationSchema(
@@ -28,7 +28,6 @@ export function stationSchema(
   const { step, option } = state;
   const fault = step >= STEP.suspected && step <= STEP.repaired;
   const preview = step === STEP.choosing || step === STEP.approval;
-  const focus = isFocusAvailable(state) && state.focus;
   const trains = schemaTrainsAt(state, source);
 
   return {
@@ -39,19 +38,18 @@ export function stationSchema(
     overlay: preview ? previewRoute(option) : issuedRoute(state),
     trains: trains.map(({ train, onTrack, ...rest }) => ({
       ...rest,
-      dimmed: focus && !INCIDENT_TRAINS.includes(train),
+      quiet: !INCIDENT_TRAINS.includes(train),
     })),
     offNote: offNoteAt(step, option, neighbors),
     note: fault
       ? `Маршруты через С3 закрыты${preview ? " · пунктир — предлагаемое изменение" : ""}`
       : "Все объекты исправны",
-    focusAvailable: isFocusAvailable(state),
-    focus,
   };
 }
 
-export function isFocusAvailable({ step, tab }: ConsoleState) {
-  return tab === "incident" && step >= STEP.suspected && step <= STEP.restored;
+// Шаг, на котором у инцидента есть зона для фокуса.
+export function isFocusStep(step: number) {
+  return step >= STEP.suspected && step <= STEP.restored;
 }
 
 // Пока путейцы не нашли повреждения, стрелка лишь «Внимание»: предмет уберут.

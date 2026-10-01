@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/Card";
 import { Kicker } from "@/components/ui/Kicker";
 import type { StationConsoleData } from "../queries";
 import type { Turn } from "../turn";
-import type { ConsoleState, ConsoleViewer } from "../types";
+import type { ConsoleViewer } from "../types";
 import { ApprovalForm } from "./ApprovalForm";
 import { CommandButton } from "./CommandButton";
 import { OptionPicker } from "./OptionPicker";
@@ -13,7 +13,6 @@ type Props = {
   turn: Turn;
   viewer: ConsoleViewer;
   comparison: StationConsoleData["comparison"];
-  state: ConsoleState;
 };
 
 const ROLE_LABEL: Record<ConsoleViewer, string> = {
@@ -40,9 +39,7 @@ export function TurnCard(props: Props) {
         {turn.title}
       </h3>
       <p className="text-[13px] text-neutral-800">{turn.text}</p>
-      {turn.form === "option" && (
-        <OptionPicker comparison={props.comparison} state={props.state} />
-      )}
+      {turn.form === "option" && <OptionPicker comparison={props.comparison} />}
       {turn.form === "approval" && <ApprovalForm stationId={stationId} />}
       {turn.items.length > 0 && (
         <TurnItems stationId={stationId} items={turn.items} />

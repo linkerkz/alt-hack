@@ -2,7 +2,6 @@ import { toMinutes } from "@/lib/clock";
 import { activeOption, forecastFor, type PlanSource } from "./activePlan";
 import type { Run } from "./forecast";
 import { FAULT, OPTION_CHANGES, SHUNTING, STEP, STEP_MINUTE } from "./mock";
-import { isFocusAvailable } from "./schema";
 import { clockAt } from "./status";
 import type { ConsoleState, OptionId } from "./types";
 
@@ -39,7 +38,6 @@ const LONG_STOP_MINUTES = 8;
 export function trackPlan(state: ConsoleState, source: PlanSource) {
   const now = toMinutes(clockAt(STEP_MINUTE[state.step]));
   const bars = barsAt(state, source);
-  const focus = isFocusAvailable(state) && state.focus;
 
   return {
     nowPercent: percentOf(now),
@@ -49,7 +47,7 @@ export function trackPlan(state: ConsoleState, source: PlanSource) {
     })),
     rows: ROWS.map((row) => ({
       ...row,
-      dimmed: focus && QUIET_TRACKS.includes(row.track),
+      quiet: QUIET_TRACKS.includes(row.track),
       bars: bars
         .filter((bar) => bar.track === row.track)
         .map((bar) => ({

@@ -1,13 +1,11 @@
-import Link from "next/link";
 import { StatusGlyph } from "@/components/ui/StatusGlyph";
 import { TONE_TEXT_CLASS } from "@/components/ui/tone";
 import type { StationConsoleData } from "../queries";
-import { consoleHref } from "../state";
-import type { ChosenOption, ConsoleState } from "../types";
+import type { ChosenOption } from "../types";
+import { ConsoleLink } from "./ConsoleLink";
 
 type Props = {
   comparison: StationConsoleData["comparison"];
-  state: ConsoleState;
 };
 
 type Head = Props["comparison"]["heads"][number];
@@ -18,7 +16,7 @@ type OptionHead = Head & { id: ChosenOption };
 // Выбор варианта в ходе ДСЦС: плитки А / Б с главными цифрами рядом с
 // «ничего не менять» и что меняет выбранный. Переключение — только вид
 // (URL); в базу уходит кнопка «Принять».
-export function OptionPicker({ comparison, state }: Props) {
+export function OptionPicker({ comparison }: Props) {
   const { heads, selected } = comparison;
   const baseline = heads.find((head) => head.id === "none");
   const options = heads.filter(
@@ -38,7 +36,7 @@ export function OptionPicker({ comparison, state }: Props) {
       )}
       <div className="grid grid-cols-2 gap-1.5">
         {options.map((head) => (
-          <OptionTile key={head.id} head={head} state={state} />
+          <OptionTile key={head.id} head={head} />
         ))}
       </div>
       <dl className="grid grid-cols-[44px_1fr] gap-x-2.5 gap-y-1 text-[13px]">
@@ -53,18 +51,10 @@ export function OptionPicker({ comparison, state }: Props) {
   );
 }
 
-function OptionTile({
-  head,
-  state,
-}: {
-  head: OptionHead;
-  state: ConsoleState;
-}) {
+function OptionTile({ head }: { head: OptionHead }) {
   return (
-    <Link
-      prefetch={false}
-      href={consoleHref(state, { option: head.id })}
-      scroll={false}
+    <ConsoleLink
+      patch={{ option: head.id }}
       aria-current={head.selected ? "true" : undefined}
       className={`flex flex-col gap-0.5 rounded border px-3 py-2 ${head.selected ? "border-accent-700 bg-accent-100 shadow-[inset_0_0_0_1px_var(--color-accent-700)]" : "border-line hover:border-accent"}`}
     >
@@ -82,6 +72,6 @@ function OptionTile({
       <span className="text-[11.5px] text-neutral-800">
         задержка до {head.maxDelay} мин · ДНЦ: {head.dncApproval}
       </span>
-    </Link>
+    </ConsoleLink>
   );
 }
