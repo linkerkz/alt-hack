@@ -21,9 +21,10 @@ export type Watch = { state: CameraState; streak: number };
 
 export const INITIAL_WATCH: Watch = { state: "clear", streak: 0 };
 
-// Следующее состояние: leaning — кадр тянет к смене состояния.
+// Следующее состояние: leaning — кадр тянет к смене состояния. Ничего не
+// поменялось — тот же объект: экран камеры не перерисовывается впустую.
 export function nextWatch(watch: Watch, leaning: boolean): Watch {
-  if (!leaning) return { state: watch.state, streak: 0 };
+  if (!leaning) return watch.streak === 0 ? watch : { ...watch, streak: 0 };
   const streak = watch.streak + 1;
   if (streak < neededTicks(watch.state)) return { state: watch.state, streak };
   return { state: flip(watch.state), streak: 0 };

@@ -1,5 +1,5 @@
 import { type Finding, MODEL_NAME } from "../detector";
-import type { Sensor } from "../useWatch";
+import type { Sensor } from "../useSensor";
 
 type Props = {
   objectId: string;
