@@ -22,9 +22,8 @@ export async function generateMetadata({
 export default async function WorkOrderPrintPage({
   params,
 }: PageProps<"/work-orders/[id]/print">) {
-  const user = await requireUser();
   const { id } = await params;
-  const order = await getWorkOrder(id);
+  const [user, order] = await Promise.all([requireUser(), getWorkOrder(id)]);
   if (order == null) notFound();
   const station = await getStation(order.stationId);
   if (station == null) notFound();
