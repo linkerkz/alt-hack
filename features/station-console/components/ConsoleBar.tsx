@@ -14,6 +14,7 @@ export function ConsoleBar({ stationName, clock, mapHref }: Props) {
       <span className="flex gap-1 text-[12px] text-muted">
         {mapHref != null && (
           <Link
+            prefetch={false}
             href={mapHref}
             className="text-accent-700 underline underline-offset-2 hover:text-accent-600"
           >

@@ -41,6 +41,7 @@ export function WorkOrderCard({ workOrder, order }: Props) {
       />
       <div className="flex gap-4 text-[12.5px]">
         <Link
+          prefetch={false}
           href={`/work-orders/${id}/print`}
           target="_blank"
           className="text-accent-700 underline underline-offset-2 hover:text-accent-600"
@@ -48,6 +49,7 @@ export function WorkOrderCard({ workOrder, order }: Props) {
           Печать наряда с QR
         </Link>
         <Link
+          prefetch={false}
           href={`/work-orders/${id}`}
           target="_blank"
           className="text-accent-700 underline underline-offset-2 hover:text-accent-600"

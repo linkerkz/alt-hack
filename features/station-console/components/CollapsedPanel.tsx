@@ -15,6 +15,7 @@ type Props = {
 export function CollapsedPanel({ state, label, marker }: Props) {
   return (
     <Link
+      prefetch={false}
       href={consoleHref(state, { panel: true })}
       scroll={false}
       title="Развернуть панель"

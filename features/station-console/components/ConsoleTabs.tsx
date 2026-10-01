@@ -24,6 +24,7 @@ export function ConsoleTabs({ state, incidentCode }: Props) {
         const isCurrent = tab.id === state.tab;
         return (
           <Link
+            prefetch={false}
             key={tab.id}
             href={consoleHref(state, { tab: tab.id })}
             scroll={false}

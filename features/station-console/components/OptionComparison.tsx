@@ -76,6 +76,7 @@ function OptionHead({ head, state }: { head: Head; state: ConsoleState }) {
   }
   return (
     <Link
+      prefetch={false}
       href={consoleHref(state, { option: head.id })}
       scroll={false}
       aria-current={head.selected ? "true" : undefined}
