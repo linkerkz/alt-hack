@@ -102,3 +102,15 @@ body {
 .leaflet-tooltip.map-tooltip::before {
   display: none;
 }
+
+/* Печать (наряд): лист A4, бумага белая, без фона темы. */
+@page {
+  size: A4;
+  margin: 14mm;
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+}
