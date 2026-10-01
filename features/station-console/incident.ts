@@ -9,6 +9,7 @@ import {
   STEP_INCIDENT_STATUS,
 } from "./mock";
 import { routeDone } from "./routing";
+import { snapshotOf } from "./snapshot";
 import type {
   Command,
   ConsoleState,
@@ -47,7 +48,7 @@ export function incidentCard(
   return {
     code: live.incident?.code ?? INCIDENT.id,
     detection,
-    snapshot: live.incident?.snapshot ?? null,
+    snapshot: snapshotOf(live.incident),
     analysis: live.incident?.analysis ?? null,
     isActive: step >= STEP.suspected && step <= STEP.restored,
     statusName: INCIDENT_STATUS[statusIndex],

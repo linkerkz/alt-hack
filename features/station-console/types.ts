@@ -36,8 +36,6 @@ export type LiveIncident = {
   option: ChosenOption | null;
   routeTasks: RouteTask[];
   detection: DetectionKind;
-  // Снимок с камеры в момент обнаружения (data URL); null — без снимка.
-  snapshot: string | null;
   // Вывод ИИ по снимку; null — без анализа.
   analysis: string | null;
 };
