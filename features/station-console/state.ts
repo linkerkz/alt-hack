@@ -1,5 +1,7 @@
 import { STEP } from "./mock";
-import type { ConsoleState, ConsoleTab } from "./types";
+import type { ConsoleState, ConsoleTab, RouteTask } from "./types";
+
+const ROUTE_TASKS: RouteTask[] = ["r101", "r2001"];
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -12,6 +14,8 @@ export function parseConsoleState(params: SearchParams): ConsoleState {
     tab: parseTab(first(params.tab), step),
     focus: first(params.focus) !== "off",
     panel: first(params.panel) !== "off",
+    done: parseDone(first(params.done)),
+    confirm: first(params.confirm) === "1",
   };
 }
 
@@ -25,7 +29,14 @@ export function consoleHref(state: ConsoleState, patch: Partial<ConsoleState>) {
   });
   if (!next.focus) query.set("focus", "off");
   if (!next.panel) query.set("panel", "off");
+  if (next.done.length > 0) query.set("done", next.done.join(","));
+  if (next.confirm) query.set("confirm", "1");
   return `?${query}`;
+}
+
+function parseDone(value: string | undefined): RouteTask[] {
+  const ids = (value ?? "").split(",");
+  return ROUTE_TASKS.filter((task) => ids.includes(task));
 }
 
 function parseStep(value: string | undefined) {

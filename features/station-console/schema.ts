@@ -1,4 +1,5 @@
 import { STEP } from "./mock";
+import { routeDone } from "./routing";
 import type { ChosenOption, ConsoleState, Neighbors, Status } from "./types";
 
 // Динамика схемы станции на шаге сценария: занятость путей, поезда,
@@ -13,6 +14,15 @@ export type SchemaTrain = {
   // Затронут инцидентом — обводка цветом «Критично».
   late: boolean;
   dimmed: boolean;
+};
+
+// Линии поверх путей: предпросмотр варианта (пунктир) или заданный маршрут.
+type Overlay = {
+  paths: string[];
+  label: string;
+  labelX: number;
+  labelY: number;
+  dashed: boolean;
 };
 
 export type TrackNumber = 1 | 2 | 3 | 4 | 5 | 6;
@@ -41,8 +51,8 @@ export function stationSchema(state: ConsoleState, neighbors: Neighbors) {
     occupied: occupiedTracks(step, option),
     fault,
     switchC3: switchC3(step, fault),
-    entrySignal: entrySignal(step),
-    preview: preview ? previewRoute(option) : null,
+    entrySignal: entrySignal(state),
+    overlay: preview ? previewRoute(option) : issuedRoute(state),
     trains: trainsAt(step, option).map((train) => ({
       ...train,
       dimmed: focus && !INCIDENT_TRAINS.includes(train.label.split(" ")[0]),
@@ -80,17 +90,34 @@ function switchC3(step: number, fault: boolean) {
 }
 
 // Входной Н запрещает приём, пока маршрут 101 не задан по новому плану.
-function entrySignal(step: number): Status | null {
+function entrySignal(state: ConsoleState): Status | null {
+  const { step } = state;
+  if (step === STEP.decided && routeDone(state).r101) return "normal";
   return step >= STEP.suspected && step <= STEP.decided ? "critical" : null;
 }
 
-function previewRoute(option: ChosenOption) {
+// Маршрут, который ДСП уже задал для 101: сплошная линия поверх пути 1.
+function issuedRoute(state: ConsoleState): Overlay | null {
+  if (state.step !== STEP.decided || !routeDone(state).r101) return null;
+  return {
+    paths: ["M40 170 H200"],
+    label: "Маршрут Н → путь 1 задан",
+    labelX: 60,
+    labelY: 196,
+    dashed: false,
+  };
+}
+
+function previewRoute(option: ChosenOption): Overlay {
   return {
     paths: [
       "M0 170 H420",
       option === "B" ? "M0 230 H110 L165 285 H300" : "M0 170 H300",
     ],
     label: `Предпросмотр: ${option === "B" ? "вариант б" : "вариант а"}`,
+    labelX: 200,
+    labelY: 200,
+    dashed: true,
   };
 }
 

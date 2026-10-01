@@ -1,16 +1,18 @@
 import Link from "next/link";
-import { INCIDENT } from "../mock";
+import type { ReactNode } from "react";
 import { consoleHref } from "../state";
 import type { ConsoleState } from "../types";
 
 type Props = {
   state: ConsoleState;
-  // Активный инцидент: полоса напоминает о нём, даже когда панель свёрнута.
-  hasActiveIncident: boolean;
+  // Название панели, вертикально вдоль полосы.
+  label: string;
+  // Значок о том, что в панели есть срочное: инцидент или новые задачи.
+  marker?: ReactNode;
 };
 
 // Свёрнутая правая панель: узкая полоса, по клику панель открывается.
-export function CollapsedPanel({ state, hasActiveIncident }: Props) {
+export function CollapsedPanel({ state, label, marker }: Props) {
   return (
     <Link
       href={consoleHref(state, { panel: true })}
@@ -22,13 +24,9 @@ export function CollapsedPanel({ state, hasActiveIncident }: Props) {
         ‹
       </span>
       <span className="font-heading font-semibold text-[15px] [writing-mode:vertical-rl]">
-        {state.tab === "incident" ? `Инцидент ${INCIDENT.id}` : "Обзор"}
+        {label}
       </span>
-      {hasActiveIncident && (
-        <span className="text-[12px] text-critical" title="Активный инцидент">
-          ■
-        </span>
-      )}
+      {marker}
       <span className="sr-only">Развернуть панель</span>
     </Link>
   );
