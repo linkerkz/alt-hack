@@ -14,6 +14,10 @@ CLAUDE.md — только оглавление. Здесь живут `@`-им�
 
 <!-- Code style, architecture, API contract, terminology, workflow. Read ALWAYS when writing or planning code. -->
 
+@docs/ui.md
+
+<!-- Тема «Classical»: токены, значки состояний, каталог components/ui. Читай перед любой вёрсткой. -->
+
 @AGENTS.md
 
 <!-- Base context: Expo v56 docs rule, project language (Russian-only). Read ALWAYS. -->
