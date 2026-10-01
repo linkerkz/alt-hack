@@ -1,8 +1,13 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { LiveClock } from "./LiveClock";
 
 type Props = {
   current: Section;
+  // Пульт своей станции; null — у пользователя её нет, пункт неактивен.
+  stationHref: string | null;
+  // Блок пользователя справа: его собирает страница, шапка о входе не знает.
+  account?: ReactNode;
 };
 
 type Section = "network" | "station";
@@ -11,18 +16,28 @@ type NavItem = {
   id: Section | "analytics" | "scenarios" | "settings";
   label: string;
   href?: string;
+  // Подсказка для неактивного пункта.
+  hint?: string;
 };
 
-// Пункты без href ещё не реализованы — показываем их, чтобы было видно план продукта.
-const NAV: NavItem[] = [
-  { id: "network", label: "Карта сети", href: "/" },
-  { id: "station", label: "Пульт станции" },
-  { id: "analytics", label: "Эффективность" },
-  { id: "scenarios", label: "Сценарии сбоев" },
-  { id: "settings", label: "Настройки индекса" },
-];
+// Пункты без href неактивны: ещё не реализованы или недоступны роли —
+// показываем их, чтобы было видно план продукта.
+function navItems(stationHref: string | null): NavItem[] {
+  return [
+    { id: "network", label: "Карта сети", href: "/" },
+    {
+      id: "station",
+      label: "Пульт станции",
+      href: stationHref ?? undefined,
+      hint: "Откройте пульт из карточки станции на карте",
+    },
+    { id: "analytics", label: "Эффективность" },
+    { id: "scenarios", label: "Сценарии сбоев" },
+    { id: "settings", label: "Настройки индекса" },
+  ];
+}
 
-export function AppHeader({ current }: Props) {
+export function AppHeader({ current, stationHref, account }: Props) {
   return (
     <header className="flex h-12 shrink-0 items-center gap-6 border-line border-b bg-surface-1 px-4">
       <Link href="/" className="flex items-center gap-2.5">
@@ -33,7 +48,7 @@ export function AppHeader({ current }: Props) {
       </Link>
 
       <nav className="flex h-full items-stretch gap-1">
-        {NAV.map((item) => (
+        {navItems(stationHref).map((item) => (
           <NavLink key={item.id} item={item} isCurrent={item.id === current} />
         ))}
       </nav>
@@ -47,6 +62,7 @@ export function AppHeader({ current }: Props) {
           Симулятор · онлайн
         </span>
         <LiveClock />
+        {account}
       </div>
     </header>
   );
@@ -68,7 +84,7 @@ function NavLink({ item, isCurrent }: { item: NavItem; isCurrent: boolean }) {
   if (item.href == null) {
     return (
       <span
-        title="В разработке"
+        title={item.hint ?? "В разработке"}
         className={`${base} cursor-not-allowed border-transparent text-zinc-600`}
       >
         {item.label}
