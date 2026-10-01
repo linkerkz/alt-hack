@@ -4,9 +4,9 @@ import { TRACKS } from "../schema";
 type Props = { schema: StationConsoleData["schema"] };
 
 // Состояние схемы: занятость путей, закрытые съезды через С3, входной Н,
-// предпросмотр варианта.
+// предпросмотр варианта или заданный маршрут.
 export function SchemaTracks({ schema }: Props) {
-  const { occupied, fault, preview } = schema;
+  const { occupied, fault, overlay } = schema;
   const linkClass = fault ? "stroke-critical" : "stroke-neutral-500";
 
   return (
@@ -31,25 +31,25 @@ export function SchemaTracks({ schema }: Props) {
           className={`fill-none ${linkClass}`}
         />
       ))}
-      {preview?.paths.map((d) => (
+      {overlay?.paths.map((d) => (
         <path
           key={d}
           d={d}
-          strokeWidth={7}
-          strokeDasharray="10 7"
+          strokeWidth={overlay.dashed ? 7 : 5}
+          strokeDasharray={overlay.dashed ? "10 7" : undefined}
           strokeLinecap="round"
           className="fill-none stroke-accent opacity-85"
         />
       ))}
-      {preview != null && (
+      {overlay != null && (
         <text
-          x={200}
-          y={200}
+          x={overlay.labelX}
+          y={overlay.labelY}
           fontSize={12}
           fontStyle="italic"
           className="fill-accent-700"
         >
-          {preview.label}
+          {overlay.label}
         </text>
       )}
     </g>

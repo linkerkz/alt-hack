@@ -6,6 +6,7 @@ import {
   STEP_INCIDENT_STATUS,
   scenarioEvents,
 } from "./mock";
+import { routeDone } from "./routing";
 import type { ConsoleState, Neighbors, Status } from "./types";
 
 // Карточка инцидента для ДСЦС: что делать сейчас, кто чем занят, хронология.
@@ -87,11 +88,18 @@ function actionAt(state: ConsoleState, neighbors: Neighbors): ConsoleAction {
         waiting: "Ждёт согласования ДНЦ",
         showMap: true,
       };
-    case STEP.decided:
+    case STEP.decided: {
+      const routed = routeDone(state);
+      if (routed.r101 && routed.r2001) {
+        return {
+          text: "ДСП задал маршруты по новому плану. ДНЦ получил «маршрут готов», машинисты уведомлены.",
+        };
+      }
       return {
         text: "План обновлён. Задачи переданы ДСП: приём поездов по новому плану.",
         waiting: "Ждёт подтверждения ДСП",
       };
+    }
     case STEP.repairing:
       return {
         text: "Идут работы на С3. Стрелка закрыта, пока ДСП не вернёт её в эксплуатацию.",
@@ -112,11 +120,13 @@ function actionAt(state: ConsoleState, neighbors: Neighbors): ConsoleAction {
   }
 }
 
-function tasksAt({ step, option }: ConsoleState, { odd }: Neighbors) {
+function tasksAt(state: ConsoleState, { odd }: Neighbors) {
+  const { step, option } = state;
   const tasks: { who: string; what: string; status: string; tone: Status }[] =
     [];
   const isB = option === "B";
-  const routed = step >= STEP.repairing;
+  const routed = routeDone(state);
+  const acknowledged = step >= STEP.repairing;
   const pending = { status: "Ожидает…", tone: "warning" as const };
 
   if (isB && step >= STEP.approval) {
@@ -135,26 +145,26 @@ function tasksAt({ step, option }: ConsoleState, { odd }: Neighbors) {
     {
       who: "ДСП",
       what: "Приём 101 на путь 1",
-      ...(routed ? done("Маршрут задан 14:12") : pending),
+      ...(routed.r101 ? done("Маршрут задан 14:12") : pending),
     },
     {
       who: "ДСП",
       what: isB
         ? "Приём 2001 на путь 4 в 14:27"
         : "Приём 2001 на путь 1 в 14:32",
-      ...(routed ? done("Подтвердил") : pending),
+      ...(routed.r2001 ? done("Подтвердил") : pending),
     },
     {
       who: "Машинист 101",
       what: "Приём на путь 1",
-      ...(routed
+      ...(acknowledged
         ? done("Подтвердил")
         : { status: "Уведомлён", tone: "warning" }),
     },
     {
       who: "Машинист 2001",
       what: isB ? `Стоянка на ст. ${odd} ≈ 9 мин` : "Ожидание у входного Н",
-      ...(routed
+      ...(acknowledged
         ? done("Подтвердил")
         : { status: "Уведомлён", tone: "warning" }),
     },
