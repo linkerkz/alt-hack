@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { canOpenStation, homePath } from "@/features/auth/access";
 import { requireUser } from "@/features/auth/queries";
@@ -9,6 +8,10 @@ import { WorkOrderSheet } from "@/features/work-orders/components/WorkOrderSheet
 import { getWorkOrder } from "@/features/work-orders/queries";
 
 // Печатный наряд для сотрудников станции. Заголовок вкладки станет именем PDF.
+
+// QR всегда ведёт на деплой: телефон рабочего откроет его откуда угодно,
+// даже если наряд напечатали с локальной машины.
+const SITE_URL = "https://alt-hack.vercel.app";
 
 export async function generateMetadata({
   params,
@@ -38,16 +41,8 @@ export default async function WorkOrderPrintPage({
       <WorkOrderSheet
         order={order}
         stationName={station.name}
-        checklistUrl={await checklistUrl(order.id)}
+        checklistUrl={`${SITE_URL}/work-orders/${order.id}`}
       />
     </main>
   );
-}
-
-// QR ведёт на тот же адрес, с которого открыт наряд: локальный IP или деплой.
-async function checklistUrl(id: string) {
-  const requestHeaders = await headers();
-  const host = requestHeaders.get("host") ?? "localhost:3000";
-  const protocol = requestHeaders.get("x-forwarded-proto") ?? "http";
-  return `${protocol}://${host}/work-orders/${id}`;
 }
