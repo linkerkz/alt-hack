@@ -708,3 +708,14 @@ function section(
 ): Section {
   return { id: `${fromId}--${toId}`, fromId, toId, status, note };
 }
+
+// Диспетчерские круги ДНЦ: деление сети условное, под демо.
+export const DISPATCH_AREA_NAMES: Record<string, string> = {
+  almaty: "Алматинский круг",
+  semey: "Семейский круг",
+  shymkent: "Шымкентский круг",
+  kyzylorda: "Кызылординский круг",
+  aktobe: "Западный круг",
+  karaganda: "Карагандинский круг",
+  astana: "Астанинский круг",
+};

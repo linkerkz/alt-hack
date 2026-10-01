@@ -1,14 +1,10 @@
 import Link from "next/link";
-import {
-  STATION_KIND_LABEL,
-  STATUS_DOT_CLASS,
-  STATUS_TEXT_CLASS,
-  toStatus,
-} from "../status";
-import type { Station } from "../types";
+import { STATUS_DOT_CLASS, STATUS_TEXT_CLASS, toStatus } from "../status";
+import type { ZoneStation } from "../types";
+import { FlowCounters } from "./FlowCounters";
 
 type Props = {
-  stations: Station[];
+  stations: ZoneStation[];
   selectedStationId: string | null;
 };
 
@@ -19,7 +15,7 @@ export function StationList({ stations, selectedStationId }: Props) {
         <h2 className="font-semibold text-[11px] text-muted uppercase tracking-widest">
           Станции · {stations.length}
         </h2>
-        <span className="text-[11px] text-muted">по критичности</span>
+        <span className="text-[11px] text-muted">↓ приб. ↑ отпр. ⇢ проезд</span>
       </header>
       <ul className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
         {stations.map((station) => (
@@ -36,7 +32,7 @@ export function StationList({ stations, selectedStationId }: Props) {
 }
 
 type RowProps = {
-  station: Station;
+  station: ZoneStation;
   isSelected: boolean;
 };
 
@@ -54,16 +50,16 @@ function StationRow({ station, isSelected }: RowProps) {
       <span
         className={`size-2 shrink-0 rounded-full ${STATUS_DOT_CLASS[status]}`}
       />
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm text-zinc-100">
-          {station.name}
-        </span>
-        <span className="block text-[11px] text-muted">
-          {STATION_KIND_LABEL[station.kind]}
+      <span className="min-w-0 flex-1 space-y-1">
+        <span className="flex items-baseline gap-2">
+          <span className="truncate text-sm text-zinc-100">{station.name}</span>
           {incidentCount > 0 && (
-            <span className="text-rose-400"> · сбоев: {incidentCount}</span>
+            <span className="text-[11px] text-rose-400">
+              сбоев: {incidentCount}
+            </span>
           )}
         </span>
+        <FlowCounters flow={station.flow} />
       </span>
       <span
         className={`font-mono font-semibold text-sm tabular-nums ${STATUS_TEXT_CLASS[status]}`}

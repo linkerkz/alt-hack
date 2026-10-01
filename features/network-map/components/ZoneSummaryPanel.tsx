@@ -1,3 +1,4 @@
+import { HORIZON_MINUTES } from "../flows";
 import {
   STATUS_BADGE_CLASS,
   STATUS_DOT_CLASS,
@@ -6,19 +7,31 @@ import {
   STATUS_TEXT_CLASS,
   toStatus,
 } from "../status";
-import type { NetworkSummary } from "../types";
+import type { ZoneSummary } from "../types";
 import { IndexRing } from "./IndexRing";
 
-export function NetworkSummaryPanel({ summary }: { summary: NetworkSummary }) {
+type Props = {
+  title: string;
+  summary: ZoneSummary;
+};
+
+export function ZoneSummaryPanel({ title, summary }: Props) {
   const status = toStatus(summary.avgEfficiencyIndex);
 
   return (
     <section className="space-y-4 border-line border-b p-4">
+      <div>
+        <p className="font-mono text-[11px] text-muted uppercase tracking-widest">
+          Зона ответственности
+        </p>
+        <h1 className="mt-0.5 font-semibold text-lg text-white">{title}</h1>
+      </div>
+
       <div className="flex items-center gap-4">
-        <IndexRing value={summary.avgEfficiencyIndex} />
+        <IndexRing value={summary.avgEfficiencyIndex} size={80} />
         <div className="space-y-2">
           <p className="text-muted text-xs leading-snug">
-            Средний индекс эффективности сети
+            Средний индекс эффективности зоны
           </p>
           <span
             className={`inline-flex rounded border px-2 py-0.5 font-medium text-xs uppercase tracking-wider ${STATUS_BADGE_CLASS[status]}`}
@@ -28,12 +41,16 @@ export function NetworkSummaryPanel({ summary }: { summary: NetworkSummary }) {
         </div>
       </div>
 
-      <StatusBreakdown summary={summary} />
+      {summary.stationCount > 1 && <StatusBreakdown summary={summary} />}
 
-      <dl className="grid grid-cols-2 gap-2">
-        <Metric label="Поездов на станциях" value={summary.trainCount} />
+      <dl className="grid grid-cols-3 gap-2">
+        <Metric label="Поездов в зоне" value={summary.trainsWithinCount} />
         <Metric
-          label="Активных сбоев"
+          label={`Прибытий за ${HORIZON_MINUTES / 60} ч`}
+          value={summary.arrivingCount}
+        />
+        <Metric
+          label="Сбоев"
           value={summary.incidentCount}
           accent={summary.incidentCount > 0}
         />
@@ -42,7 +59,7 @@ export function NetworkSummaryPanel({ summary }: { summary: NetworkSummary }) {
   );
 }
 
-function StatusBreakdown({ summary }: { summary: NetworkSummary }) {
+function StatusBreakdown({ summary }: { summary: ZoneSummary }) {
   const { stationCount, stationCountByStatus } = summary;
 
   return (
@@ -85,8 +102,8 @@ type MetricProps = {
 
 function Metric({ label, value, accent = false }: MetricProps) {
   return (
-    <div className="rounded border border-line bg-surface-1 px-3 py-2">
-      <dt className="text-[11px] text-muted">{label}</dt>
+    <div className="flex flex-col justify-between gap-1 rounded border border-line bg-surface-1 px-2.5 py-2">
+      <dt className="text-[11px] text-muted leading-tight">{label}</dt>
       <dd
         className={`font-mono font-semibold text-xl tabular-nums ${accent ? "text-rose-400" : "text-white"}`}
       >

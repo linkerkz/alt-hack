@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { Section, Station } from "../types";
+import type { ZoneSection, ZoneStation } from "../types";
 
 // Leaflet обращается к window при импорте, поэтому карту грузим только в браузере.
 const MapCanvas = dynamic(
@@ -10,8 +10,8 @@ const MapCanvas = dynamic(
 );
 
 type Props = {
-  stations: Station[];
-  sections: Section[];
+  stations: ZoneStation[];
+  sections: ZoneSection[];
   selectedStationId: string | null;
 };
 
@@ -23,7 +23,7 @@ function MapPlaceholder() {
   return (
     <div className="flex h-full w-full items-center justify-center bg-surface-0">
       <span className="font-mono text-muted text-xs uppercase tracking-widest">
-        Загрузка карты сети…
+        Загрузка карты…
       </span>
     </div>
   );

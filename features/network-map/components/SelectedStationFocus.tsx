@@ -4,20 +4,21 @@ import { useEffect } from "react";
 import { useMap } from "react-leaflet";
 import type { Station } from "../types";
 
-const FOCUS_ZOOM = 7;
-// Справа карту перекрывает превью станции — сдвигаем центр влево на половину его ширины.
-const PREVIEW_OFFSET_PX = 190;
+// Справа карту перекрывает карточка станции — сдвигаем центр влево на половину её ширины.
+const PREVIEW_OFFSET_PX = 200;
 
+// Карта уже приближена к зоне, поэтому только сдвигаем её к станции, не меняя зум.
 export function SelectedStationFocus({ station }: { station: Station | null }) {
   const map = useMap();
 
   useEffect(() => {
     if (station == null) return;
 
+    const zoom = map.getZoom();
     const point = map
-      .project([station.lat, station.lon], FOCUS_ZOOM)
+      .project([station.lat, station.lon], zoom)
       .add([PREVIEW_OFFSET_PX, 0]);
-    map.flyTo(map.unproject(point, FOCUS_ZOOM), FOCUS_ZOOM, { duration: 1 });
+    map.panTo(map.unproject(point, zoom), { duration: 0.8 });
   }, [map, station]);
 
   return null;
