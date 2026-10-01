@@ -143,7 +143,7 @@ insert into public.work_orders (
 ) values (
   'b0000000-0000-4000-8000-000000000001',
   'almaty-1',
-  'inc-s3',
+  null,
   'С3',
   'signalling',
   'Восстановить контроль стрелки С3',
