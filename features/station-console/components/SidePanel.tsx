@@ -25,7 +25,10 @@ export function SidePanel({ role, operatorName, data, state, mapHref }: Props) {
         <DspPanel operatorName={operatorName} data={data} state={state} />
       ) : (
         <>
-          <ConsoleTabs state={state} hasIncident={state.step > 0} />
+          <ConsoleTabs
+            state={state}
+            incidentCode={state.step > 0 ? data.incident.code : null}
+          />
           <div className="flex flex-1 flex-col gap-[18px] overflow-auto px-5 pt-4 pb-[120px]">
             {state.tab === "incident" ? (
               <IncidentPanel data={data} state={state} mapHref={mapHref} />
@@ -64,7 +67,9 @@ function Collapsed({ role, data, state }: CollapsedProps) {
   return (
     <CollapsedPanel
       state={state}
-      label={state.tab === "incident" ? "Инцидент И-0417" : "Обзор"}
+      label={
+        state.tab === "incident" ? `Инцидент ${data.incident.code}` : "Обзор"
+      }
       marker={
         data.incident.isActive && (
           <span className="text-[12px] text-critical" title="Активный инцидент">
