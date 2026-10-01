@@ -2,9 +2,6 @@ import type { PlanBarKind } from "./plan";
 import type { StageState } from "./progress";
 import type { Status } from "./types";
 
-// Пороги индекса по продуктовому решению: от 80 — Норма, 60–79 — Внимание.
-const INDEX_THRESHOLDS = { normal: 80, warning: 60 };
-
 // Пороги оценки одного показателя из 20 баллов.
 const SCORE_THRESHOLDS = { normal: 17, warning: 12 };
 
@@ -19,10 +16,6 @@ export const METRICS = [
   { label: "Конфликты маршрутов", unit: "", good: 0, bad: 3 },
   { label: "Простой ресурсов", unit: " мин", good: 0, bad: 30 },
 ];
-
-export function indexStatus(index: number) {
-  return statusOf(index, INDEX_THRESHOLDS);
-}
 
 export function scoreStatus(score: number) {
   return statusOf(score, SCORE_THRESHOLDS);
