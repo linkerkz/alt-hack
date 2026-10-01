@@ -1,22 +1,19 @@
-import Link from "next/link";
 import { Kicker } from "@/components/ui/Kicker";
 import { StatusGlyph } from "@/components/ui/StatusGlyph";
 import { TONE_TEXT_CLASS } from "@/components/ui/tone";
 import type { StationConsoleData } from "../queries";
-import { consoleHref } from "../state";
-import type { ConsoleState } from "../types";
+import { ConsoleLink } from "./ConsoleLink";
 import { SelectedOption } from "./SelectedOption";
 
 type Props = {
   comparison: StationConsoleData["comparison"];
-  state: ConsoleState;
 };
 
 type Head = StationConsoleData["comparison"]["heads"][number];
 
 // Варианты перепланирования рядом с «ничего не менять»: колонка на вариант,
 // лучшее значение в строке выделено. Пока решение не принято, вариант можно выбрать.
-export function OptionComparison({ comparison, state }: Props) {
+export function OptionComparison({ comparison }: Props) {
   const { note, decided, heads, rows, selected } = comparison;
 
   return (
@@ -29,7 +26,7 @@ export function OptionComparison({ comparison, state }: Props) {
         <div className="grid grid-cols-[100px_repeat(3,minmax(0,1fr))] text-[12.5px]">
           <span />
           {heads.map((head) => (
-            <OptionHead key={head.id} head={head} state={state} />
+            <OptionHead key={head.id} head={head} />
           ))}
           {rows.map((row) => (
             <div key={row.label} className="contents">
@@ -54,7 +51,7 @@ export function OptionComparison({ comparison, state }: Props) {
   );
 }
 
-function OptionHead({ head, state }: { head: Head; state: ConsoleState }) {
+function OptionHead({ head }: { head: Head }) {
   const className = `flex flex-col gap-0.5 border-t-2 px-2 pt-2 pb-1.5 text-left ${
     head.selected ? "border-accent bg-accent-100" : "border-transparent"
   }`;
@@ -75,14 +72,12 @@ function OptionHead({ head, state }: { head: Head; state: ConsoleState }) {
     return <div className={className}>{content}</div>;
   }
   return (
-    <Link
-      prefetch={false}
-      href={consoleHref(state, { option: head.id })}
-      scroll={false}
+    <ConsoleLink
+      patch={{ option: head.id }}
       aria-current={head.selected ? "true" : undefined}
       className={`${className} hover:bg-accent-100`}
     >
       {content}
-    </Link>
+    </ConsoleLink>
   );
 }

@@ -10,6 +10,8 @@ type Props = {
   // Что за число: «индекс эффективности».
   caption?: ReactNode;
   size?: "md" | "lg";
+  // Знаменатель рядом со значением: «100 / 100».
+  max?: number;
 };
 
 const SIZE_CLASS = {
@@ -24,13 +26,19 @@ export function IndexValue({
   label,
   caption,
   size = "lg",
+  max,
 }: Props) {
   return (
     <div className="flex items-center gap-3">
-      <span
-        className={`font-heading font-semibold leading-none tracking-[-0.02em] ${SIZE_CLASS[size]} ${TONE_TEXT_CLASS[tone]}`}
-      >
-        {value}
+      <span className="flex items-baseline gap-2">
+        <span
+          className={`font-heading font-semibold leading-none tracking-[-0.02em] ${SIZE_CLASS[size]} ${TONE_TEXT_CLASS[tone]}`}
+        >
+          {value}
+        </span>
+        {max != null && (
+          <span className="font-medium text-[16px] text-muted">/ {max}</span>
+        )}
       </span>
       <div className="flex flex-col gap-1">
         <StatusBadge tone={tone} label={label} />

@@ -47,7 +47,7 @@ export function TrackPlan({ plan, clock }: Props) {
       {rows.map((row) => (
         <div
           key={row.track}
-          className={`grid min-h-[30px] grid-cols-[72px_minmax(0,1fr)] border-line border-t transition-opacity duration-400 ${row.dimmed ? "opacity-35" : ""}`}
+          className={`grid min-h-[30px] grid-cols-[72px_minmax(0,1fr)] border-line border-t transition-opacity duration-400 ${row.quiet ? "group-data-[focus]/console:opacity-35" : ""}`}
         >
           <div className="flex flex-col justify-center leading-tight">
             <span className="text-[13px]">Путь {row.track}</span>

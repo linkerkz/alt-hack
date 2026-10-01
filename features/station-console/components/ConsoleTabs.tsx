@@ -1,10 +1,11 @@
-import Link from "next/link";
-import { consoleHref } from "../state";
-import type { ConsoleState, ConsoleTab } from "../types";
+"use client";
+
+import type { ConsoleTab } from "../types";
 import { CollapseLink } from "./CollapseLink";
+import { ConsoleLink } from "./ConsoleLink";
+import { useConsoleView } from "./ConsoleView";
 
 type Props = {
-  state: ConsoleState;
   // Код инцидента; null — инцидента нет, и вкладки для него тоже.
   incidentCode: string | null;
   // Ход за тем, кто смотрит: вкладку инцидента помечаем.
@@ -12,7 +13,8 @@ type Props = {
 };
 
 // Вкладки правой панели: станция и карточка инцидента.
-export function ConsoleTabs({ state, incidentCode, myTurn }: Props) {
+export function ConsoleTabs({ incidentCode, myTurn }: Props) {
+  const view = useConsoleView();
   const tabs: { id: ConsoleTab; label: string }[] = [
     { id: "overview", label: "Станция" },
     ...(incidentCode == null
@@ -28,13 +30,11 @@ export function ConsoleTabs({ state, incidentCode, myTurn }: Props) {
   return (
     <nav className="flex border-line border-b">
       {tabs.map((tab) => {
-        const isCurrent = tab.id === state.tab;
+        const isCurrent = tab.id === view.tab;
         return (
-          <Link
-            prefetch={false}
+          <ConsoleLink
             key={tab.id}
-            href={consoleHref(state, { tab: tab.id })}
-            scroll={false}
+            patch={{ tab: tab.id }}
             aria-current={isCurrent ? "page" : undefined}
             className={`flex-1 px-3.5 py-[11px] text-center font-heading font-semibold text-[16px] ${
               isCurrent
@@ -43,10 +43,10 @@ export function ConsoleTabs({ state, incidentCode, myTurn }: Props) {
             }`}
           >
             {tab.label}
-          </Link>
+          </ConsoleLink>
         );
       })}
-      <CollapseLink state={state} />
+      <CollapseLink />
     </nav>
   );
 }

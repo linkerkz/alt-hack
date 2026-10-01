@@ -14,12 +14,15 @@ const KIND: Record<IncidentRow["kind"], IncidentKind> = {
   resource_shortage: "resource-shortage",
 };
 
-export async function openIncidents() {
+// stationId — только сбои этой станции; без него — всей сети.
+export async function openIncidents(stationId?: string) {
   const supabase = await createSupabaseClient();
-  const { data } = await supabase
+  let query = supabase
     .from("incidents")
     .select("code, station_id, kind, title, detected_at, timeline_events(at)")
-    .not("status", "in", "(restored,closed)")
+    .not("status", "in", "(restored,closed)");
+  if (stationId != null) query = query.eq("station_id", stationId);
+  const { data } = await query
     .order("detected_at", { ascending: false })
     .order("at", { referencedTable: "timeline_events", ascending: true })
     .limit(1, { referencedTable: "timeline_events" })

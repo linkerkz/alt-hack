@@ -1,23 +1,22 @@
-import { ButtonLink } from "@/components/ui/ButtonLink";
+import { buttonClass } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Kicker } from "@/components/ui/Kicker";
 import { TONE_GLYPH, TONE_TEXT_CLASS } from "@/components/ui/tone";
 import type { StationConsoleData } from "../queries";
-import { consoleHref } from "../state";
-import type { ConsoleState, ConsoleViewer } from "../types";
+import type { ConsoleViewer } from "../types";
+import { ConsoleLink } from "./ConsoleLink";
 import { EventFeed } from "./EventFeed";
 import { OperationsCard } from "./OperationsCard";
 import { PagerCard } from "./PagerCard";
 
 type Props = {
   data: StationConsoleData;
-  state: ConsoleState;
   viewer: ConsoleViewer;
 };
 
 // Вкладка «Станция»: активный инцидент коротко, ближайшие операции по плану
 // с поручениями бригаде, пейджер и лента событий.
-export function OverviewPanel({ data, state, viewer }: Props) {
+export function OverviewPanel({ data, viewer }: Props) {
   const { incident } = data;
   const { turn } = incident;
 
@@ -48,14 +47,12 @@ export function OverviewPanel({ data, state, viewer }: Props) {
                   : turn.waiting}
               </p>
             )}
-            <ButtonLink
-              href={consoleHref(state, { tab: "incident", focus: true })}
-              scroll={false}
-              variant="primary"
-              className="mt-1 self-start"
+            <ConsoleLink
+              patch={{ tab: "incident", focus: true }}
+              className={`${buttonClass("primary", "md")} mt-1 self-start`}
             >
               Открыть инцидент
-            </ButtonLink>
+            </ConsoleLink>
           </Card>
         ) : (
           <p className="border-line border-y py-3 text-[14px] text-muted">

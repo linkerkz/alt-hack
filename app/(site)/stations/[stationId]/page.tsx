@@ -17,16 +17,20 @@ import { StationConsole } from "@/features/station-console/components/StationCon
 import { getLive, getStationConsole } from "@/features/station-console/queries";
 import { parseConsoleState } from "@/features/station-console/state";
 
-// Соседа без участка в сети подписываем нейтрально.
-const UNKNOWN_NEIGHBOR = "соседняя";
-
 export default async function StationPage({
   params,
   searchParams,
 }: PageProps<"/stations/[stationId]">) {
-  const user = await requireUser();
   const { stationId } = await params;
-  const station = await getStation(stationId);
+  // Всё читаем одной волной: права проверяем до того, как что-то показать,
+  // а данные станции и так закрыты RLS.
+  const [user, station, live, neighbors, query] = await Promise.all([
+    requireUser(),
+    getStation(stationId),
+    getLive(stationId),
+    getStationNeighbors(stationId),
+    searchParams,
+  ]);
   if (station == null) notFound();
   if (!canOpenStation(user, station)) redirect(homePath(user) ?? "/login");
 
@@ -52,16 +56,7 @@ export default async function StationPage({
     );
   }
 
-  const [live, query, found] = await Promise.all([
-    getLive(station.id),
-    searchParams,
-    getStationNeighbors(station.id),
-  ]);
   const state = parseConsoleState(query, live);
-  const neighbors = {
-    odd: found.odd ?? UNKNOWN_NEIGHBOR,
-    even: found.even ?? UNKNOWN_NEIGHBOR,
-  };
   const data = await getStationConsole(station.id, state, neighbors, live);
 
   return (

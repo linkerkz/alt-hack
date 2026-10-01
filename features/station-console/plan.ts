@@ -7,7 +7,6 @@ import {
 } from "./activePlan";
 import type { Run, Span } from "./forecast";
 import { FAULT, OPTION_MOVES, STEP } from "./mock";
-import { isFocusAvailable } from "./schema";
 import type { ConsoleState, OptionId } from "./types";
 
 // План занятости путей (диаграмма Ганта) на окне 45 минут по прогнозу
@@ -50,7 +49,6 @@ export function trackPlan(state: ConsoleState, source: PlanSource) {
   const bars = barsAt(state, source).filter(
     (bar) => bar.to > window.from && bar.from < window.to,
   );
-  const focus = isFocusAvailable(state) && state.focus;
 
   return {
     window: `${toClock(window.from)}–${toClock(window.to)}`,
@@ -61,7 +59,7 @@ export function trackPlan(state: ConsoleState, source: PlanSource) {
     })),
     rows: ROWS.map((row) => ({
       ...row,
-      dimmed: focus && QUIET_TRACKS.includes(row.track),
+      quiet: QUIET_TRACKS.includes(row.track),
       bars: bars
         .filter((bar) => bar.track === row.track)
         .map((bar) => ({

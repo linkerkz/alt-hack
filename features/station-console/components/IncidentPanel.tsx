@@ -1,7 +1,7 @@
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Disclosure } from "@/components/ui/Disclosure";
 import type { StationConsoleData } from "../queries";
-import type { ConsoleState, ConsoleViewer } from "../types";
+import type { ConsoleViewer } from "../types";
 import { IncidentEvents } from "./IncidentEvents";
 import { IncidentEvidence } from "./IncidentEvidence";
 import { IncidentHeader } from "./IncidentHeader";
@@ -14,13 +14,12 @@ import { WorkOrderCard } from "./WorkOrderCard";
 
 type Props = {
   data: StationConsoleData;
-  state: ConsoleState;
   viewer: ConsoleViewer;
 };
 
 // Карточка инцидента сверху вниз: что случилось, на каком этапе, чей ход —
 // и подробности, раскрыт тот раздел, что нужен для хода сейчас.
-export function IncidentPanel({ data, state, viewer }: Props) {
+export function IncidentPanel({ data, viewer }: Props) {
   const { incident, comparison, workOrder } = data;
   const { sections, turn } = incident;
 
@@ -36,7 +35,6 @@ export function IncidentPanel({ data, state, viewer }: Props) {
           turn={turn}
           viewer={viewer}
           comparison={comparison}
-          state={state}
         />
       )}
       {workOrder != null && <WorkOrderCard workOrder={workOrder} />}
@@ -47,7 +45,7 @@ export function IncidentPanel({ data, state, viewer }: Props) {
         {sections.options != null && (
           <Disclosure title="Влияние и варианты" open={sections.options.open}>
             <IncidentImpact impact={comparison.impact} />
-            <OptionComparison comparison={comparison} state={state} />
+            <OptionComparison comparison={comparison} />
           </Disclosure>
         )}
         {sections.participants != null && (

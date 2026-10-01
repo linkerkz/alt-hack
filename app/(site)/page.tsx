@@ -13,19 +13,14 @@ import { AccountMenu } from "@/features/auth/components/AccountMenu";
 import { requireUser } from "@/features/auth/queries";
 import type { CurrentUser } from "@/features/auth/types";
 import { ZoneMapView } from "@/features/network-map/components/ZoneMapView";
-import {
-  getStationNeighbors,
-  getZoneMap,
-} from "@/features/network-map/queries";
+import { getZoneMap } from "@/features/network-map/queries";
 import type { ZoneStation } from "@/features/network-map/types";
 import { ApprovalRequests } from "@/features/station-console/components/ApprovalRequests";
 import {
   getApprovalRequests,
   getLiveIndexes,
 } from "@/features/station-console/queries";
-
-// Соседа без участка в сети подписываем нейтрально.
-const UNKNOWN_NEIGHBOR = "соседняя";
+import type { Neighbors } from "@/features/station-console/types";
 
 export default async function ZoneMapPage() {
   const user = await requireUser();
@@ -35,11 +30,19 @@ export default async function ZoneMapPage() {
   }
 
   // Индекс станций с планом путей считает пульт — карта показывает его же.
-  const zone = await getZoneMap(scope, await getLiveIndexes());
+  const { neighborsByStation, ...zone } = await getZoneMap(
+    scope,
+    await getLiveIndexes(),
+  );
   const consoleStations = zone.stations.filter((station) =>
     canOpenStation(user, station),
   );
-  const requests = await approvalRequestsOf(user, consoleStations);
+  const consoleStationIds = consoleStations.map((station) => station.id);
+  const requests = await approvalRequestsOf(
+    user,
+    consoleStations,
+    neighborsByStation,
+  );
   const requestStationIds = requests
     .filter((request) => request.state === "pending")
     .map((request) => request.stationId);
@@ -51,11 +54,12 @@ export default async function ZoneMapPage() {
         stationHref={ownConsolePath(user)}
         dashboardHref={ownDashboardPath(user)}
         account={<AccountMenu user={user} />}
+        selectableStationIds={consoleStationIds}
       />
       <ZoneMapView
         {...zone}
         defaultStationId={scope.kind === "station" ? scope.stationId : null}
-        consoleStationIds={consoleStations.map((station) => station.id)}
+        consoleStationIds={consoleStationIds}
         requestStationIds={requestStationIds}
         showRequests={user.role === "dnc"}
         overlay={
@@ -68,17 +72,17 @@ export default async function ZoneMapPage() {
 }
 
 // Запросы на согласование отвечает ДНЦ — только по станциям своего круга.
-async function approvalRequestsOf(user: CurrentUser, stations: ZoneStation[]) {
+function approvalRequestsOf(
+  user: CurrentUser,
+  stations: ZoneStation[],
+  neighborsByStation: Record<string, Neighbors>,
+) {
   if (user.role !== "dnc") return [];
-  const withNeighbors = await Promise.all(
-    stations.map(async (station) => {
-      const found = await getStationNeighbors(station.id);
-      const neighbors = {
-        odd: found.odd ?? UNKNOWN_NEIGHBOR,
-        even: found.even ?? UNKNOWN_NEIGHBOR,
-      };
-      return { id: station.id, name: station.name, neighbors };
-    }),
+  return getApprovalRequests(
+    stations.map((station) => ({
+      id: station.id,
+      name: station.name,
+      neighbors: neighborsByStation[station.id],
+    })),
   );
-  return getApprovalRequests(withNeighbors);
 }
