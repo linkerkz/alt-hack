@@ -34,6 +34,7 @@ main ← PR ← ветка {тип}/{говорящее-имя} ← коммит
 | `features` | сценарий в `features/{name}` (имя — в теме коммита) |
 | `ui`   | общие компоненты `components/ui/`              |
 | `lib`  | общая инфраструктура `lib/`                    |
+| `db`   | миграции и сид `supabase/`                     |
 | `cfg`  | `next.config.ts`, `tsconfig`, `biome.json`, зависимости, env |
 | `docs` | документация                                   |
 | `ci`   | CI/CD                                          |
