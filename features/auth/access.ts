@@ -31,18 +31,14 @@ export function homePath(user: CurrentUser) {
 
 // Пульт своей станции; null — у роли нет своей станции (ДНЦ выбирает на карте).
 export function ownConsolePath(user: CurrentUser) {
-  if (STATION_ROLES.includes(user.role) && user.stationId != null) {
-    return `/stations/${user.stationId}`;
-  }
-  return null;
+  const stationId = ownStationId(user);
+  return stationId == null ? null : `/stations/${stationId}`;
 }
 
 // Dashboard своей станции; null — у роли нет своей станции (ДНЦ выбирает на карте).
 export function ownDashboardPath(user: CurrentUser) {
-  if (STATION_ROLES.includes(user.role) && user.stationId != null) {
-    return `/dashboard/${user.stationId}`;
-  }
-  return null;
+  const stationId = ownStationId(user);
+  return stationId == null ? null : `/dashboard/${stationId}`;
 }
 
 // Зона ответственности: круг ДНЦ или своя станция; null — зоны у роли нет.
@@ -50,8 +46,11 @@ export function scopeOf(user: CurrentUser): Scope | null {
   if (user.role === "dnc" && user.dispatchAreaId != null) {
     return { kind: "dispatch-area", dispatchAreaId: user.dispatchAreaId };
   }
-  if (STATION_ROLES.includes(user.role) && user.stationId != null) {
-    return { kind: "station", stationId: user.stationId };
-  }
-  return null;
+  const stationId = ownStationId(user);
+  return stationId == null ? null : { kind: "station", stationId };
+}
+
+// Своя станция роли; null — роль не привязана к станции.
+function ownStationId({ role, stationId }: CurrentUser) {
+  return STATION_ROLES.includes(role) ? stationId : null;
 }
