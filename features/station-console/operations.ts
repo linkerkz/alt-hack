@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { toClock, toMinutes } from "@/lib/clock";
 import { createSupabaseClient } from "@/lib/supabase";
 import type { PagerMessage, PlannedTrain } from "./types";
@@ -24,7 +25,8 @@ const MIN_STOP_MINUTES = 2;
 const PREPARE_MINUTES = 15;
 
 // План путей станции: поезда, их пути и время. Читает вошедший диспетчер.
-export async function stationPlan(stationId: string) {
+// Кэш на запрос: индекс карты и запросы ДНЦ читают план одних и тех же станций.
+export const stationPlan = cache(async (stationId: string) => {
   const supabase = await createSupabaseClient();
   const { data } = await supabase
     .from("track_plan")
@@ -46,7 +48,7 @@ export async function stationPlan(stationId: string) {
       departure: row.departs_at.slice(0, 5),
     }),
   );
-}
+});
 
 // Операции от текущего времени станции «14:05», ближайшие сверху, со
 // статусом поручения: последнее сообщение пейджера по этой операции.
