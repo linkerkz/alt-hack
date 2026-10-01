@@ -10,7 +10,7 @@ export function ReportTitle({ code, state, title, summary }: Props) {
       <Kicker tone="accent">
         Отчёт по инциденту {code} · {REPORT_STATE_LABEL[state]}
       </Kicker>
-      <h1 className="font-heading font-normal text-[46px] leading-[1.12] tracking-[-0.015em]">
+      <h1 className="font-heading font-semibold text-[34px] leading-[1.15] tracking-[-0.02em]">
         {title}
       </h1>
       <p className="max-w-[680px] text-justify text-[15px] text-neutral-800">
