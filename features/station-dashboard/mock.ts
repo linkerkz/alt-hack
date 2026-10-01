@@ -27,8 +27,11 @@ const BASE_OPERATIONS: {
 
 const HISTORY_HOURS = [8, 9, 10, 11, 12, 13];
 
-// Мок, пока нет бэкенда: показатели детерминированно выводятся из реальных
-// полей станции, чтобы у разных станций картина отчёта была своя.
+// Для этого блока в базе нет таблицы (операции, план, статистика смены,
+// история индекса — не то же самое, что track_plan: та есть только у одной
+// демо-станции). Показатели детерминированно выводятся из реальных полей
+// станции (`StationSnapshot` — из её строки в `stations`), чтобы у разных
+// станций картина отчёта была своя, а не одинаковый мок на всех.
 export function buildMockDashboard(station: StationSnapshot): StationDashboard {
   const operations = buildOperations(station);
   const planProgress = buildPlanProgress(station);
