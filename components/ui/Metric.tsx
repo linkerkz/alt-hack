@@ -10,7 +10,7 @@ type Props = {
   title?: string;
 };
 
-// Показатель: подпись мелко, значение — серифным числом.
+// Показатель: подпись мелко, значение — крупным числом.
 export function Metric({
   label,
   value,
@@ -20,8 +20,10 @@ export function Metric({
 }: Props) {
   return (
     <div className="flex min-w-0 flex-col gap-0.5" title={title}>
-      <dt className="truncate text-[11px] text-muted">{label}</dt>
-      <dd className={`font-heading text-[24px] leading-[1.1] ${valueClass}`}>
+      <dt className="truncate text-[12px] text-muted">{label}</dt>
+      <dd
+        className={`font-heading font-semibold text-[22px] leading-[1.15] tracking-[-0.01em] ${valueClass}`}
+      >
         {value}
       </dd>
       {children}

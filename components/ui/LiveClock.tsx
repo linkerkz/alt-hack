@@ -23,7 +23,7 @@ export function LiveClock() {
 
   return (
     <span className="flex items-baseline gap-1.5 border-line border-l pl-5">
-      <span className="font-heading text-[24px] leading-none">
+      <span className="font-medium text-[18px] leading-none">
         {now == null ? "--:--:--" : FORMAT.format(now)}
       </span>
       {now != null && (

@@ -18,7 +18,7 @@ const TONE_CLASS: Record<NonNullable<Props["tone"]>, string> = {
 export function Kicker({ children, tone = "muted", className = "" }: Props) {
   return (
     <p
-      className={`text-[10.5px] uppercase leading-tight tracking-[0.1em] ${TONE_CLASS[tone]} ${className}`}
+      className={`font-medium text-[11px] uppercase leading-tight tracking-[0.06em] ${TONE_CLASS[tone]} ${className}`}
     >
       {children}
     </p>

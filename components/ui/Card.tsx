@@ -9,8 +9,8 @@ type Props = ComponentProps<"div"> & {
 
 const EMPHASIS_CLASS = {
   default: "border-line",
-  accent: "border-accent",
-  critical: "border-critical",
+  accent: "border-accent-300 ring-1 ring-accent-300",
+  critical: "border-critical/60 ring-1 ring-critical/60",
 };
 
 const ELEVATION_CLASS = {
@@ -20,7 +20,7 @@ const ELEVATION_CLASS = {
   lg: "shadow-lg",
 };
 
-// Поверхность без заливки: тонкая рамка на бумаге, тень — едва заметная.
+// Белая поверхность на светлом фоне: тонкая рамка, тень — едва заметная.
 export function Card({
   emphasis = "default",
   elevation = "none",
@@ -29,7 +29,7 @@ export function Card({
 }: Props) {
   return (
     <div
-      className={`rounded border bg-paper ${EMPHASIS_CLASS[emphasis]} ${ELEVATION_CLASS[elevation]} ${className}`}
+      className={`rounded-lg border bg-card ${EMPHASIS_CLASS[emphasis]} ${ELEVATION_CLASS[elevation]} ${className}`}
       {...props}
     />
   );
