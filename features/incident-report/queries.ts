@@ -1,11 +1,13 @@
-import { MOCK_INCIDENT_REPORT } from "./mock";
+import { buildMockReport } from "./mock";
+import { INCIDENT_CODE_PREFIX } from "./paths";
 import type { IncidentReport } from "./types";
 
-// Пока отчёт один — заглушка И-0417; номер берём из адреса без «И-».
+const INCIDENT_NUMBER = /^\d{4}$/;
+
+// Пока все отчёты — заглушка сценария С3; номер берём из адреса без «И-».
 export async function getIncidentReport(
   number: string,
 ): Promise<IncidentReport | null> {
-  return MOCK_INCIDENT_REPORT.code === `И-${number}`
-    ? MOCK_INCIDENT_REPORT
-    : null;
+  if (!INCIDENT_NUMBER.test(number)) return null;
+  return buildMockReport(`${INCIDENT_CODE_PREFIX}${number}`);
 }
