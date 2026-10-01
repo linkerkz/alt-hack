@@ -8,11 +8,11 @@ type Props = {
   className?: string;
 };
 
-// Серифный заголовок: 1 — экран, 2 — карточка, 3 — раздел внутри неё.
+// Заголовок: 1 — экран, 2 — карточка, 3 — раздел внутри неё.
 const LEVEL_CLASS = {
-  1: "text-[28px] leading-[1.1]",
-  2: "text-[24px] leading-[1.1]",
-  3: "text-[19px] leading-tight",
+  1: "text-[24px] leading-[1.15] tracking-[-0.01em]",
+  2: "text-[19px] leading-tight tracking-[-0.005em]",
+  3: "text-[16px] leading-tight",
 };
 
 export function Heading({ children, note, level = 3, className = "" }: Props) {

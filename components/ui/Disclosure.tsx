@@ -15,7 +15,7 @@ export function Disclosure({ title, meta, open = false, children }: Props) {
   return (
     <details open={open} className="group border-line border-t">
       <summary className="flex cursor-pointer list-none items-baseline justify-between gap-2 py-2.5 hover:text-accent-700 [&::-webkit-details-marker]:hidden">
-        <span className="flex items-baseline gap-2 text-[11px] uppercase tracking-[0.1em]">
+        <span className="flex items-baseline gap-2 font-medium text-[11px] uppercase tracking-[0.06em]">
           <span
             aria-hidden
             className="inline-block transition-transform group-open:rotate-90"

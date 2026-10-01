@@ -40,6 +40,7 @@ export function SchemaIncidentObjects({ schema }: Props) {
         fontWeight={600}
         textAnchor="middle"
         style={{ fill: c3Color }}
+        className="stroke-paper [paint-order:stroke] [stroke-linejoin:round] [stroke-width:4px]"
       >
         {switchC3.label}
       </text>

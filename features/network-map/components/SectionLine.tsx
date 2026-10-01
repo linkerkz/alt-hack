@@ -16,7 +16,7 @@ type Props = {
 };
 
 const PATH_OPTIONS: Record<Status, PathOptions> = {
-  normal: { color: "#605d5d", weight: 1.5, opacity: 0.85 },
+  normal: { color: "#5a6577", weight: 1.5, opacity: 0.85 },
   warning: { color: TONE_COLOR.warning, weight: 3, opacity: 0.9 },
   critical: {
     color: TONE_COLOR.critical,
@@ -27,7 +27,7 @@ const PATH_OPTIONS: Record<Status, PathOptions> = {
 };
 
 // Участки выбранной станции: нормальные — акцентом, проблемные — своим цветом, но толще.
-const HIGHLIGHT_COLOR = "#b68235";
+const HIGHLIGHT_COLOR = "#2563d8";
 
 export const SectionLine = memo(function SectionLine({
   section,

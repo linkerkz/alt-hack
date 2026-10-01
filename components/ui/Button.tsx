@@ -29,19 +29,20 @@ export function Button({
 }
 
 const BASE =
-  "inline-flex cursor-pointer items-center justify-center gap-1.5 rounded border font-heading font-semibold leading-tight transition-colors disabled:cursor-not-allowed disabled:opacity-45";
+  "inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md border font-medium leading-tight transition-colors disabled:cursor-not-allowed disabled:opacity-45";
 
 const VARIANT_CLASS: Record<ButtonVariant, string> = {
   primary:
-    "border-accent-700 bg-accent-700 text-paper shadow-sm hover:border-accent-800 hover:bg-accent-800 active:bg-accent-900",
-  secondary: "border-line text-ink hover:bg-ink/7 active:bg-ink/14",
+    "border-accent-600 bg-accent-600 text-white shadow-sm hover:border-accent-700 hover:bg-accent-700 active:bg-accent-800",
+  secondary:
+    "border-neutral-300 bg-card text-ink hover:border-neutral-400 hover:bg-neutral-100 active:bg-neutral-200",
   ghost:
     "border-transparent text-accent-700 hover:bg-accent/10 active:bg-accent/18",
 };
 
 const SIZE_CLASS: Record<ButtonSize, string> = {
-  md: "px-4 py-2 text-[15px]",
-  sm: "px-2.5 py-1 text-[13px]",
+  md: "px-4 py-2 text-[14px]",
+  sm: "px-2.5 py-1 text-[12.5px]",
   icon: "size-9 text-lg",
 };
 

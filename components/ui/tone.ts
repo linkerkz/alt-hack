@@ -11,9 +11,9 @@ export const TONE_GLYPH: Record<Tone, string> = {
 
 // Значения для SVG и Leaflet, где нужен цвет, а не класс. Те же, что в globals.css.
 export const TONE_COLOR: Record<Tone, string> = {
-  normal: "#337344",
-  warning: "#a06f24",
-  critical: "#b6322b",
+  normal: "#1d7a47",
+  warning: "#b35c00",
+  critical: "#c8302a",
 };
 
 // Классы пишем целиком, чтобы сканер Tailwind их нашёл.
@@ -33,4 +33,11 @@ export const TONE_BORDER_CLASS: Record<Tone, string> = {
   normal: "border-normal",
   warning: "border-warning",
   critical: "border-critical",
+};
+
+// Лёгкая подложка цвета состояния — для плашек и подсвеченных строк.
+export const TONE_TINT_CLASS: Record<Tone, string> = {
+  normal: "bg-normal/8",
+  warning: "bg-warning/8",
+  critical: "bg-critical/8",
 };

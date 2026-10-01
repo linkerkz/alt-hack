@@ -38,7 +38,7 @@ export function NoteForm({ stationId }: Props) {
           value={track}
           onChange={(event) => setTrack(event.target.value)}
           aria-label="Путь"
-          className="min-h-9 rounded border border-line bg-transparent px-1.5 text-[13px] outline-none hover:border-ink/45 focus-visible:border-accent"
+          className="min-h-9 rounded-md border border-neutral-300 bg-card px-1.5 text-[13px] outline-none hover:border-neutral-400 focus-visible:border-accent"
         >
           <option value="">Путь —</option>
           {TRACKS.map((number) => (
@@ -53,7 +53,7 @@ export function NoteForm({ stationId }: Props) {
           maxLength={NOTE_LIMIT}
           placeholder="Что сделать бригаде"
           aria-label="Что сделать бригаде"
-          className="min-h-9 min-w-0 flex-1 rounded border border-line bg-transparent px-2.5 text-[13px] outline-none hover:border-ink/45 focus-visible:border-accent"
+          className="min-h-9 min-w-0 flex-1 rounded-md border border-neutral-300 bg-card px-2.5 text-[13px] outline-none hover:border-neutral-400 focus-visible:border-accent"
         />
       </div>
       <Button
