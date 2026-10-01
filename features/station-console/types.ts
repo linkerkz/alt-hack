@@ -35,7 +35,13 @@ export type LiveIncident = {
   status: IncidentStatus;
   option: ChosenOption | null;
   routeTasks: RouteTask[];
+  detection: DetectionKind;
+  // Снимок с камеры в момент обнаружения (data URL); null — без снимка.
+  snapshot: string | null;
 };
+
+// Чем обнаружена проблема: датчиком ЭЦ или камерой в горловине.
+export type DetectionKind = "sensor" | "camera";
 
 // Совпадает с enum public.incident_status.
 export type IncidentStatus =

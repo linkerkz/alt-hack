@@ -33,7 +33,7 @@ async function lastIncident(stationId: string) {
   const supabase = await createSupabaseClient();
   const { data } = await supabase
     .from("incidents")
-    .select("id, code, status, option, route_tasks")
+    .select("id, code, status, option, route_tasks, device_id, snapshot")
     .eq("station_id", stationId)
     .order("detected_at", { ascending: false })
     .limit(1)
@@ -78,6 +78,8 @@ function toIncident(row: IncidentRow): LiveIncident {
     status: row.status,
     option: row.option,
     routeTasks: row.route_tasks.filter(isRouteTask),
+    detection: row.device_id == null ? "sensor" : "camera",
+    snapshot: row.snapshot,
   };
 }
 
@@ -114,6 +116,8 @@ type IncidentRow = {
   status: IncidentStatus;
   option: ChosenOption | null;
   route_tasks: string[];
+  device_id: string | null;
+  snapshot: string | null;
 };
 
 type WorkOrderRow = {

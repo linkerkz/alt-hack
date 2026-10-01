@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from "@/lib/supabase";
+import { DETECTION, detectionOf } from "./detection";
 import { type JournalEntry, journalOf, simAt } from "./journal";
-import { INCIDENT, STEP, WORK_ORDER } from "./mock";
+import { STEP } from "./mock";
 import { nextCommand, stepOf } from "./scenario";
 import type {
   ChosenOption,
@@ -48,7 +49,8 @@ async function dispatch(context: Context, command: Command) {
 
   if (command.kind === "detect") {
     if (step !== STEP.normal && step !== STEP.closed) return NOT_NOW;
-    return detect(context);
+    await openIncident(context.stationId, { device: null });
+    return DONE;
   }
   if (command.kind === "advance") {
     const next = nextCommand(live);
@@ -105,8 +107,10 @@ async function dispatch(context: Context, command: Command) {
   }
 }
 
-// Датчик ЭЦ: стрелка С3 потеряла контроль — система открывает инцидент.
-async function detect({ stationId }: Context) {
+// Стрелка С3 под подозрением: система открывает инцидент и закрывает
+// маршруты. Без устройства — сработал датчик ЭЦ, с камерой — её снимок.
+export async function openIncident(stationId: string, found: Sighting) {
+  const detection = DETECTION[found.device == null ? "sensor" : "camera"];
   const { data, error } = await db()
     .from("incidents")
     .insert({
@@ -115,20 +119,31 @@ async function detect({ stationId }: Context) {
       object_id: "С3",
       source: "iot",
       severity: "high",
-      title: INCIDENT.title,
-      description: INCIDENT.description,
+      title: detection.title,
+      description: detection.description,
+      device_id: found.device?.id ?? null,
+      snapshot: found.device?.snapshot ?? null,
     })
     .select("id, code")
     .single<{ id: string; code: string }>();
   if (error != null) throw error;
 
-  const entries = journalOf(
-    { kind: "detect" },
-    { code: data.code, option: null, routed: [] },
-  );
-  await log(stationId, data.id, entries);
-  return DONE;
+  await log(stationId, data.id, [
+    { minute: 8, actor: "iot", text: detection.signal, level: "critical" },
+    {
+      minute: 8,
+      actor: "system",
+      text: `Создан инцидент ${data.code} «подозрение». Маршруты через С3 закрыты`,
+      level: "warning",
+    },
+  ]);
+  return data;
 }
+
+// Что увидело устройство; device: null — сигнал датчика ЭЦ с демо-пульта.
+export type Sighting = {
+  device: { id: string; snapshot: string } | null;
+};
 
 // Меняет инцидент и пишет в хронологию, что сделал участник.
 async function updateIncident(
@@ -145,6 +160,7 @@ async function updateIncident(
 
   const entries = journalOf(command, {
     code: incident.code,
+    detection: incident.detection,
     option: patch.option ?? incident.option,
     routed: patch.route_tasks ?? incident.routeTasks,
   });
@@ -156,22 +172,23 @@ async function issueWorkOrder(
   { stationId, operatorId }: Context,
   incident: LiveIncident,
 ) {
+  const { workOrder } = detectionOf(incident);
   const { data, error } = await db()
     .from("work_orders")
     .insert({
       station_id: stationId,
       incident_id: incident.id,
       object_id: "С3",
-      service: WORK_ORDER.service,
-      title: WORK_ORDER.title,
-      description: WORK_ORDER.description,
+      service: workOrder.service,
+      title: workOrder.title,
+      description: workOrder.description,
       created_by: operatorId,
     })
     .select("id")
     .single<{ id: string }>();
   if (error != null) throw error;
 
-  const items = WORK_ORDER.items.map((text, i) => ({
+  const items = workOrder.items.map((text, i) => ({
     work_order_id: data.id,
     position: i + 1,
     text,
@@ -215,7 +232,7 @@ async function reset(stationId: string) {
   return DONE;
 }
 
-async function log(
+export async function log(
   stationId: string,
   incidentId: string,
   entries: JournalEntry[],

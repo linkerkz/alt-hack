@@ -1,4 +1,5 @@
 import type { ChainState } from "./chain";
+import { type Detection, detectionOf } from "./detection";
 import {
   baselineEvents,
   INCIDENT,
@@ -41,9 +42,12 @@ export function incidentCard(
   const statusIndex = STEP_INCIDENT_STATUS[step];
   const incidentId = live.incident?.id;
   const feed: ScenarioEvent[] = [...live.events, ...baselineEvents(neighbors)];
+  const detection = detectionOf(live.incident);
 
   return {
     code: live.incident?.code ?? INCIDENT.id,
+    detection,
+    snapshot: live.incident?.snapshot ?? null,
     isActive: step >= STEP.suspected && step <= STEP.restored,
     statusName: INCIDENT_STATUS[statusIndex],
     statusSteps: INCIDENT_STATUS.map((label, i) => ({
@@ -53,7 +57,7 @@ export function incidentCard(
     dncBadge: dncBadgeAt(state),
     suggestion: suggestionAt(step, neighbors),
     action: actionAt(state, neighbors),
-    tasks: tasksAt(state, neighbors, live.workOrder),
+    tasks: tasksAt(state, neighbors, live.workOrder, detection),
     events: live.events.filter((event) => event.incidentId === incidentId),
     feed,
   };
@@ -84,7 +88,7 @@ function actionAt(state: ConsoleState, neighbors: Neighbors): ConsoleAction {
   switch (step) {
     case STEP.suspected:
       return {
-        text: "Система обнаружила проблему по датчику. Проверка ушла ДСП: после подтверждения неисправности варианты станут активными.",
+        text: "Система обнаружила проблему автоматически. Проверка ушла ДСП: после подтверждения неисправности варианты станут активными.",
         waiting: "Ждёт подтверждения ДСП",
       };
     case STEP.choosing:
@@ -143,6 +147,7 @@ function tasksAt(
   state: ConsoleState,
   { odd }: Neighbors,
   workOrder: LiveWorkOrder | null,
+  detection: Detection,
 ) {
   const { step, option } = state;
   const tasks: { who: string; what: string; status: string; tone: Status }[] =
@@ -193,8 +198,8 @@ function tasksAt(
         : { status: "Уведомлён", tone: "warning" }),
     },
     {
-      who: "Электромеханик",
-      what: "Восстановить контроль С3",
+      who: detection.crew,
+      what: detection.workOrder.title,
       status: repairStatusOf(workOrder),
       tone: step >= STEP.restored ? "normal" : "warning",
     },

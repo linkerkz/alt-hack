@@ -9,12 +9,19 @@ type Props = {
   stationId: string;
   state: ConsoleState;
   workOrder: LiveWorkOrder | null;
+  // Кто устранял: электромеханик или монтёр пути.
+  crew: string;
 };
 
 // Подтверждение возврата С3 в эксплуатацию: решает только ДСП,
 // отметки «работы выполнены» от службы для этого мало.
 // Диалог закроется сам: после возврата шаг сменится.
-export function ReturnToServiceDialog({ stationId, state, workOrder }: Props) {
+export function ReturnToServiceDialog({
+  stationId,
+  state,
+  workOrder,
+  crew,
+}: Props) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-neutral-900/50 p-[18px]">
       <Card
@@ -32,8 +39,7 @@ export function ReturnToServiceDialog({ stationId, state, workOrder }: Props) {
         </h2>
         <div className="flex flex-col gap-1.5 text-[14px] text-neutral-800">
           <p>
-            Электромеханик сообщил: работы выполнены, {checklistText(workOrder)}
-            .
+            {crew} сообщил: работы выполнены, {checklistText(workOrder)}.
           </p>
           <p>На пульте: контроль положения С3 есть в обоих положениях.</p>
           <p>Маршруты через С3 на пути 3 и 5 снова станут доступны.</p>

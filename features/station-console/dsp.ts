@@ -1,3 +1,4 @@
+import { type Detection, detectionOf } from "./detection";
 import { dspObjects } from "./dspObjects";
 import { dspReports } from "./dspReports";
 import { STEP } from "./mock";
@@ -5,6 +6,7 @@ import { routeDone } from "./routing";
 import type {
   ActionLink,
   ConsoleState,
+  Live,
   LiveWorkOrder,
   Neighbors,
 } from "./types";
@@ -24,23 +26,22 @@ export type DspTask = {
   secondary?: ActionLink;
 };
 
-const SENSOR = "Система · датчик ЭЦ";
 const DSCS = "ДСЦС";
-const MECHANIC = "Электромеханик";
 
 export function dspPanel(
   state: ConsoleState,
   neighbors: Neighbors,
-  workOrder: LiveWorkOrder | null,
+  live: Live,
 ) {
-  const tasks = tasksAt(state, workOrder);
+  const detection = detectionOf(live.incident);
+  const tasks = tasksAt(state, live.workOrder, detection);
   const pending = tasks.filter((task) => !task.done);
 
   return {
     // Невыполненные сверху, выполненные — от свежих к старым.
     tasks: [...pending, ...tasks.filter((task) => task.done).reverse()],
     pendingCount: pending.length,
-    idleText: idleTextAt(state.step),
+    idleText: idleTextAt(state.step, detection.crew),
     objects: dspObjects(state),
     reports: dspReports(state, neighbors),
     // Диалог «Вернуть в эксплуатацию» открыт только на своём шаге.
@@ -51,6 +52,7 @@ export function dspPanel(
 function tasksAt(
   state: ConsoleState,
   workOrder: LiveWorkOrder | null,
+  detection: Detection,
 ): DspTask[] {
   const { step, option } = state;
   const routed = routeDone(state);
@@ -62,11 +64,10 @@ function tasksAt(
 
   if (step === STEP.suspected) {
     tasks.push({
-      from: SENSOR,
+      from: detection.from,
       time: "14:08",
-      title: "Стрелка С3: нет контроля положения",
-      detail:
-        "Проверьте на пульте. Если неисправность подтверждается, закройте стрелку и вызовите электромеханика.",
+      title: detection.check,
+      detail: `Проверьте на пульте. Если неисправность подтверждается, закройте стрелку и ${detection.callCrew}.`,
       result: "",
       done: false,
       primary: {
@@ -78,11 +79,11 @@ function tasksAt(
   }
   if (step >= STEP.choosing) {
     tasks.push({
-      from: SENSOR,
+      from: detection.from,
       time: "14:08",
       title: "Закрыть стрелку С3, вызвать службу",
       detail: "",
-      result: "14:09 · С3 закрыта, электромеханик вызван",
+      result: `14:09 · С3 закрыта, ${detection.crewCalled}`,
       done: true,
     });
   }
@@ -120,7 +121,7 @@ function tasksAt(
   }
   if (step === STEP.repaired) {
     tasks.push({
-      from: MECHANIC,
+      from: detection.crew,
       time: "14:27",
       title: "Вернуть С3 в эксплуатацию",
       detail: `Работы выполнены, ${checklistText(workOrder)}. Проверьте контроль положения на пульте.`,
@@ -131,7 +132,7 @@ function tasksAt(
   }
   if (step >= STEP.restored) {
     tasks.push({
-      from: MECHANIC,
+      from: detection.crew,
       time: "14:27",
       title: "Вернуть С3 в эксплуатацию",
       detail: "",
@@ -150,14 +151,14 @@ export function checklistText(workOrder: LiveWorkOrder | null) {
   return `чеклист ${checked} из ${total}${note}`;
 }
 
-function idleTextAt(step: number) {
+function idleTextAt(step: number, crew: string) {
   if (step === STEP.normal)
     return "Новых задач нет. Станция работает по плану.";
   if (step === STEP.choosing || step === STEP.approval) {
     return "ДСЦС выбирает вариант перепланирования. Задачи придут после решения.";
   }
   if (step === STEP.repairing) {
-    return "Электромеханик работает на С3. Стрелка закрыта.";
+    return `${crew} работает на С3. Стрелка закрыта.`;
   }
   return "Новых задач нет.";
 }

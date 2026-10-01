@@ -32,7 +32,12 @@ export function IncidentPanel({ data, state, mapHref }: Props) {
       <OptionComparison comparison={comparison} state={state} />
       {chain.length > 0 && <DecisionChain chain={chain} />}
       {incident.tasks.length > 0 && <TaskList tasks={incident.tasks} />}
-      {data.workOrder != null && <WorkOrderCard workOrder={data.workOrder} />}
+      {data.workOrder != null && (
+        <WorkOrderCard
+          workOrder={data.workOrder}
+          order={data.incident.detection.workOrder}
+        />
+      )}
       <IncidentEvents events={incident.events} />
     </div>
   );
