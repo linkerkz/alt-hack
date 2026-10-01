@@ -34,7 +34,8 @@ export function IndexChart({ history, forecast }: Props) {
         />
         <text
           x={(forecastStart.x + forecastEnd.x) / 2}
-          y={(forecastStart.y + forecastEnd.y) / 2 + 18}
+          y={(forecastStart.y + forecastEnd.y) / 2 - 10}
+          textAnchor="middle"
           className="fill-critical italic"
         >
           прогноз без вмешательства

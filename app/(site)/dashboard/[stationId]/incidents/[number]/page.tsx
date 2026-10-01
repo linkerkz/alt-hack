@@ -1,11 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { AppHeader } from "@/components/ui/AppHeader";
-import {
-  canOpenStation,
-  homePath,
-  ownConsolePath,
-  ownDashboardPath,
-} from "@/features/auth/access";
+import { canOpenStation, homePath } from "@/features/auth/access";
 import { AccountMenu } from "@/features/auth/components/AccountMenu";
 import { requireUser } from "@/features/auth/queries";
 import { IndexChart } from "@/features/incident-report/components/IndexChart";
@@ -33,8 +28,8 @@ export default async function IncidentReportPage({
     <>
       <AppHeader
         current="analytics"
-        stationHref={ownConsolePath(user)}
-        dashboardHref={ownDashboardPath(user)}
+        stationHref={`/stations/${station.id}`}
+        dashboardHref={`/dashboard/${station.id}`}
         account={<AccountMenu user={user} />}
       />
       <main className="mx-auto w-full max-w-[860px] flex-1 overflow-y-auto px-4 pt-7 pb-16 sm:px-8">
