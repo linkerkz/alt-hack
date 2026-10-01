@@ -13,6 +13,13 @@ const TILE_URL =
   "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
 const TILE_ATTRIBUTION = "Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ";
 
+// Рамка Казахстана [юго-запад, северо-восток], как в promtech-hack: карта
+// открывается на всю страну и не уезжает за её пределы.
+const KAZAKHSTAN_BOUNDS: LatLngBoundsExpression = [
+  [40.0, 46.0],
+  [55.5, 87.5],
+];
+
 type Props = {
   stations: Station[];
   sections: Section[];
@@ -32,10 +39,11 @@ export function MapCanvas({ stations, sections, selectedStationId }: Props) {
 
   return (
     <MapContainer
-      bounds={boundsOf(stations)}
-      boundsOptions={{ padding: [56, 56] }}
+      bounds={KAZAKHSTAN_BOUNDS}
+      maxBounds={KAZAKHSTAN_BOUNDS}
+      maxBoundsViscosity={1}
       zoomSnap={0.25}
-      minZoom={5}
+      minZoom={4.5}
       maxZoom={10}
       zoomControl={false}
       className="h-full w-full"
@@ -69,13 +77,4 @@ export function MapCanvas({ stations, sections, selectedStationId }: Props) {
 function DeselectOnMapClick({ onDeselect }: { onDeselect: () => void }) {
   useMapEvent("click", onDeselect);
   return null;
-}
-
-function boundsOf(stations: Station[]): LatLngBoundsExpression {
-  const lats = stations.map((station) => station.lat);
-  const lons = stations.map((station) => station.lon);
-  return [
-    [Math.min(...lats), Math.min(...lons)],
-    [Math.max(...lats), Math.max(...lons)],
-  ];
 }
