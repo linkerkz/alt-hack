@@ -46,7 +46,7 @@ export function IncidentPanel({ data, state, viewer }: Props) {
         </Disclosure>
         {sections.options != null && (
           <Disclosure title="Влияние и варианты" open={sections.options.open}>
-            <IncidentImpact />
+            <IncidentImpact impact={comparison.impact} />
             <OptionComparison comparison={comparison} state={state} />
           </Disclosure>
         )}

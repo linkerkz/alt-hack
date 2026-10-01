@@ -1,4 +1,9 @@
-import { type PlanSource, scorePlan } from "./efficiency";
+import {
+  forecastUntil,
+  type PlanSource,
+  scoreBaseline,
+  scorePlan,
+} from "./efficiency";
 import type { PlanScore } from "./metrics";
 import { replanOptions, STEP } from "./mock";
 import { formatNumber, indexStatus } from "./status";
@@ -38,6 +43,12 @@ export function optionComparison(
 
   return {
     note: noteAt(step, selected.name),
+    impact: {
+      before: scoreBaseline(live).index,
+      after: options.none.index,
+      status: indexStatus(options.none.index),
+      until: forecastUntil(),
+    },
     decided,
     heads: ORDER.map((id) => ({
       id,

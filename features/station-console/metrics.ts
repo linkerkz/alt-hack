@@ -7,7 +7,7 @@ import type { StationLayout } from "./types";
 // исходного плана; удержание по варианту — тоже задержка, но не конфликт.
 
 // Окно плана — горизонт решения ДСП.
-const WINDOW_MINUTES = 30;
+export const WINDOW_MINUTES = 30;
 
 export function evaluatePlan(runs: Run[], layout: StationLayout, now: number) {
   const window = { from: now, to: now + WINDOW_MINUTES };

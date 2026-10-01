@@ -1,6 +1,6 @@
-import { toMinutes } from "@/lib/clock";
+import { toClock, toMinutes } from "@/lib/clock";
 import { forecastPlan } from "./forecast";
-import { evaluatePlan } from "./metrics";
+import { evaluatePlan, WINDOW_MINUTES } from "./metrics";
 import { FAULT, replanOptions, STEP, STEP_MINUTE } from "./mock";
 import {
   clockAt,
@@ -63,9 +63,17 @@ export function stationEfficiency(
     trend: trendOf(step, index, baseline.index),
     metrics,
     reason: reasonOf(metrics),
-    // Прогноз «если ничего не менять» — пока решение не принято.
-    showForecast: step >= STEP.suspected && step <= STEP.approval,
+    // Пока решение не принято, индекс — прогноз «если ничего не менять».
+    forecast:
+      step >= STEP.suspected && step <= STEP.approval
+        ? `Прогноз до ${forecastUntil()}, если ничего не менять`
+        : null,
   };
+}
+
+// Конец окна прогноза после сбоя: «14:38».
+export function forecastUntil() {
+  return toClock(toMinutes(FAULT.from) + WINDOW_MINUTES);
 }
 
 function faultClosure() {

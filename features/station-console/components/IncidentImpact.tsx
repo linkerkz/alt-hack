@@ -1,7 +1,12 @@
 import { Kicker } from "@/components/ui/Kicker";
+import { TONE_TEXT_CLASS } from "@/components/ui/tone";
+import type { StationConsoleData } from "../queries";
+import { STATUS_LABEL } from "../status";
+
+type Props = { impact: StationConsoleData["comparison"]["impact"] };
 
 // Влияние инцидента на работу станции: поезда, маршруты, ресурсы, индекс.
-export function IncidentImpact() {
+export function IncidentImpact({ impact }: Props) {
   return (
     <section className="flex flex-col gap-2">
       <Kicker>Влияние</Kicker>
@@ -21,8 +26,9 @@ export function IncidentImpact() {
         <dt className="text-muted">Ресурсы</dt>
         <dd>Бригада поезда 2001 в ожидании</dd>
         <dt className="text-muted">Индекс</dt>
-        <dd className="text-critical">
-          78 → 48 «Критично» к 14:30, если ничего не менять
+        <dd className={TONE_TEXT_CLASS[impact.status]}>
+          {impact.before} → {impact.after} «{STATUS_LABEL[impact.status]}» к{" "}
+          {impact.until}, если ничего не менять
         </dd>
       </dl>
     </section>
