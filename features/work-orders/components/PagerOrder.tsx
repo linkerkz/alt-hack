@@ -1,7 +1,8 @@
 "use client";
 
 import { useOptimistic, useState, useTransition } from "react";
-import { DeviceButton, FIREFOX_NO_RESTORE } from "@/components/ui/DeviceButton";
+import { DeviceButton } from "@/components/ui/DeviceButton";
+import { FIREFOX_NO_RESTORE } from "@/components/ui/noRestore";
 import { completeWork, takeWork, toggleItem } from "../actions";
 import { isTaken, SERVICE_LABEL } from "../status";
 import type { ActionResult, ChecklistItem, WorkOrder } from "../types";

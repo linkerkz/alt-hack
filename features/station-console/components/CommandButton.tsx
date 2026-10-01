@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Button, type ButtonVariant } from "@/components/ui/Button";
+import { FIREFOX_NO_RESTORE } from "@/components/ui/noRestore";
 import { runCommand } from "../actions";
 import type { Command } from "../types";
 
@@ -51,6 +52,7 @@ export function CommandButton({
       ) : (
         <button
           type="button"
+          {...FIREFOX_NO_RESTORE}
           onClick={run}
           disabled={isPending}
           className={`${unstyledClassName} disabled:opacity-45`}

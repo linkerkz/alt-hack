@@ -1,4 +1,5 @@
 import type { ComponentProps } from "react";
+import { FIREFOX_NO_RESTORE } from "./noRestore";
 
 type Props = ComponentProps<"button"> & {
   // alert — главное действие на экране, обводка цветом тревоги.
@@ -22,10 +23,6 @@ export function DeviceButton({
     />
   );
 }
-
-// Firefox помнит disabled у кнопки между перезагрузками и ломает гидратацию;
-// autocomplete="off" это отключает. В типах React атрибута у кнопки нет.
-export const FIREFOX_NO_RESTORE = { autoComplete: "off" };
 
 const TONE_CLASS = {
   default: "border-device-line text-device-ink",
