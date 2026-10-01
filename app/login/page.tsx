@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 import { homePath } from "@/features/auth/access";
-import { DemoLogin } from "@/features/auth/components/DemoLogin";
 import { LoginForm } from "@/features/auth/components/LoginForm";
-import { getCurrentUser, isDemoLoginEnabled } from "@/features/auth/queries";
+import { getCurrentUser } from "@/features/auth/queries";
 
 export default async function LoginPage() {
   const user = await getCurrentUser();
@@ -21,17 +20,8 @@ export default async function LoginPage() {
           </h1>
         </header>
 
-        <section className="space-y-5 rounded-lg border border-line bg-surface-1 p-6 shadow-2xl">
+        <section className="rounded-lg border border-line bg-surface-1 p-6 shadow-2xl">
           <LoginForm />
-
-          {isDemoLoginEnabled() && (
-            <div className="space-y-3 border-line border-t pt-5">
-              <p className="text-center text-muted text-xs">
-                Демо: войти под ролью
-              </p>
-              <DemoLogin />
-            </div>
-          )}
         </section>
       </div>
     </main>

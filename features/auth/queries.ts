@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { env } from "@/lib/env";
 import { createSupabaseClient } from "@/lib/supabase";
 import { isRole } from "./roles";
 import type { CurrentUser } from "./types";
@@ -25,10 +24,6 @@ export async function requireUser() {
   const user = await getCurrentUser();
   if (user == null) redirect("/login");
   return user;
-}
-
-export function isDemoLoginEnabled() {
-  return env.demoPassword != null;
 }
 
 // Строка из базы без сгенерированных типов — проверяем форму руками.

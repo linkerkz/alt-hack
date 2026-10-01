@@ -1,10 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { env } from "@/lib/env";
 import { createSupabaseClient } from "@/lib/supabase";
 import { homePath } from "./access";
-import { DEMO_ACCOUNTS } from "./demo";
 import { getCurrentUser } from "./queries";
 import type { SignInState } from "./types";
 
@@ -18,19 +16,6 @@ export async function signIn(
     return { error: "Введите email и пароль" };
   }
   return signInAndGoHome(email, password);
-}
-
-// Пароль демо-аккаунта берётся с сервера, в браузер он не попадает.
-export async function signInAsDemo(
-  _state: SignInState,
-  formData: FormData,
-): Promise<SignInState> {
-  const email = String(formData.get("email") ?? "");
-  const isDemo = DEMO_ACCOUNTS.some((account) => account.email === email);
-  if (!isDemo || env.demoPassword == null) {
-    return { error: "Быстрый вход не настроен" };
-  }
-  return signInAndGoHome(email, env.demoPassword);
 }
 
 export async function signOut() {
