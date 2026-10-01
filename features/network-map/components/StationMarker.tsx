@@ -104,7 +104,7 @@ function flowCounters(station: ZoneStation) {
   return FLOW_ORDER.map((key) => {
     const value = station.flow[key];
     const color = flowCounterClass(key, value);
-    return `<span class="${color}" title="${FLOW_LABEL[key].label}">${FLOW_LABEL[key].icon}${value}</span>`;
+    return `<span class="${color}" title="${FLOW_LABEL[key].label}: ${FLOW_LABEL[key].hint}">${FLOW_LABEL[key].icon}${value}</span>`;
   }).join("");
 }
 

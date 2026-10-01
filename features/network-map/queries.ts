@@ -1,20 +1,17 @@
 import {
   isTrainWithin,
-  type Leg,
-  legsBetween,
   sectionFlow,
   stationFlow,
+  stationTrains,
 } from "./flows";
 import { DISPATCH_AREA_NAMES, SECTIONS, STATIONS } from "./mock";
 import { TRAINS } from "./mock-trains";
 import { STATUS_ORDER, toStatus } from "./status";
 import type {
-  Direction,
   MapScope,
   Section,
   Station,
-  StationTraffic,
-  TrainMovement,
+  StationTrain,
   ZoneStation,
   ZoneSummary,
 } from "./types";
@@ -33,8 +30,8 @@ export async function getZoneMap(scope: MapScope) {
     title: titleOf(scope),
     stations,
     // Карточки всех станций зоны считаем сразу: выбор станции идёт без запроса к серверу.
-    trafficByStation: Object.fromEntries(
-      scopeStations.map((station) => [station.id, trafficOf(station.id)]),
+    trainsByStation: Object.fromEntries(
+      scopeStations.map((station) => [station.id, trainsOf(station.id)]),
     ),
     sections: sections.map((section) => ({
       ...section,
@@ -48,10 +45,28 @@ export async function getStation(stationId: string) {
   return STATIONS.find((station) => station.id === stationId) ?? null;
 }
 
-function trafficOf(stationId: string): StationTraffic {
-  return {
-    directions: directionsOf(stationId),
-  };
+// Ближайшие события станции сверху: прибытие или отправление.
+function trainsOf(stationId: string): StationTrain[] {
+  return stationTrains(TRAINS, stationId)
+    .map(({ train, stop, incoming, outgoing, flow }) => ({
+      trainId: train.id,
+      number: train.number,
+      kind: train.kind,
+      flow,
+      originName: nameOf(train.route[0].stationId),
+      destinationName: nameOf(train.route[train.route.length - 1].stationId),
+      fromName: incoming == null ? null : nameOf(incoming.from.stationId),
+      toName: outgoing == null ? null : nameOf(outgoing.to.stationId),
+      arrival: stop.arrival,
+      departure: stop.departure,
+      nextArrival: outgoing?.to.arrival ?? null,
+      isTerminal: train.route[train.route.length - 1] === stop,
+    }))
+    .toSorted((a, b) => eventTime(a) - eventTime(b));
+}
+
+function eventTime(train: StationTrain) {
+  return train.flow === "departing" ? train.departure : train.arrival;
 }
 
 function stationIdsOf(scope: MapScope) {
@@ -83,38 +98,6 @@ function toZoneStation(station: Station, scopeIds: Set<string>): ZoneStation {
     ...station,
     flow: stationFlow(TRAINS, station.id),
     isInScope: scopeIds.has(station.id),
-  };
-}
-
-function directionsOf(stationId: string): Direction[] {
-  return SECTIONS.flatMap((section) => {
-    if (section.fromId !== stationId && section.toId !== stationId) return [];
-    const neighborId =
-      section.fromId === stationId ? section.toId : section.fromId;
-    return {
-      neighborId,
-      neighborName: nameOf(neighborId),
-      toUs: legsBetween(TRAINS, neighborId, stationId)
-        .map((leg) => toMovement(leg, leg.passesTo))
-        .toSorted((a, b) => a.arrival - b.arrival),
-      fromUs: legsBetween(TRAINS, stationId, neighborId)
-        .map((leg) => toMovement(leg, leg.passesFrom))
-        .toSorted((a, b) => a.departure - b.departure),
-    };
-  });
-}
-
-function toMovement(leg: Leg, passesStation: boolean): TrainMovement {
-  const { train, from, to } = leg;
-  return {
-    trainId: train.id,
-    number: train.number,
-    kind: train.kind,
-    originName: nameOf(train.route[0].stationId),
-    destinationName: nameOf(train.route[train.route.length - 1].stationId),
-    departure: from.departure,
-    arrival: to.arrival,
-    passesStation,
   };
 }
 

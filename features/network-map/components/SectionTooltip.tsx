@@ -18,6 +18,7 @@ export function SectionTooltip({ section, from, to }: Props) {
         {from.name} → {to.name}: {section.flow.forward} · {to.name} →{" "}
         {from.name}: {section.flow.backward}
       </div>
+      <div className="text-muted">Все поезда по участку, включая проездом</div>
       <div className="text-muted">
         {STATUS_LABEL[section.status]}
         {section.note == null ? null : ` · ${section.note}`}
