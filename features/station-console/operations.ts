@@ -1,3 +1,4 @@
+import { toClock, toMinutes } from "@/lib/clock";
 import { createSupabaseClient } from "@/lib/supabase";
 import type { PagerMessage, PlannedTrain } from "./types";
 
@@ -27,7 +28,9 @@ export async function stationPlan(stationId: string) {
   const supabase = await createSupabaseClient();
   const { data } = await supabase
     .from("track_plan")
-    .select("train_number, track, arrives_at, departs_at, trains(kind)")
+    .select(
+      "train_number, track, entry_route, exit_route, arrives_at, departs_at, trains(kind)",
+    )
     .eq("station_id", stationId)
     .order("arrives_at")
     .overrideTypes<PlanRow[], { merge: false }>();
@@ -37,6 +40,8 @@ export async function stationPlan(stationId: string) {
       train: row.train_number,
       kind: row.trains?.kind ?? "freight",
       track: row.track,
+      entryRoute: row.entry_route,
+      exitRoute: row.exit_route,
       arrival: row.arrives_at.slice(0, 5),
       departure: row.departs_at.slice(0, 5),
     }),
@@ -69,7 +74,8 @@ function allOperations(plan: PlannedTrain[]) {
   return plan
     .filter(
       (train) =>
-        minutes(train.departure) - minutes(train.arrival) >= MIN_STOP_MINUTES,
+        toMinutes(train.departure) - toMinutes(train.arrival) >=
+        MIN_STOP_MINUTES,
     )
     .flatMap((train) => [arrivalOf(train), departureOf(train)]);
 }
@@ -96,23 +102,15 @@ function departureOf({
   const text =
     kind === "passenger"
       ? `Проводить ${train} с пути ${track} в ${departure}: осмотреть состав, нет ли людей на путях`
-      : `Подготовить ${train} к отправлению с пути ${track} в ${departure}: сцепить вагоны, опробовать тормоза к ${clock(minutes(departure) - PREPARE_MINUTES)}`;
+      : `Подготовить ${train} к отправлению с пути ${track} в ${departure}: сцепить вагоны, опробовать тормоза к ${toClock(toMinutes(departure) - PREPARE_MINUTES)}`;
   return { id: `${train}-departure`, time: departure, train, text };
-}
-
-function minutes(time: string) {
-  const [hours, mins] = time.split(":").map(Number);
-  return hours * 60 + mins;
-}
-
-function clock(total: number) {
-  const hours = String(Math.floor(total / 60)).padStart(2, "0");
-  return `${hours}:${String(total % 60).padStart(2, "0")}`;
 }
 
 type PlanRow = {
   train_number: string;
   track: number;
+  entry_route: string;
+  exit_route: string;
   arrives_at: string;
   departs_at: string;
   trains: { kind: PlannedTrain["kind"] } | null;
