@@ -35,6 +35,11 @@ export type Live = {
   // считает индекс эффективности.
   plan: PlannedTrain[];
   layout: StationLayout;
+  // Время станции, минуты от полуночи: в сценарии — минута шага (14:05…),
+  // без сценария — реальные часы.
+  now: number;
+  // План из симуляции поездов: сценария сбоя нет, пульт идёт по часам.
+  simulated: boolean;
   // Хронология станции, свежие сверху.
   events: JournalEvent[];
 };
@@ -109,10 +114,10 @@ export type PlannedTrain = {
   departure: string;
 };
 
-// Устройство станции для расчёта индекса: пути, маршруты со стрелками и
-// поезда, за которыми закреплены бригады.
+// Устройство станции для расчёта индекса и живого плана: пути, маршруты со
+// стрелками и поезда, за которыми закреплены бригады.
 export type StationLayout = {
-  tracks: { number: number; kind: TrackKind }[];
+  tracks: { number: number; kind: TrackKind; hasPlatform: boolean }[];
   routes: { id: string; track: number; throat: Throat; switches: string[] }[];
   crewTrains: string[];
 };

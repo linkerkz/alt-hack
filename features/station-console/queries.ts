@@ -1,11 +1,10 @@
+import { toClock } from "@/lib/clock";
 import { stationEfficiency } from "./efficiency";
 import { incidentCard } from "./incident";
-import { STEP_MINUTE } from "./mock";
 import { optionComparison } from "./options";
 import { pagerCard } from "./pagerCard";
 import { trackPlan } from "./plan";
 import { stationSchema } from "./schema";
-import { clockAt } from "./status";
 import type { ConsoleState, Live, Neighbors } from "./types";
 
 export { getApprovalRequests } from "./approval";
@@ -19,7 +18,7 @@ export async function getStationConsole(
   neighbors: Neighbors,
   live: Live,
 ) {
-  const clock = clockAt(STEP_MINUTE[state.step]);
+  const clock = toClock(live.now);
   return {
     stationId,
     clock,

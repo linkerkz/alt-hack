@@ -1,8 +1,10 @@
+import { activePlan } from "./activePlan";
 import { DAMAGE, OBSTRUCTION } from "./fault";
 import { baselineEvents, INCIDENT, STEP } from "./mock";
 import { participantsOf } from "./participants";
 import { incidentProgress } from "./progress";
 import { snapshotOf } from "./snapshot";
+import { trainEvents } from "./trainEvents";
 import { turnOf } from "./turn";
 import type {
   ConsoleState,
@@ -22,7 +24,7 @@ export function incidentCard(
 ) {
   const { step } = state;
   const incidentId = live.incident?.id;
-  const feed: ScenarioEvent[] = [...live.events, ...baselineEvents(neighbors)];
+  const feed = feedOf(live, neighbors);
   // Путейцы нашли повреждение: инцидент уже не про предмет, а про ремонт.
   const damaged = step >= STEP.escalated;
   const tone: Status = damaged ? "critical" : "warning";
@@ -43,6 +45,13 @@ export function incidentCard(
     events: live.events.filter((event) => event.incidentId === incidentId),
     feed,
   };
+}
+
+// Лента станции: в живом плане — поезда симуляции, в сценарии — хронология
+// и штатная работа до сбоя.
+function feedOf(live: Live, neighbors: Neighbors): ScenarioEvent[] {
+  if (live.simulated) return trainEvents(activePlan(live), live.now);
+  return [...live.events, ...baselineEvents(neighbors)];
 }
 
 // Подробности под ходом: какие есть на этом этапе и какие раскрыты.

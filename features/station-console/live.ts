@@ -1,9 +1,9 @@
 import { cache } from "react";
 import { simClock } from "@/lib/clock";
 import { createSupabaseClient, supabaseAdmin } from "@/lib/supabase";
-import { stationLayout } from "./layout";
-import { stationPlan } from "./operations";
 import { stationPager } from "./pager";
+import { planSourceOf } from "./planSource";
+import { stepOf } from "./scenario";
 import type {
   ChosenOption,
   IncidentStatus,
@@ -24,19 +24,19 @@ export const INCIDENT_COLUMNS =
   "id, code, station_id, status, option, route_tasks, dnc_rejected_at, dnc_comment, analysis";
 
 // Ход станции из базы: последний инцидент, его наряд, пейджер, план путей
-// с устройством станции и хронология. Кэш на запрос: страница и действие читают по разу. Всё,
-// кроме наряда, читается параллельно с инцидентом, наряд — следом за ним.
+// с устройством станции и хронология. Кэш на запрос: страница и действие
+// читают по разу. Наряд и план — следом за инцидентом: от наряда зависит
+// шаг сценария, а от шага — откуда план (planSource.ts).
 export const getLive = cache(async (stationId: string): Promise<Live> => {
-  const [incident, pager, plan, layout, events] = await Promise.all([
+  const [incident, pager, events] = await Promise.all([
     lastIncident(stationId),
     stationPager(stationId),
-    stationPlan(stationId),
-    stationLayout(stationId),
     stationEvents(stationId),
   ]);
   const workOrder = incident == null ? null : await incidentWorkOrder(incident);
+  const source = await planSourceOf(stationId, stepOf({ incident, workOrder }));
 
-  return { incident, workOrder, pager, plan, layout, events };
+  return { incident, workOrder, pager, events, ...source };
 });
 
 async function lastIncident(stationId: string) {

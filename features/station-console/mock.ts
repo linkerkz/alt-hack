@@ -1,3 +1,4 @@
+import { toMinutes } from "@/lib/clock";
 import type {
   Neighbors,
   OptionId,
@@ -27,6 +28,11 @@ export const STEP = {
 
 // Минута сценария на каждом шаге.
 export const STEP_MINUTE = [5, 8, 8, 9, 9, 10, 11, 16, 27, 29, 32];
+
+// Время станции на шаге сценария, минуты от полуночи.
+export function scenarioMinute(step: number) {
+  return toMinutes("14:00") + STEP_MINUTE[step];
+}
 
 // Тексты инцидента: что увидела камера и что нашли путейцы — см. fault.ts.
 export const INCIDENT = {

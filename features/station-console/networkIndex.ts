@@ -1,9 +1,8 @@
 import { createSupabaseClient } from "@/lib/supabase";
 import { activeOption } from "./activePlan";
 import { scoreActive } from "./efficiency";
-import { stationLayout } from "./layout";
 import { lastIncidents } from "./live";
-import { stationPlan } from "./operations";
+import { planSourceOf } from "./planSource";
 import { stepOf } from "./scenario";
 
 // Индекс станций, у которых в базе есть план путей, — тот же, что на пульте.
@@ -14,14 +13,11 @@ export async function getLiveIndexes() {
   const incidents = await lastIncidents(stationIds);
   const entries = await Promise.all(
     stationIds.map(async (stationId) => {
-      const [plan, layout] = await Promise.all([
-        stationPlan(stationId),
-        stationLayout(stationId),
-      ]);
       const incident = incidents.get(stationId) ?? null;
       const step = stepOf({ incident, workOrder: null });
+      const source = await planSourceOf(stationId, step);
       const option = activeOption(step, incident?.option ?? null);
-      return [stationId, scoreActive({ plan, layout }, option).index] as const;
+      return [stationId, scoreActive(source, option).index] as const;
     }),
   );
   return new Map(entries);

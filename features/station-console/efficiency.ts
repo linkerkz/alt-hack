@@ -7,7 +7,7 @@ import {
   type PlanSource,
 } from "./activePlan";
 import { evaluatePlan } from "./metrics";
-import { FAULT, STEP, STEP_MINUTE } from "./mock";
+import { FAULT, STEP, STEP_MINUTE, scenarioMinute } from "./mock";
 import {
   clockAt,
   formatNumber,
@@ -25,10 +25,11 @@ export function scorePlan(source: PlanSource, option: OptionId) {
   return evaluatePlan(runs, source.layout, toMinutes(FAULT.from));
 }
 
-// Исходный план без сбоя — с ним сравниваем индекс после сбоя.
+// Исходный план без сбоя — с ним сравниваем индекс после сбоя. В живом
+// плане — на текущую минуту, в сценарии — на минуту до сбоя.
 export function scoreBaseline(source: PlanSource) {
-  const now = clockAt(STEP_MINUTE[STEP.normal]);
-  return evaluatePlan(forecastFor(source, null), source.layout, toMinutes(now));
+  const at = source.simulated ? source.now : scenarioMinute(STEP.normal);
+  return evaluatePlan(forecastFor(source, null), source.layout, at);
 }
 
 // Оценка действующего плана; null — исходный план, сбоя нет.

@@ -9,8 +9,8 @@ import type { ChosenOption, Live, OptionId, PlannedTrain } from "./types";
 // «ничего не менять» при закрытой С3, после — принятый вариант. По его
 // прогнозу рисуются схема и план путей и поручаются операции бригаде.
 
-// Для прогноза из хода станции нужны только план путей и устройство.
-export type PlanSource = Pick<Live, "plan" | "layout">;
+// Для прогноза из хода станции нужны план путей, устройство и время станции.
+export type PlanSource = Pick<Live, "plan" | "layout" | "now" | "simulated">;
 
 // null — исходный план, сбоя нет.
 export function activeOption(step: number, chosen: ChosenOption | null) {

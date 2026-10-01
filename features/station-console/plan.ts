@@ -1,14 +1,14 @@
-import { toMinutes } from "@/lib/clock";
+import { toClock, toMinutes } from "@/lib/clock";
 import { activeOption, forecastFor, type PlanSource } from "./activePlan";
-import type { Run } from "./forecast";
-import { FAULT, OPTION_CHANGES, SHUNTING, STEP, STEP_MINUTE } from "./mock";
+import type { Run, Span } from "./forecast";
+import { FAULT, OPTION_CHANGES, SHUNTING, STEP } from "./mock";
 import { isFocusAvailable } from "./schema";
-import { clockAt } from "./status";
 import type { ConsoleState, OptionId } from "./types";
 
-// План занятости путей (диаграмма Ганта) на окне 14:00–14:45 по прогнозу
+// План занятости путей (диаграмма Ганта) на окне 45 минут по прогнозу
 // действующего плана: до решения поезда, которым мешает сбой, — конфликты,
-// после — нитки принятого варианта.
+// после — нитки принятого варианта. Окно сценария — 14:00–14:45, живого
+// плана — от четверти часа назад.
 
 export type PlanBarKind =
   | "fact"
@@ -18,7 +18,11 @@ export type PlanBarKind =
   | "new"
   | "closed";
 
-const WINDOW = { from: toMinutes("14:00"), minutes: 45 };
+const WINDOW_MINUTES = 45;
+const SCENARIO_FROM = toMinutes("14:00");
+// Сколько прошлого видно в живом плане; начало окна — кратно шагу шкалы.
+const PAST_MINUTES = 15;
+const TICK_STEP = 5;
 const TICK_MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40];
 
 const ROWS = [
@@ -37,15 +41,20 @@ const QUIET_TRACKS = [2, 6];
 const LONG_STOP_MINUTES = 8;
 
 export function trackPlan(state: ConsoleState, source: PlanSource) {
-  const now = toMinutes(clockAt(STEP_MINUTE[state.step]));
-  const bars = barsAt(state, source);
+  const { now } = source;
+  const window = windowOf(source);
+  const percentOf = (minute: number) => percentIn(window, minute);
+  const bars = barsAt(state, source).filter(
+    (bar) => bar.to > window.from && bar.from < window.to,
+  );
   const focus = isFocusAvailable(state) && state.focus;
 
   return {
+    window: `${toClock(window.from)}–${toClock(window.to)}`,
     nowPercent: percentOf(now),
     ticks: TICK_MINUTES.map((minute) => ({
-      left: percentOf(WINDOW.from + minute),
-      label: clockAt(minute),
+      left: percentOf(window.from + minute),
+      label: toClock(window.from + minute),
     })),
     rows: ROWS.map((row) => ({
       ...row,
@@ -95,15 +104,23 @@ function barsAt(state: ConsoleState, source: PlanSource) {
       bars.push({ track, ...span(FAULT.from, FAULT.until), label, kind });
     }
   }
-  bars.push({
-    track: SHUNTING.track,
-    ...span(SHUNTING.from, SHUNTING.until),
-    label: "Манёвры ТЭМ2",
-    kind: "plan",
-  });
-  return bars.filter(
-    (bar) => bar.to > WINDOW.from && bar.from < WINDOW.from + WINDOW.minutes,
-  );
+  // Манёвры ТЭМ2 — часть сценария: в живом плане их нет.
+  if (!source.simulated) {
+    bars.push({
+      track: SHUNTING.track,
+      ...span(SHUNTING.from, SHUNTING.until),
+      label: "Манёвры ТЭМ2",
+      kind: "plan",
+    });
+  }
+  return bars;
+}
+
+function windowOf({ now, simulated }: PlanSource): Span {
+  const from = simulated
+    ? Math.floor((now - PAST_MINUTES) / TICK_STEP) * TICK_STEP
+    : SCENARIO_FROM;
+  return { from, to: from + WINDOW_MINUTES };
 }
 
 function barOf(run: Run, at: Run["planned"], kind: PlanBarKind) {
@@ -138,7 +155,7 @@ type Bar = {
 };
 
 // Полосы за краями окна обрезаем.
-function percentOf(minute: number) {
-  const offset = Math.min(Math.max(minute - WINDOW.from, 0), WINDOW.minutes);
-  return (offset / WINDOW.minutes) * 100;
+function percentIn(window: Span, minute: number) {
+  const offset = Math.min(Math.max(minute - window.from, 0), WINDOW_MINUTES);
+  return (offset / WINDOW_MINUTES) * 100;
 }

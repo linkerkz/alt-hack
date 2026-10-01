@@ -1,8 +1,5 @@
-import { toMinutes } from "@/lib/clock";
 import { activeOption, forecastFor, type PlanSource } from "./activePlan";
 import type { Run } from "./forecast";
-import { STEP_MINUTE } from "./mock";
-import { clockAt } from "./status";
 import type { ConsoleState } from "./types";
 
 // Поезда на схеме станции и геометрия путей, по которой их расставляем.
@@ -40,7 +37,7 @@ const SHUNTER = { label: "ТЭМ2", track: 6, x: 540, width: 46 } as const;
 // Поезда на схеме в минуту шага по прогнозу действующего плана: на путях
 // стоят те, кто уже прибыл; у входного — кто ждёт или вот-вот подойдёт.
 export function schemaTrainsAt(state: ConsoleState, source: PlanSource) {
-  const now = toMinutes(clockAt(STEP_MINUTE[state.step]));
+  const { now } = source;
   const runs = forecastFor(source, activeOption(state.step, state.option));
   const standing = runs
     .filter((run) => run.forecast.from <= now && now < run.forecast.to)

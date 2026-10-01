@@ -1,11 +1,11 @@
 import { indexStatus } from "@/lib/efficiencyIndex";
 import type { PlanSource } from "./activePlan";
 import { scoreBaseline } from "./efficiency";
-import { stationLayout } from "./layout";
 import { lastIncidents } from "./live";
 import { APPROVAL, approvalTrains } from "./mock";
-import { stationPlan } from "./operations";
 import { scoredOptions } from "./options";
+import { planSourceOf } from "./planSource";
+import { stepOf } from "./scenario";
 import type { LiveIncident, Neighbors, Status } from "./types";
 
 // Запрос на согласование варианта Б: карточка ДНЦ на карте сети.
@@ -55,11 +55,9 @@ export async function getApprovalRequests(stations: ApprovalStation[]) {
   });
   return Promise.all(
     pending.map(async ({ station, incident, state }) => {
-      const [plan, layout] = await Promise.all([
-        stationPlan(station.id),
-        stationLayout(station.id),
-      ]);
-      return toRequest(station, incident, state, { plan, layout });
+      const step = stepOf({ incident, workOrder: null });
+      const source = await planSourceOf(station.id, step);
+      return toRequest(station, incident, state, source);
     }),
   );
 }
