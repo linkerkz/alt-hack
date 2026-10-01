@@ -2,22 +2,23 @@ import { simClock } from "@/lib/clock";
 import { createSupabaseClient } from "@/lib/supabase";
 import type { Incident, IncidentKind } from "./types";
 
-// Инциденты из базы: их ведут пульты станций. Открытый — пока объект
-// не вернули в эксплуатацию.
+// Открытые сбои станций из базы: живой сценарий ведёт пульт, остальные —
+// из сида. Открытый — пока объект не вернули в эксплуатацию.
 
 const KIND: Record<IncidentRow["kind"], IncidentKind> = {
   switch_fault: "breakdown",
+  breakdown: "breakdown",
   train_delay: "delay",
   track_closure: "track-closure",
+  route_conflict: "route-conflict",
+  resource_shortage: "resource-shortage",
 };
 
-export async function liveIncidents(stationIds: string[]) {
+export async function openIncidents() {
   const supabase = await createSupabaseClient();
-  // Время обнаружения — первое событие хронологии: оно во времени симуляции.
   const { data } = await supabase
     .from("incidents")
-    .select("code, station_id, kind, title, timeline_events(at)")
-    .in("station_id", stationIds)
+    .select("code, station_id, kind, title, detected_at, timeline_events(at)")
     .not("status", "in", "(restored,closed)")
     .order("detected_at", { ascending: false })
     .order("at", { referencedTable: "timeline_events", ascending: true })
@@ -32,13 +33,15 @@ export async function liveIncidents(stationIds: string[]) {
   return byStation;
 }
 
+// Время обнаружения — первое событие хронологии: оно во времени симуляции.
+// У сбоев без хронологии — момент обнаружения.
 function toIncident(row: IncidentRow): Incident {
   const [firstEvent] = row.timeline_events;
   return {
     id: row.code,
     kind: KIND[row.kind],
-    title: `${row.code} · ${row.title}`,
-    startedAt: firstEvent == null ? "—" : simClock(firstEvent.at),
+    title: row.title,
+    startedAt: simClock(firstEvent?.at ?? row.detected_at),
   };
 }
 
@@ -46,7 +49,14 @@ function toIncident(row: IncidentRow): Incident {
 type IncidentRow = {
   code: string;
   station_id: string;
-  kind: "switch_fault" | "train_delay" | "track_closure";
+  kind:
+    | "switch_fault"
+    | "breakdown"
+    | "train_delay"
+    | "track_closure"
+    | "route_conflict"
+    | "resource_shortage";
   title: string;
+  detected_at: string;
   timeline_events: { at: string }[];
 };

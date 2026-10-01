@@ -4,12 +4,9 @@ import {
   stationFlow,
   stationTrains,
 } from "./flows";
-import { liveIncidents } from "./live";
-import { DISPATCH_AREA_NAMES, SECTIONS, STATIONS } from "./mock";
-import { TRAINS } from "./mock-trains";
+import { getNetwork, type Network } from "./network";
 import { STATUS_ORDER, toStatus } from "./status";
 import type {
-  Incident,
   MapScope,
   Section,
   Station,
@@ -19,57 +16,64 @@ import type {
 } from "./types";
 
 export async function getZoneMap(scope: MapScope) {
-  const scopeIds = stationIdsOf(scope);
-  const sections = SECTIONS.filter(
+  const network = await getNetwork();
+  const scopeIds = stationIdsOf(network, scope);
+  const sections = network.sections.filter(
     (section) => scopeIds.has(section.fromId) || scopeIds.has(section.toId),
   );
-  const live = await liveIncidents([...scopeIds]);
-  const stations = sortBySeverity(visibleStations(scopeIds, sections)).map(
-    (station) => toZoneStation(station, scopeIds, live.get(station.id) ?? []),
-  );
+  const stations = sortBySeverity(
+    visibleStations(network, scopeIds, sections),
+  ).map((station) => toZoneStation(network, station, scopeIds));
   const scopeStations = stations.filter((station) => station.isInScope);
 
   return {
-    title: titleOf(scope),
+    title: titleOf(network, scope),
     stations,
     // Карточки всех станций зоны считаем сразу: выбор станции идёт без запроса к серверу.
     trainsByStation: Object.fromEntries(
-      scopeStations.map((station) => [station.id, trainsOf(station.id)]),
+      scopeStations.map((station) => [
+        station.id,
+        trainsOf(network, station.id),
+      ]),
     ),
     sections: sections.map((section) => ({
       ...section,
-      flow: sectionFlow(TRAINS, section),
+      flow: sectionFlow(network.trains, section),
     })),
-    summary: summarize(scopeStations),
+    summary: summarize(network, scopeStations),
   };
 }
 
 export async function getStation(stationId: string) {
-  return STATIONS.find((station) => station.id === stationId) ?? null;
+  const { stations } = await getNetwork();
+  return stations.find((station) => station.id === stationId) ?? null;
 }
 
 // Соседи по участкам: нечётная сторона — откуда поезда идут к нам, чётная — куда от нас.
 export async function getStationNeighbors(stationId: string) {
-  const incoming = SECTIONS.find((section) => section.toId === stationId);
-  const outgoing = SECTIONS.find((section) => section.fromId === stationId);
+  const network = await getNetwork();
+  const { sections } = network;
+  const incoming = sections.find((section) => section.toId === stationId);
+  const outgoing = sections.find((section) => section.fromId === stationId);
   return {
-    odd: incoming == null ? null : nameOf(incoming.fromId),
-    even: outgoing == null ? null : nameOf(outgoing.toId),
+    odd: incoming == null ? null : nameOf(network, incoming.fromId),
+    even: outgoing == null ? null : nameOf(network, outgoing.toId),
   };
 }
 
 // Ближайшие события станции сверху: прибытие или отправление.
-function trainsOf(stationId: string): StationTrain[] {
-  return stationTrains(TRAINS, stationId)
+function trainsOf(network: Network, stationId: string): StationTrain[] {
+  const name = (id: string) => nameOf(network, id);
+  return stationTrains(network.trains, stationId)
     .map(({ train, stop, incoming, outgoing, flow }) => ({
       trainId: train.id,
       number: train.number,
       kind: train.kind,
       flow,
-      originName: nameOf(train.route[0].stationId),
-      destinationName: nameOf(train.route[train.route.length - 1].stationId),
-      fromName: incoming == null ? null : nameOf(incoming.from.stationId),
-      toName: outgoing == null ? null : nameOf(outgoing.to.stationId),
+      originName: name(train.route[0].stationId),
+      destinationName: name(train.route[train.route.length - 1].stationId),
+      fromName: incoming == null ? null : name(incoming.from.stationId),
+      toName: outgoing == null ? null : name(outgoing.to.stationId),
       arrival: stop.arrival,
       departure: stop.departure,
       nextArrival: outgoing?.to.arrival ?? null,
@@ -82,47 +86,51 @@ function eventTime(train: StationTrain) {
   return train.flow === "departing" ? train.departure : train.arrival;
 }
 
-function stationIdsOf(scope: MapScope) {
+function stationIdsOf({ stations }: Network, scope: MapScope) {
   if (scope.kind === "station") return new Set([scope.stationId]);
   return new Set(
-    STATIONS.filter(
-      (station) => station.dispatchAreaId === scope.dispatchAreaId,
-    ).map((station) => station.id),
+    stations
+      .filter((station) => station.dispatchAreaId === scope.dispatchAreaId)
+      .map((station) => station.id),
   );
 }
 
 // Станции зоны и их соседи — другие концы участков, выходящих из зоны.
-function visibleStations(scopeIds: Set<string>, sections: Section[]) {
+function visibleStations(
+  { stations }: Network,
+  scopeIds: Set<string>,
+  sections: Section[],
+) {
   const visibleIds = new Set(scopeIds);
   for (const section of sections) {
     visibleIds.add(section.fromId);
     visibleIds.add(section.toId);
   }
-  return STATIONS.filter((station) => visibleIds.has(station.id));
+  return stations.filter((station) => visibleIds.has(station.id));
 }
 
-function titleOf(scope: MapScope) {
-  if (scope.kind === "station") return `Станция ${nameOf(scope.stationId)}`;
-  return DISPATCH_AREA_NAMES[scope.dispatchAreaId] ?? "Диспетчерский круг";
+function titleOf(network: Network, scope: MapScope) {
+  if (scope.kind === "station") {
+    return `Станция ${nameOf(network, scope.stationId)}`;
+  }
+  return network.areaNames.get(scope.dispatchAreaId) ?? "Диспетчерский круг";
 }
 
-// Сбои из базы — сверху: их сейчас ведёт станция.
 function toZoneStation(
+  { trains }: Network,
   station: Station,
   scopeIds: Set<string>,
-  live: Incident[],
 ): ZoneStation {
   return {
     ...station,
-    incidents: [...live, ...station.incidents],
-    flow: stationFlow(TRAINS, station.id),
+    flow: stationFlow(trains, station.id),
     isInScope: scopeIds.has(station.id),
   };
 }
 
-function nameOf(stationId: string) {
+function nameOf({ stations }: Network, stationId: string) {
   return (
-    STATIONS.find((station) => station.id === stationId)?.name ?? stationId
+    stations.find((station) => station.id === stationId)?.name ?? stationId
   );
 }
 
@@ -135,7 +143,7 @@ function sortBySeverity(stations: Station[]) {
   });
 }
 
-function summarize(stations: ZoneStation[]): ZoneSummary {
+function summarize({ trains }: Network, stations: ZoneStation[]): ZoneSummary {
   const stationCountByStatus = { normal: 0, warning: 0, critical: 0 };
   let indexSum = 0;
   let arrivingCount = 0;
@@ -153,7 +161,7 @@ function summarize(stations: ZoneStation[]): ZoneSummary {
     avgEfficiencyIndex: Math.round(indexSum / stations.length),
     stationCount: stations.length,
     stationCountByStatus,
-    trainsWithinCount: TRAINS.filter((train) => isTrainWithin(train, scopeIds))
+    trainsWithinCount: trains.filter((train) => isTrainWithin(train, scopeIds))
       .length,
     arrivingCount,
     incidentCount,
