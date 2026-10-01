@@ -2,11 +2,13 @@ import { type NextRequest, NextResponse } from "next/server";
 import { refreshSession } from "@/lib/supabase";
 
 // По QR без входа: чеклист наряда (но не его печать) и полевые устройства —
-// страница, её манифест и иконки PWA, приём сигнала камеры. Доступ даёт uuid.
+// экраны камеры и пейджера, их манифест и иконки PWA, приём сигнала камеры.
+// Доступ даёт uuid.
 const PUBLIC_PATHS = [
   /^\/login$/,
   /^\/work-orders\/[^/]+$/,
-  /^\/devices\/[0-9a-f-]{36}(\/manifest\.webmanifest)?$/,
+  /^\/(camera|pager)\/[0-9a-f-]{36}$/,
+  /^\/devices\/[0-9a-f-]{36}\/manifest\.webmanifest$/,
   /^\/devices\/icon\/\d+$/,
   /^\/api\/devices\/[0-9a-f-]{36}\/observations$/,
 ];

@@ -14,6 +14,7 @@ import {
 } from "@/features/auth/access";
 import { AccountMenu } from "@/features/auth/components/AccountMenu";
 import { requireUser } from "@/features/auth/queries";
+import { devicePath } from "@/features/devices/paths";
 import { getStationDevices } from "@/features/devices/queries";
 import type { Device } from "@/features/devices/types";
 import { getStation } from "@/features/network-map/queries";
@@ -22,8 +23,8 @@ import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Полевые устройства" };
 
-// Камеры и пейджеры станции: QR открывает устройство на телефоне, дальше
-// его ставят на домашний экран как приложение.
+// Служебная страница без ссылок из приложения: QR камер и пейджеров станции,
+// чтобы перед демо открыть их на телефонах и поставить на домашний экран.
 export default async function StationDevicesPage({
   params,
 }: PageProps<"/stations/[stationId]/devices">) {
@@ -57,7 +58,7 @@ export default async function StationDevicesPage({
                   {device.name}
                 </p>
                 <QrCode
-                  url={`${SITE_URL}/devices/${device.id}`}
+                  url={`${SITE_URL}${devicePath(device)}`}
                   className="size-40"
                 />
                 {device.kind === "camera" && (
@@ -68,7 +69,7 @@ export default async function StationDevicesPage({
                   </p>
                 )}
                 <Link
-                  href={`/devices/${device.id}`}
+                  href={devicePath(device)}
                   target="_blank"
                   className="text-[13px] text-accent-700 underline underline-offset-2 hover:text-accent-600"
                 >

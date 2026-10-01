@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
-import { ACCENT, INK, PAPER } from "@/features/devices/manifest";
+import { SCREEN, SCREEN_INK, SCREEN_WARN } from "@/features/devices/manifest";
 
-// Иконка устройства на домашнем экране: путь с золотыми шпалами на бумаге.
+// Иконка устройства на домашнем экране: путь с жёлтыми шпалами на тёмном экране.
 // 180 — для iOS, 192 и 512 — для манифеста.
 const SIZES = [180, 192, 512];
 
@@ -21,7 +21,7 @@ export async function GET(
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: PAPER,
+        background: SCREEN,
       }}
     >
       <div
@@ -39,7 +39,7 @@ export async function GET(
             key={sleeper}
             style={{
               height: unit * 0.9,
-              background: ACCENT,
+              background: SCREEN_WARN,
               borderRadius: unit / 4,
             }}
           />
@@ -53,7 +53,7 @@ export async function GET(
               top: 0,
               width: unit * 0.8,
               height: unit * 10,
-              background: INK,
+              background: SCREEN_INK,
             }}
           />
         ))}
