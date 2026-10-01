@@ -39,7 +39,6 @@ export default async function PagerPage({ params }: PageProps<"/pager/[id]">) {
     <DeviceFrame
       code={deviceCode(device)}
       stationName={station?.name ?? device.stationId}
-      title={device.name}
     >
       <LiveRefresh />
       <PagerAlert message={signal} />
