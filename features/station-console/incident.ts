@@ -1,4 +1,5 @@
 import type { ChainState } from "./chain";
+import { type Detection, detectionOf } from "./detection";
 import {
   baselineEvents,
   INCIDENT,
@@ -8,6 +9,7 @@ import {
   STEP_INCIDENT_STATUS,
 } from "./mock";
 import { routeDone } from "./routing";
+import { snapshotOf } from "./snapshot";
 import type {
   Command,
   ConsoleState,
@@ -42,9 +44,13 @@ export function incidentCard(
   const statusIndex = STEP_INCIDENT_STATUS[step];
   const incidentId = live.incident?.id;
   const feed: ScenarioEvent[] = [...live.events, ...baselineEvents(neighbors)];
+  const detection = detectionOf(live.incident);
 
   return {
     code: live.incident?.code ?? INCIDENT.id,
+    detection,
+    snapshot: snapshotOf(live.incident),
+    analysis: live.incident?.analysis ?? null,
     isActive: step >= STEP.suspected && step <= STEP.restored,
     statusName: INCIDENT_STATUS[statusIndex],
     statusSteps: INCIDENT_STATUS.map((label, i) => ({
@@ -54,7 +60,7 @@ export function incidentCard(
     dncBadge: dncBadgeAt(state, isRejected(state, live.incident)),
     suggestion: suggestionAt(step, neighbors),
     action: actionAt(state, neighbors, live.incident),
-    tasks: tasksAt(state, neighbors, live),
+    tasks: tasksAt(state, neighbors, live, detection),
     events: live.events.filter((event) => event.incidentId === incidentId),
     feed,
   };
@@ -98,7 +104,7 @@ function actionAt(
   switch (step) {
     case STEP.suspected:
       return {
-        text: "Система обнаружила проблему по датчику. Проверка ушла ДСП: после подтверждения неисправности варианты станут активными.",
+        text: "Система обнаружила проблему автоматически. Проверка ушла ДСП: после подтверждения неисправности варианты станут активными.",
         waiting: "Ждёт подтверждения ДСП",
       };
     case STEP.choosing:
@@ -169,6 +175,7 @@ function tasksAt(
   state: ConsoleState,
   { odd }: Neighbors,
   { incident, workOrder }: Live,
+  detection: Detection,
 ) {
   const { step, option } = state;
   const tasks: { who: string; what: string; status: string; tone: Status }[] =
@@ -227,8 +234,8 @@ function tasksAt(
         : { status: "Уведомлён", tone: "warning" }),
     },
     {
-      who: "Электромеханик",
-      what: "Восстановить контроль С3",
+      who: detection.crew,
+      what: detection.workOrder.title,
       status: repairStatusOf(workOrder),
       tone: step >= STEP.restored ? "normal" : "warning",
     },

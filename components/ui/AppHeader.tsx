@@ -55,6 +55,7 @@ export function AppHeader({
   return (
     <header className="flex h-14 shrink-0 items-center gap-6 border-line border-b bg-paper px-5">
       <Link
+        prefetch={false}
         href="/"
         className="flex items-center gap-2.5 font-heading font-semibold text-[21px]"
       >
@@ -108,6 +109,7 @@ function NavLink({ item, isCurrent }: { item: NavItem; isCurrent: boolean }) {
   }
   return (
     <Link
+      prefetch={false}
       href={item.href}
       className={`${base} border-transparent text-ink hover:text-accent`}
     >

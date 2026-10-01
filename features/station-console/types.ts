@@ -39,7 +39,13 @@ export type LiveIncident = {
   dncRejected: boolean;
   // Комментарий ДНЦ для станции к согласованию или отказу.
   dncComment: string | null;
+  detection: DetectionKind;
+  // Вывод ИИ по снимку; null — без анализа.
+  analysis: string | null;
 };
+
+// Чем обнаружена проблема: датчиком ЭЦ или камерой в горловине.
+export type DetectionKind = "sensor" | "camera";
 
 // Совпадает с enum public.incident_status.
 export type IncidentStatus =
@@ -113,8 +119,10 @@ export type Status = "normal" | "warning" | "critical";
 // Соседние станции: нечётная горловина — от кого поезда идут к нам, чётная — к кому.
 export type Neighbors = { odd: string; even: string };
 
-// Событие ленты: время симуляции «14:08», текст и уровень.
+// Событие ленты: время симуляции «14:08», текст и уровень. id — ключ строки:
+// время и текст повторяются (камера дважды за минуту сообщила «свободно»).
 export type ScenarioEvent = {
+  id: number | string;
   time: string;
   text: string;
   level?: Status;

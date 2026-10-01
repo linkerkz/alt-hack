@@ -35,6 +35,7 @@ export function StationSchema({
               <Tag variant="outline">Фокус · {incidentCode}</Tag>
             )}
             <Link
+              prefetch={false}
               href={consoleHref(state, { focus: !state.focus })}
               scroll={false}
               className={buttonClass("ghost", "sm")}

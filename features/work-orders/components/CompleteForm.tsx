@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
-import { completeWork } from "../actions";
+import { submitCompletion } from "../actions";
 
 type Props = {
   orderId: string;
@@ -14,7 +14,7 @@ type Props = {
 // «Работы выполнены» не открывает движение: объект вернёт в эксплуатацию ДСП.
 export function CompleteForm({ orderId, isReady }: Props) {
   const [state, formAction, isPending] = useActionState(
-    completeWork.bind(null, orderId),
+    submitCompletion.bind(null, orderId),
     { error: null },
   );
 

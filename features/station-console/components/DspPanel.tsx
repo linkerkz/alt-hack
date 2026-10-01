@@ -51,7 +51,12 @@ export function DspPanel({ operatorName, data, state }: Props) {
           ))}
         </section>
         <DspObjects objects={objects} />
-        {data.workOrder != null && <WorkOrderCard workOrder={data.workOrder} />}
+        {data.workOrder != null && (
+          <WorkOrderCard
+            workOrder={data.workOrder}
+            order={data.incident.detection.workOrder}
+          />
+        )}
         {chain.length > 0 && <DecisionChain chain={chain} />}
         {reports.length > 0 && <DspReports reports={reports} />}
       </div>

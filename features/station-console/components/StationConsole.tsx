@@ -40,6 +40,7 @@ export function StationConsole(props: Props) {
       {showBanner && (
         <IncidentBanner
           code={incident.code}
+          title={incident.detection.title}
           suggestion={incident.suggestion}
           state={state}
         />
@@ -68,6 +69,7 @@ export function StationConsole(props: Props) {
           stationId={data.stationId}
           state={state}
           workOrder={data.workOrder}
+          crew={data.incident.detection.crew}
         />
       )}
       <LiveRefresh />

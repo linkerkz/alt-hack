@@ -162,3 +162,19 @@ from (values
   (4, 'Измерить напряжение в цепи контроля'),
   (5, 'Перевести стрелку с пульта, проверить контроль в плюсе и минусе')
 ) as items (position, text);
+
+-- Полевые устройства станции: камера над стрелкой С3 и пейджеры бригад.
+-- Фиксированные id — их QR открываем на телефонах перед демо.
+insert into public.devices (id, station_id, kind, name, object_id, service) values
+  ('c0000000-0000-4000-8000-000000000001', 'almaty-1', 'camera',
+    'Камера нечётной горловины', 'С3', null),
+  ('c0000000-0000-4000-8000-000000000002', 'almaty-1', 'pager',
+    'Пейджер путейцев', null, 'track'),
+  ('c0000000-0000-4000-8000-000000000003', 'almaty-1', 'pager',
+    'Пейджер СЦБ', null, 'signalling')
+on conflict (id) do update set
+  station_id = excluded.station_id,
+  kind = excluded.kind,
+  name = excluded.name,
+  object_id = excluded.object_id,
+  service = excluded.service;

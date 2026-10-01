@@ -89,8 +89,9 @@ function buildPlanProgress(station: StationSnapshot): PlanProgress {
   const remaining = total - problems;
   const inProgress = Math.min(Math.round(remaining * 0.2), remaining);
   const completed = remaining - inProgress;
+  const percent = Math.round((completed / total) * 100);
 
-  return { completed, inProgress, problems, total };
+  return { completed, inProgress, problems, total, percent };
 }
 
 function buildStatistics(

@@ -12,7 +12,7 @@ export function EventFeed({ events }: Props) {
       <ul>
         {events.map((event) => (
           <li
-            key={`${event.time}-${event.text}`}
+            key={event.id}
             className="grid grid-cols-[14px_44px_1fr] gap-1.5 border-line border-t py-1.5 text-[12.5px]"
           >
             <span

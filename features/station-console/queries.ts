@@ -28,7 +28,7 @@ export async function getStationConsole(
     incident: incidentCard(state, neighbors, live),
     comparison: optionComparison(state, neighbors),
     chain: decisionChain(state, neighbors),
-    dsp: dspPanel(state, neighbors, live.workOrder),
+    dsp: dspPanel(state, neighbors, live),
     workOrder: live.workOrder,
   };
 }

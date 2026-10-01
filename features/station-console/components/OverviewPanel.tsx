@@ -1,7 +1,6 @@
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Card } from "@/components/ui/Card";
 import { Kicker } from "@/components/ui/Kicker";
-import { INCIDENT } from "../mock";
 import type { StationConsoleData } from "../queries";
 import { consoleHref } from "../state";
 import type { ConsoleState } from "../types";
@@ -27,7 +26,7 @@ export function OverviewPanel({ incident, state }: Props) {
               <span className="text-muted">{incident.statusName}</span>
             </div>
             <p className="font-heading font-semibold text-[17px] leading-tight">
-              {INCIDENT.title}
+              {incident.detection.title}
             </p>
             <p className="text-[13px] text-neutral-800">
               {incident.suggestion}

@@ -9,6 +9,8 @@ const FORMAT = new Intl.DateTimeFormat("ru-RU", {
   second: "2-digit",
 });
 
+const ZONE = new Intl.DateTimeFormat("ru-RU", { timeZoneName: "short" });
+
 export function LiveClock() {
   const [now, setNow] = useState<Date | null>(null);
 
@@ -33,8 +35,6 @@ export function LiveClock() {
 
 // Короткое имя пояса: «GMT+5» — чтобы было видно, по какому поясу часы.
 function zoneName(date: Date) {
-  const parts = new Intl.DateTimeFormat("ru-RU", {
-    timeZoneName: "short",
-  }).formatToParts(date);
+  const parts = ZONE.formatToParts(date);
   return parts.find((part) => part.type === "timeZoneName")?.value ?? "";
 }

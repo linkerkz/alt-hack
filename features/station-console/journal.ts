@@ -1,8 +1,16 @@
-import type { ChosenOption, Command, RouteTask, Status } from "./types";
+import { DETECTION } from "./detection";
+import type {
+  ChosenOption,
+  Command,
+  DetectionKind,
+  RouteTask,
+  Status,
+} from "./types";
 
 // Что команда пишет в хронологию станции. Время — минута симуляции после
-// 14:00, как у плана путей: демо-час идёт быстрее реального. Этапы наряда
-// пишет сама база (триггер work_order_stage): рабочий работает не с пульта.
+// 14:00, как у плана путей: демо-час идёт быстрее реального. Обнаружение
+// пишет openIncident, этапы наряда — сама база (триггер work_order_stage):
+// рабочий работает не с пульта.
 
 export type JournalEntry = {
   minute: number;
@@ -23,6 +31,7 @@ type Actor =
 
 type Context = {
   code: string;
+  detection: DetectionKind;
   option: ChosenOption | null;
   // Поезда, которые ДСП принял по новому плану, включая этот.
   routed: RouteTask[];
@@ -30,35 +39,8 @@ type Context = {
 
 export function journalOf(command: Command, context: Context): JournalEntry[] {
   switch (command.kind) {
-    case "detect":
-      return [
-        {
-          minute: 8,
-          actor: "iot",
-          text: "Датчик: стрелка С3 потеряла контроль положения",
-          level: "critical",
-        },
-        {
-          minute: 8,
-          actor: "system",
-          text: `Создан инцидент ${context.code} «подозрение». Маршруты через С3 закрыты`,
-          level: "warning",
-        },
-      ];
     case "confirm":
-      return [
-        {
-          minute: 9,
-          actor: "dsp",
-          text: "ДСП подтвердил неисправность, закрыл С3 и вызвал электромеханика. Рассчитано 2 варианта",
-          level: "warning",
-        },
-        {
-          minute: 9,
-          actor: "system",
-          text: "Службе СЦБ выдан наряд: восстановить контроль С3",
-        },
-      ];
+      return confirmEntries(context.detection);
     case "dismiss":
       return [
         {
@@ -135,6 +117,23 @@ export function simAt(minute: number) {
 // Комментарий ДНЦ в хронологии: « «текст»», пустой — не пишем.
 function quoted(comment: string | null) {
   return comment == null ? "" : ` «${comment}»`;
+}
+
+function confirmEntries(kind: DetectionKind): JournalEntry[] {
+  const { confirmed, workOrder } = DETECTION[kind];
+  return [
+    {
+      minute: 9,
+      actor: "dsp",
+      text: `${confirmed}. Рассчитано 2 варианта`,
+      level: "warning",
+    },
+    {
+      minute: 9,
+      actor: "system",
+      text: `Наряд ${workOrder.serviceLabel}: ${workOrder.title.toLowerCase()}`,
+    },
+  ];
 }
 
 function acceptEntry(option: ChosenOption): JournalEntry {

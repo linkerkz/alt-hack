@@ -6,6 +6,7 @@ import type { ConsoleState } from "../types";
 export function CollapseLink({ state }: { state: ConsoleState }) {
   return (
     <Link
+      prefetch={false}
       href={consoleHref(state, { panel: false })}
       scroll={false}
       title="Свернуть панель"

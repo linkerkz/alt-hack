@@ -1,9 +1,6 @@
 import { cache } from "react";
 import { simClock } from "@/lib/clock";
-import {
-  createSupabaseAdminClient,
-  createSupabaseClient,
-} from "@/lib/supabase";
+import { createSupabaseClient, supabaseAdmin } from "@/lib/supabase";
 import type {
   ChosenOption,
   IncidentStatus,
@@ -21,14 +18,17 @@ const FEED_LIMIT = 40;
 
 // Поля инцидента, из которых складывается ход сценария.
 export const INCIDENT_COLUMNS =
-  "id, code, station_id, status, option, route_tasks, dnc_rejected_at, dnc_comment";
+  "id, code, station_id, status, option, route_tasks, dnc_rejected_at, dnc_comment, device_id, analysis";
 
 // Ход сценария станции из базы: последний инцидент, его наряд и хронология.
-// Кэш на запрос: страница и действие читают по разу.
+// Кэш на запрос: страница и действие читают по разу. Хронология читается
+// параллельно с инцидентом, наряд — следом за ним.
 export const getLive = cache(async (stationId: string): Promise<Live> => {
-  const incident = await lastIncident(stationId);
+  const [incident, events] = await Promise.all([
+    lastIncident(stationId),
+    stationEvents(stationId),
+  ]);
   const workOrder = incident == null ? null : await incidentWorkOrder(incident);
-  const events = await stationEvents(stationId);
 
   return { incident, workOrder, events };
 });
@@ -48,7 +48,7 @@ async function lastIncident(stationId: string) {
 
 // Наряды закрыты RLS: их читает сервер секретным ключом, как и чеклист по QR.
 async function incidentWorkOrder({ id }: LiveIncident) {
-  const supabase = createSupabaseAdminClient();
+  const supabase = supabaseAdmin();
   const { data } = await supabase
     .from("work_orders")
     .select(
@@ -84,6 +84,8 @@ export function toIncident(row: IncidentRow): LiveIncident {
     routeTasks: row.route_tasks.filter(isRouteTask),
     dncRejected: row.dnc_rejected_at != null,
     dncComment: row.dnc_comment,
+    detection: row.device_id == null ? "sensor" : "camera",
+    analysis: row.analysis,
   };
 }
 
@@ -123,6 +125,8 @@ export type IncidentRow = {
   route_tasks: string[];
   dnc_rejected_at: string | null;
   dnc_comment: string | null;
+  device_id: string | null;
+  analysis: string | null;
 };
 
 type WorkOrderRow = {
