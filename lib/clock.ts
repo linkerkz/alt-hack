@@ -17,3 +17,8 @@ export function toClock(total: number) {
   const hours = String(Math.floor(total / 60)).padStart(2, "0");
   return `${hours}:${String(total % 60).padStart(2, "0")}`;
 }
+
+// Минуты от полуночи станции (Алматы, UTC+5) для момента at.
+export function stationMinutes(at: Date) {
+  return toMinutes(simClock(at.toISOString()));
+}

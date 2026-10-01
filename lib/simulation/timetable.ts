@@ -91,6 +91,14 @@ export const LINES: Line[] = [
     offsetMinutes: 600,
     route: ["mangyshlak", "beyneu", "makat", "atyrau"],
   },
+  // Региональный Алматы — Сары-Озек.
+  {
+    kind: "passenger",
+    number: 7001,
+    everyMinutes: 120,
+    offsetMinutes: 25,
+    route: ["almaty-1", "sary-ozek"],
+  },
   // Транзит Китай — Европа через Достык.
   {
     kind: "freight",
@@ -159,6 +167,14 @@ export const LINES: Line[] = [
     everyMinutes: 360,
     offsetMinutes: 300,
     route: ["semey", "zhangiz-tobe", "ayagoz", "aktogay", "dostyk"],
+  },
+  // Сборный грузовой через Алматы-1.
+  {
+    kind: "freight",
+    number: 3001,
+    everyMinutes: 120,
+    offsetMinutes: 85,
+    route: ["sary-ozek", "almaty-1", "shu"],
   },
   {
     kind: "freight",
