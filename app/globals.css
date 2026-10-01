@@ -1,26 +1,54 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Диспетчерский интерфейс — всегда тёмная тема. */
+@theme {
+  --color-surface-0: #07090d;
+  --color-surface-1: #0d1117;
+  --color-surface-2: #161b22;
+  --color-line: #232a35;
+  --color-muted: #8b95a5;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-surface-0);
+  color: #e4e7ec;
+}
+
+/* Leaflet: подгоняем стандартные элементы под тёмную тему. */
+.leaflet-container {
+  background: var(--color-surface-0);
+  font-family: inherit;
+}
+
+.leaflet-container .leaflet-control-attribution {
+  background: color-mix(in srgb, var(--color-surface-1) 80%, transparent);
+  color: var(--color-muted);
+}
+
+.leaflet-container .leaflet-control-attribution a {
+  color: var(--color-muted);
+}
+
+.leaflet-tooltip.map-tooltip {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-line);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.5);
+  color: #e4e7ec;
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+.leaflet-tooltip.map-tooltip::before {
+  display: none;
 }
