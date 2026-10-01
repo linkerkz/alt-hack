@@ -6,7 +6,7 @@ type Props = {
   size?: "sm" | "lg";
 };
 
-// Счётчики станции: ↓ прибывают, ↑ отправляются, ⇢ проездом.
+// Счётчики станции: ↓ к нам, ↑ от нас, ⇢ проездом — каждый поезд в одном из них.
 export function FlowCounters({ flow, size = "sm" }: Props) {
   if (size === "lg") {
     return (
@@ -16,7 +16,9 @@ export function FlowCounters({ flow, size = "sm" }: Props) {
             key={key}
             className="rounded border border-line bg-surface-0/60 px-3 py-2"
           >
-            <dt className="text-[11px] text-muted">{FLOW_LABEL[key].label}</dt>
+            <dt className="text-[11px] text-muted" title={FLOW_LABEL[key].hint}>
+              {FLOW_LABEL[key].label}
+            </dt>
             <dd
               className={`font-mono font-semibold text-xl tabular-nums ${flowCounterClass(key, flow[key])}`}
             >
@@ -33,7 +35,7 @@ export function FlowCounters({ flow, size = "sm" }: Props) {
       {FLOW_ORDER.map((key) => (
         <span
           key={key}
-          title={FLOW_LABEL[key].label}
+          title={`${FLOW_LABEL[key].label}: ${FLOW_LABEL[key].hint}`}
           className={flowCounterClass(key, flow[key])}
         >
           {FLOW_LABEL[key].icon}

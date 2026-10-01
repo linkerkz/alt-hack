@@ -5,15 +5,15 @@ import {
   STATUS_LABEL,
   toStatus,
 } from "../status";
-import type { StationTraffic, ZoneStation } from "../types";
-import { DirectionList } from "./DirectionList";
+import type { StationTrain, ZoneStation } from "../types";
 import { FlowCounters } from "./FlowCounters";
 import { IncidentList } from "./IncidentList";
 import { IndexRing } from "./IndexRing";
+import { StationTrainList } from "./StationTrainList";
 
 type Props = {
   station: ZoneStation;
-  traffic: StationTraffic;
+  trains: StationTrain[];
   canOpenConsole: boolean;
   // null — карточку закрыть нельзя (своя станция ДСП).
   onClose: (() => void) | null;
@@ -21,7 +21,7 @@ type Props = {
 
 export function StationPreview({
   station,
-  traffic,
+  trains,
   canOpenConsole,
   onClose,
 }: Props) {
@@ -58,7 +58,7 @@ export function StationPreview({
 
       <div className="space-y-5 overflow-y-auto p-4">
         <FlowCounters flow={station.flow} size="lg" />
-        <DirectionList directions={traffic.directions} />
+        <StationTrainList trains={trains} />
         <IncidentList incidents={station.incidents} />
       </div>
 
