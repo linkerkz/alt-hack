@@ -4,14 +4,12 @@ import type { ConsoleState, ConsoleViewer, Neighbors } from "../types";
 import { ConsoleBar } from "./ConsoleBar";
 import { EfficiencySummary } from "./EfficiencySummary";
 import { IncidentBanner } from "./IncidentBanner";
-import { ReturnToServiceDialog } from "./ReturnToServiceDialog";
 import { SidePanel } from "./SidePanel";
 import { StationSchema } from "./StationSchema";
 import { TrackPlan } from "./TrackPlan";
 
 type Props = {
   role: ConsoleViewer;
-  operatorName: string;
   stationName: string;
   data: StationConsoleData;
   state: ConsoleState;
@@ -20,15 +18,14 @@ type Props = {
   mapHref: string | null;
 };
 
-// Пульт станции: слева индекс, схема и план путей, справа — панель роли.
+// Пульт станции: слева индекс, схема и план путей, справа — панель с
+// инцидентом, одна для всех ролей.
 export function StationConsole(props: Props) {
   const { role, stationName, data, state, neighbors, mapHref } = props;
-  const { incident, dsp } = data;
+  const { incident } = data;
   // Баннер напоминает об инциденте, пока его карточка не видна.
   const showBanner =
-    role !== "dsp" &&
-    incident.isActive &&
-    (state.tab === "overview" || !state.panel);
+    incident.isActive && (state.tab === "overview" || !state.panel);
 
   return (
     <>
@@ -36,7 +33,6 @@ export function StationConsole(props: Props) {
         stationName={stationName}
         clock={data.clock}
         mapHref={mapHref}
-        viewOnly={role === "dnc"}
       />
       {showBanner && (
         <IncidentBanner
@@ -58,21 +54,8 @@ export function StationConsole(props: Props) {
           />
           <TrackPlan plan={data.plan} />
         </section>
-        <SidePanel
-          role={role}
-          operatorName={props.operatorName}
-          data={data}
-          state={state}
-          mapHref={mapHref}
-        />
+        <SidePanel role={role} data={data} state={state} />
       </main>
-      {role === "dsp" && dsp.confirmOpen && (
-        <ReturnToServiceDialog
-          stationId={data.stationId}
-          state={state}
-          workOrder={data.workOrder}
-        />
-      )}
       <LiveRefresh />
     </>
   );

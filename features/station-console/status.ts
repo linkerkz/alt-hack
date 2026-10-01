@@ -1,5 +1,5 @@
-import type { ChainState } from "./chain";
 import type { PlanBarKind } from "./plan";
+import type { StageState } from "./progress";
 import type { Status } from "./types";
 
 // Пороги индекса по продуктовому решению: от 80 — Норма, 60–79 — Внимание.
@@ -53,12 +53,17 @@ export const PLAN_BAR_CLASS: Record<PlanBarKind, string> = {
     "border border-critical text-critical bg-[repeating-linear-gradient(135deg,transparent_0_5px,color-mix(in_srgb,var(--color-critical)_30%,transparent)_5px_7px)]",
 };
 
-// Шаги статуса инцидента и пути решения: сделано, текущий, впереди.
+// Этапы прогресса инцидента: сделано, текущий, впереди, не понадобился.
 export const PROGRESS_CLASS: Record<
-  ChainState,
+  StageState,
   { bar: string; text: string; mark: string }
 > = {
   done: { bar: "bg-ink", text: "text-ink", mark: "●" },
   current: { bar: "bg-accent", text: "text-accent-700", mark: "▲" },
   todo: { bar: "bg-neutral-300", text: "text-neutral-500", mark: "○" },
+  skipped: {
+    bar: "bg-[repeating-linear-gradient(90deg,var(--color-neutral-300)_0_3px,transparent_3px_6px)]",
+    text: "text-neutral-500 line-through",
+    mark: "–",
+  },
 };

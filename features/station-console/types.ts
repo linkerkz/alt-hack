@@ -1,6 +1,6 @@
 // Что показывает пульт. Ход инцидента (шаг, принятый вариант, принятые ДСП
-// поезда) приходит из базы; вид экрана (вкладка, фокус, панель, диалог и
-// вариант, который ДСЦС пока только смотрит) — из URL.
+// поезда) приходит из базы; вид экрана (вкладка, фокус, панель и вариант,
+// который ДСЦС пока только смотрит) — из URL.
 export type ConsoleState = {
   step: number;
   option: ChosenOption;
@@ -11,8 +11,6 @@ export type ConsoleState = {
   panel: boolean;
   // Поезда, приём которых ДСП уже подтвердил по новому плану.
   done: RouteTask[];
-  // Открыт диалог «Вернуть стрелку в эксплуатацию».
-  confirm: boolean;
 };
 
 // Роль, которая отдаёт команды с пульта: правая панель у ДСЦС и ДСП разная.
@@ -132,11 +130,6 @@ export type ApprovalAnswer =
   | { kind: "reconsider" };
 
 export type CommandResult = { error: string | null };
-
-// Кнопка задачи: команда в базу или смена вида пульта (открыть диалог).
-export type ActionLink =
-  | { label: string; command: Command }
-  | { label: string; patch: Partial<ConsoleState> };
 
 // Вариант перепланирования; none — исходный сценарий «ничего не менять».
 export type OptionId = "none" | ChosenOption;

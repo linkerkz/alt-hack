@@ -1,9 +1,9 @@
-import { decisionChain } from "./chain";
-import { dspPanel } from "./dsp";
+import { dspObjects } from "./dspObjects";
 import { stationEfficiency } from "./efficiency";
 import { incidentCard } from "./incident";
 import { STEP_MINUTE } from "./mock";
 import { optionComparison } from "./options";
+import { pagerCard } from "./pagerCard";
 import { trackPlan } from "./plan";
 import { stationSchema } from "./schema";
 import { clockAt } from "./status";
@@ -27,8 +27,8 @@ export async function getStationConsole(
     plan: trackPlan(state),
     incident: incidentCard(state, neighbors, live),
     comparison: optionComparison(state, neighbors),
-    chain: decisionChain(state, neighbors),
-    dsp: dspPanel(state, neighbors, live),
+    objects: dspObjects(state),
+    pager: pagerCard(live.pager),
     workOrder: live.workOrder,
   };
 }
