@@ -1,7 +1,15 @@
 import { supabaseAdmin } from "@/lib/supabase";
-import { DETECTION, detectionOf } from "./detection";
-import { type JournalEntry, journalOf, simAt } from "./journal";
+import { journalOf } from "./journal";
 import { STEP } from "./mock";
+import {
+  finishWorkOrder,
+  issueWorkOrder,
+  log,
+  now,
+  openIncident,
+  resetStation,
+  updateWorkOrder,
+} from "./records";
 import { nextCommand, stepOf } from "./scenario";
 import type {
   ChosenOption,
@@ -13,8 +21,9 @@ import type {
   RouteTask,
 } from "./types";
 
-// Команды пульта над базой. Роль уже проверена в actions.ts; здесь каждая
-// команда проверяет, что её очередь: шаг мог смениться на другом экране.
+// Команды пульта: роль уже проверена в actions.ts; здесь каждая команда
+// проверяет, что её очередь, — шаг мог смениться на другом экране. Сами
+// записи в базу — records.ts.
 
 type Context = { stationId: string; operatorId: string; live: Live };
 
@@ -57,7 +66,10 @@ async function dispatch(context: Context, command: Command) {
     if (next == null) return { error: "Сценарий пройден — нажмите «Сброс»" };
     return dispatch(context, next);
   }
-  if (command.kind === "reset") return reset(context.stationId);
+  if (command.kind === "reset") {
+    await resetStation(context.stationId);
+    return DONE;
+  }
   if (incident == null) return NOT_NOW;
 
   const update = (patch: IncidentPatch) =>
@@ -107,60 +119,6 @@ async function dispatch(context: Context, command: Command) {
   }
 }
 
-// Стрелка С3 под подозрением: система открывает инцидент и закрывает
-// маршруты. Без устройства — сработал датчик ЭЦ, с камерой — её снимок.
-export async function openIncident(stationId: string, found: Sighting) {
-  const detection = DETECTION[found.device == null ? "sensor" : "camera"];
-  const { data, error } = await db()
-    .from("incidents")
-    .insert({
-      station_id: stationId,
-      kind: "switch_fault",
-      object_id: "С3",
-      source: "iot",
-      severity: "high",
-      title: detection.title,
-      description: detection.description,
-      device_id: found.device?.id ?? null,
-      snapshot: found.device?.snapshot ?? null,
-      analysis: found.device?.analysis ?? null,
-    })
-    .select("id, code")
-    .single<{ id: string; code: string }>();
-  if (error != null) throw error;
-
-  const analysis = found.device?.analysis;
-  await log(stationId, data.id, [
-    { minute: 8, actor: "iot", text: detection.signal, level: "critical" },
-    ...(analysis == null
-      ? []
-      : [
-          {
-            minute: 8,
-            actor: "system" as const,
-            text: `ИИ: ${analysis}`,
-          },
-        ]),
-    {
-      minute: 8,
-      actor: "system",
-      text: `Создан инцидент ${data.code} «подозрение». Маршруты через С3 закрыты`,
-      level: "warning",
-    },
-  ]);
-  return data;
-}
-
-// Что увидело устройство; device: null — сигнал датчика ЭЦ с демо-пульта.
-export type Sighting = {
-  device: {
-    id: string;
-    snapshot: string;
-    // Вывод ИИ по снимку; null — без анализа.
-    analysis: string | null;
-  } | null;
-};
-
 // Меняет инцидент и пишет в хронологию, что сделал участник.
 async function updateIncident(
   { stationId }: Context,
@@ -168,7 +126,7 @@ async function updateIncident(
   command: Command,
   patch: IncidentPatch,
 ) {
-  const { error } = await db()
+  const { error } = await supabaseAdmin()
     .from("incidents")
     .update(patch)
     .eq("id", incident.id);
@@ -182,95 +140,4 @@ async function updateIncident(
   });
   await log(stationId, incident.id, entries);
   return DONE;
-}
-
-async function issueWorkOrder(
-  { stationId, operatorId }: Context,
-  incident: LiveIncident,
-) {
-  const { workOrder } = detectionOf(incident);
-  const { data, error } = await db()
-    .from("work_orders")
-    .insert({
-      station_id: stationId,
-      incident_id: incident.id,
-      object_id: "С3",
-      service: workOrder.service,
-      title: workOrder.title,
-      description: workOrder.description,
-      created_by: operatorId,
-    })
-    .select("id")
-    .single<{ id: string }>();
-  if (error != null) throw error;
-
-  const items = workOrder.items.map((text, i) => ({
-    work_order_id: data.id,
-    position: i + 1,
-    text,
-  }));
-  const { error: itemsError } = await db()
-    .from("work_order_items")
-    .insert(items);
-  if (itemsError != null) throw itemsError;
-}
-
-// Симуляция службы: все пункты отмечены, работы выполнены.
-async function finishWorkOrder(id: string) {
-  const at = now();
-  const { error } = await db()
-    .from("work_order_items")
-    .update({ done_at: at })
-    .eq("work_order_id", id)
-    .is("done_at", null);
-  if (error != null) throw error;
-  await updateWorkOrder(id, { status: "done", done_at: at });
-}
-
-async function updateWorkOrder(id: string, patch: object) {
-  const { error } = await db().from("work_orders").update(patch).eq("id", id);
-  if (error != null) throw error;
-}
-
-// Демо с чистого листа: хронология и инциденты станции, наряды уходят
-// каскадом вслед за инцидентом.
-async function reset(stationId: string) {
-  const events = await db()
-    .from("timeline_events")
-    .delete()
-    .eq("station_id", stationId);
-  if (events.error != null) throw events.error;
-  const { error } = await db()
-    .from("incidents")
-    .delete()
-    .eq("station_id", stationId);
-  if (error != null) throw error;
-  return DONE;
-}
-
-export async function log(
-  stationId: string,
-  incidentId: string,
-  entries: JournalEntry[],
-) {
-  if (entries.length === 0) return;
-  const rows = entries.map((entry) => ({
-    station_id: stationId,
-    incident_id: incidentId,
-    at: simAt(entry.minute),
-    actor: entry.actor,
-    text: entry.text,
-    level: entry.level ?? null,
-  }));
-  const { error } = await db().from("timeline_events").insert(rows);
-  if (error != null) throw error;
-}
-
-// Пишет сервер секретным ключом: политик записи у таблиц нет.
-function db() {
-  return supabaseAdmin();
-}
-
-function now() {
-  return new Date().toISOString();
 }

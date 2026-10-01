@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase";
-import { log, openIncident } from "./commands";
+import { log, openIncident } from "./records";
 import type { IncidentStatus } from "./types";
 
 // Сигнал камеры горловины над стрелкой С3. Камера приходит без входа, поэтому
