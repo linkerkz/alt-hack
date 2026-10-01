@@ -13,36 +13,18 @@ type Props = {
 
 type Section = "network" | "station" | "analytics";
 
-type NavItem = {
-  id: Section | "scenarios" | "settings";
-  label: string;
-  href?: string;
-  // Подсказка для неактивного пункта.
-  hint?: string;
-};
+type NavItem = { id: Section; label: string; href: string | null };
 
-// Пункты без href неактивны: ещё не реализованы или недоступны роли —
-// показываем их, чтобы было видно план продукта.
+// Пункт без адреса показываем, только пока он открыт: ДНЦ попадает на пульт
+// и в эффективность из карточки станции на карте.
 function navItems(
   stationHref: string | null,
   dashboardHref: string | null,
 ): NavItem[] {
   return [
     { id: "network", label: "Карта сети", href: "/" },
-    {
-      id: "station",
-      label: "Пульт станции",
-      href: stationHref ?? undefined,
-      hint: "Откройте пульт из карточки станции на карте",
-    },
-    {
-      id: "analytics",
-      label: "Эффективность",
-      href: dashboardHref ?? undefined,
-      hint: "Откройте dashboard из карточки станции на карте",
-    },
-    { id: "scenarios", label: "Сценарии сбоев" },
-    { id: "settings", label: "Настройки индекса" },
+    { id: "station", label: "Пульт станции", href: stationHref },
+    { id: "analytics", label: "Эффективность", href: dashboardHref },
   ];
 }
 
@@ -52,6 +34,10 @@ export function AppHeader({
   dashboardHref,
   account,
 }: Props) {
+  const items = navItems(stationHref, dashboardHref).filter(
+    (item) => item.href != null || item.id === current,
+  );
+
   return (
     <header className="flex h-14 shrink-0 items-center gap-6 border-line border-b bg-paper px-5">
       <Link
@@ -64,19 +50,12 @@ export function AppHeader({
       </Link>
 
       <nav className="flex h-full items-stretch gap-1">
-        {navItems(stationHref, dashboardHref).map((item) => (
+        {items.map((item) => (
           <NavLink key={item.id} item={item} isCurrent={item.id === current} />
         ))}
       </nav>
 
       <div className="ml-auto flex items-center gap-5">
-        <span className="flex items-center gap-2 text-[11px] text-muted">
-          <span className="relative flex size-2">
-            <span className="absolute inset-0 animate-ping rounded-full bg-normal opacity-50" />
-            <span className="relative size-2 rounded-full bg-normal" />
-          </span>
-          Симулятор · онлайн
-        </span>
         <LiveClock />
         {account}
       </div>
@@ -87,7 +66,7 @@ export function AppHeader({
 function NavLink({ item, isCurrent }: { item: NavItem; isCurrent: boolean }) {
   const base = "flex items-center border-b-2 px-3 text-sm transition-colors";
 
-  if (isCurrent) {
+  if (isCurrent || item.href == null) {
     return (
       <span
         aria-current="page"
@@ -97,21 +76,11 @@ function NavLink({ item, isCurrent }: { item: NavItem; isCurrent: boolean }) {
       </span>
     );
   }
-  if (item.href == null) {
-    return (
-      <span
-        title={item.hint ?? "В разработке"}
-        className={`${base} cursor-not-allowed border-transparent text-neutral-400`}
-      >
-        {item.label}
-      </span>
-    );
-  }
   return (
     <Link
       prefetch={false}
       href={item.href}
-      className={`${base} border-transparent text-ink hover:text-accent`}
+      className={`${base} border-transparent text-ink hover:text-accent-700`}
     >
       {item.label}
     </Link>
