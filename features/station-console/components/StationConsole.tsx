@@ -36,7 +36,6 @@ export function StationConsole(props: Props) {
         stationName={stationName}
         clock={data.clock}
         mapHref={mapHref}
-        devicesHref={`/stations/${data.stationId}/devices`}
       />
       {showBanner && (
         <IncidentBanner
