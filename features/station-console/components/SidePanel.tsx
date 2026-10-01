@@ -10,11 +10,12 @@ type Props = {
   role: ConsoleViewer;
   data: StationConsoleData;
   state: ConsoleState;
+  reportHref: string;
 };
 
 // Правая панель пульта, одна для всех ролей: вкладки «Станция» и
 // «Инцидент»; отличаются только кнопки в ходе. Свёрнутая — узкая полоса.
-export function SidePanel({ role, data, state }: Props) {
+export function SidePanel({ role, data, state, reportHref }: Props) {
   const myTurn = data.incident.turn?.owner === role;
   if (!state.panel) {
     return <Collapsed data={data} state={state} myTurn={myTurn} />;
@@ -29,7 +30,12 @@ export function SidePanel({ role, data, state }: Props) {
       />
       <div className="flex flex-1 flex-col gap-[18px] overflow-auto px-5 pt-4 pb-[120px]">
         {state.tab === "incident" ? (
-          <IncidentPanel data={data} state={state} viewer={role} />
+          <IncidentPanel
+            data={data}
+            state={state}
+            viewer={role}
+            reportHref={reportHref}
+          />
         ) : (
           <OverviewPanel data={data} state={state} viewer={role} />
         )}
@@ -38,7 +44,9 @@ export function SidePanel({ role, data, state }: Props) {
   );
 }
 
-type CollapsedProps = Omit<Props, "role"> & { myTurn: boolean };
+type CollapsedProps = Omit<Props, "role" | "reportHref"> & {
+  myTurn: boolean;
+};
 
 function Collapsed({ data, state, myTurn }: CollapsedProps) {
   const { incident } = data;

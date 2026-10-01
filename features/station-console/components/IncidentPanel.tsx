@@ -1,3 +1,4 @@
+import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Disclosure } from "@/components/ui/Disclosure";
 import type { StationConsoleData } from "../queries";
 import type { ConsoleState, ConsoleViewer } from "../types";
@@ -15,11 +16,12 @@ type Props = {
   data: StationConsoleData;
   state: ConsoleState;
   viewer: ConsoleViewer;
+  reportHref: string;
 };
 
 // Карточка инцидента сверху вниз: что случилось, на каком этапе, чей ход —
 // и подробности, раскрыт тот раздел, что нужен для хода сейчас.
-export function IncidentPanel({ data, state, viewer }: Props) {
+export function IncidentPanel({ data, state, viewer, reportHref }: Props) {
   const { incident, comparison, workOrder } = data;
   const { sections, turn } = incident;
 
@@ -28,9 +30,14 @@ export function IncidentPanel({ data, state, viewer }: Props) {
       <IncidentHeader incident={incident} />
       <IncidentProgress progress={incident.progress} />
       {turn == null ? (
-        <p className="border-line border-y py-3 text-[14px] text-muted">
-          Инцидент закрыт. Отчёт сформирован автоматически.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-line border-y py-3">
+          <p className="text-[14px] text-muted">
+            Инцидент закрыт. Отчёт сформирован автоматически.
+          </p>
+          <ButtonLink href={reportHref} variant="primary" size="sm">
+            Открыть отчёт →
+          </ButtonLink>
+        </div>
       ) : (
         <TurnCard
           stationId={data.stationId}
@@ -39,6 +46,16 @@ export function IncidentPanel({ data, state, viewer }: Props) {
           comparison={comparison}
           state={state}
         />
+      )}
+      {turn != null && (
+        <ButtonLink
+          href={reportHref}
+          variant="ghost"
+          size="sm"
+          className="self-start"
+        >
+          Черновик отчёта →
+        </ButtonLink>
       )}
       <div className="border-line border-b">
         <Disclosure title="Снимок камеры и ИИ" open={sections.evidence.open}>

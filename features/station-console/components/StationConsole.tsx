@@ -16,12 +16,15 @@ type Props = {
   neighbors: Neighbors;
   // Карта участка; null — роли карта недоступна.
   mapHref: string | null;
+  // Отчёт по текущему инциденту: адрес собирает страница, отчёт — другая фича.
+  reportHref: string;
 };
 
 // Пульт станции: слева индекс, схема и план путей, справа — панель с
 // инцидентом, одна для всех ролей.
 export function StationConsole(props: Props) {
-  const { role, stationName, data, state, neighbors, mapHref } = props;
+  const { role, stationName, data, state, neighbors, mapHref, reportHref } =
+    props;
   const { incident } = data;
   // Баннер напоминает об инциденте, пока его карточка не видна.
   const showBanner =
@@ -54,7 +57,12 @@ export function StationConsole(props: Props) {
           />
           <TrackPlan plan={data.plan} />
         </section>
-        <SidePanel role={role} data={data} state={state} />
+        <SidePanel
+          role={role}
+          data={data}
+          state={state}
+          reportHref={reportHref}
+        />
       </main>
       <LiveRefresh />
     </>

@@ -11,6 +11,7 @@ import {
 } from "@/features/auth/access";
 import { AccountMenu } from "@/features/auth/components/AccountMenu";
 import { requireUser } from "@/features/auth/queries";
+import { incidentReportPath } from "@/features/incident-report/paths";
 import {
   getStation,
   getStationNeighbors,
@@ -76,6 +77,7 @@ export default async function StationPage({
         state={state}
         neighbors={neighbors}
         mapHref={mapHref}
+        reportHref={incidentReportPath(station.id, data.incident.code)}
       />
     </>
   );
