@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { Card } from "@/components/ui/Card";
+import { Kicker } from "@/components/ui/Kicker";
 import { homePath } from "@/features/auth/access";
 import { LoginForm } from "@/features/auth/components/LoginForm";
 import { getCurrentUser } from "@/features/auth/queries";
@@ -12,17 +14,15 @@ export default async function LoginPage() {
     <main className="flex flex-1 items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-6">
         <header className="space-y-1 text-center">
-          <p className="font-mono text-[11px] text-muted uppercase tracking-widest">
-            Диспетчерская система
-          </p>
-          <h1 className="font-semibold text-2xl text-white">
+          <Kicker>Диспетчерская система</Kicker>
+          <h1 className="font-heading font-semibold text-[32px] leading-tight">
             Цифровая станция
           </h1>
         </header>
 
-        <section className="rounded-lg border border-line bg-surface-1 p-6 shadow-2xl">
+        <Card elevation="md" className="p-6">
           <LoginForm />
-        </section>
+        </Card>
       </div>
     </main>
   );
