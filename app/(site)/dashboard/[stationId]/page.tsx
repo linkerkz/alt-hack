@@ -19,9 +19,9 @@ import { getStationDashboard } from "@/features/station-dashboard/queries";
 export default async function StationDashboardPage({
   params,
 }: PageProps<"/dashboard/[stationId]">) {
-  const user = await requireUser();
   const { stationId } = await params;
-  const [found, liveIndexes] = await Promise.all([
+  const [user, found, liveIndexes] = await Promise.all([
+    requireUser(),
     getStation(stationId),
     getLiveIndexes(),
   ]);

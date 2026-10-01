@@ -1,23 +1,25 @@
-import Link from "next/link";
+"use client";
+
 import type { ReactNode } from "react";
-import { consoleHref } from "../state";
-import type { ConsoleState } from "../types";
+import type { ConsoleTab } from "../types";
+import { ConsoleLink } from "./ConsoleLink";
+import { useConsoleView } from "./ConsoleView";
 
 type Props = {
-  state: ConsoleState;
-  // Название панели, вертикально вдоль полосы.
-  label: string;
+  // Название панели по вкладке, вертикально вдоль полосы.
+  labels: Record<ConsoleTab, string>;
   // Значок о том, что в панели есть срочное: инцидент или новые задачи.
   marker?: ReactNode;
 };
 
 // Свёрнутая правая панель: узкая полоса, по клику панель открывается.
-export function CollapsedPanel({ state, label, marker }: Props) {
+export function CollapsedPanel({ labels, marker }: Props) {
+  const { tab, panel } = useConsoleView();
+  if (panel) return null;
+
   return (
-    <Link
-      prefetch={false}
-      href={consoleHref(state, { panel: true })}
-      scroll={false}
+    <ConsoleLink
+      patch={{ panel: true }}
       title="Развернуть панель"
       className="sticky top-0 flex max-h-screen w-11 flex-none flex-col items-center gap-3 py-3 text-muted hover:bg-ink/4 hover:text-accent-700"
     >
@@ -25,10 +27,10 @@ export function CollapsedPanel({ state, label, marker }: Props) {
         ‹
       </span>
       <span className="font-heading font-semibold text-[15px] [writing-mode:vertical-rl]">
-        {label}
+        {labels[tab]}
       </span>
       {marker}
       <span className="sr-only">Развернуть панель</span>
-    </Link>
+    </ConsoleLink>
   );
 }

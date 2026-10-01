@@ -6,6 +6,7 @@ import {
   stationTrains,
 } from "./flows";
 import { getNetwork, type Network } from "./network";
+import { UNKNOWN_NEIGHBOR } from "./station";
 import { STATUS_ORDER, toStatus } from "./status";
 import type {
   MapScope,
@@ -49,25 +50,17 @@ export async function getZoneMap(
     })),
     movingTrains: movingTrainsOn(network, sections),
     summary: summarize(network, scopeStations),
+    // Соседи станций зоны — для запросов ДНЦ: сеть уже прочитана.
+    neighborsByStation: Object.fromEntries(
+      scopeStations.map((station) => [
+        station.id,
+        neighborsOf(network, station.id),
+      ]),
+    ),
   };
 }
 
-export async function getStation(stationId: string) {
-  const { stations } = await getNetwork();
-  return stations.find((station) => station.id === stationId) ?? null;
-}
-
-// Соседи по участкам: нечётная сторона — откуда поезда идут к нам, чётная — куда от нас.
-export async function getStationNeighbors(stationId: string) {
-  const network = await getNetwork();
-  const { sections } = network;
-  const incoming = sections.find((section) => section.toId === stationId);
-  const outgoing = sections.find((section) => section.fromId === stationId);
-  return {
-    odd: incoming == null ? null : nameOf(network, incoming.fromId),
-    even: outgoing == null ? null : nameOf(network, outgoing.toId),
-  };
-}
+export { getStation, getStationNeighbors } from "./station";
 
 function withIndexes(network: Network, indexes: Map<string, number>) {
   const stations = network.stations.map((station) => ({
@@ -172,6 +165,17 @@ function toZoneStation(
     ...station,
     flow: stationFlow(trains, station.id),
     isInScope: scopeIds.has(station.id),
+  };
+}
+
+// Нечётная сторона — откуда поезда идут к нам, чётная — куда от нас.
+function neighborsOf(network: Network, stationId: string) {
+  const { sections } = network;
+  const incoming = sections.find((section) => section.toId === stationId);
+  const outgoing = sections.find((section) => section.fromId === stationId);
+  return {
+    odd: incoming == null ? UNKNOWN_NEIGHBOR : nameOf(network, incoming.fromId),
+    even: outgoing == null ? UNKNOWN_NEIGHBOR : nameOf(network, outgoing.toId),
   };
 }
 

@@ -4,8 +4,9 @@ import { TRACKS } from "../schemaTrains";
 type Props = { schema: StationConsoleData["schema"] };
 
 // Поезда на путях и фокус на инциденте: остальная станция под вуалью.
+// Фокус включает FocusScope, здесь — только классы приглушения.
 export function SchemaTrains({ schema }: Props) {
-  const { trains, focus, offNote } = schema;
+  const { trains, offNote } = schema;
 
   return (
     <g>
@@ -14,11 +15,9 @@ export function SchemaTrains({ schema }: Props) {
         y={0}
         width={665}
         height={360}
-        className={`pointer-events-none fill-paper transition-opacity duration-400 ${focus ? "opacity-72" : "opacity-0"}`}
+        className="pointer-events-none fill-paper opacity-0 transition-opacity duration-400 group-data-[focus]/console:opacity-72"
       />
-      <g
-        className={`transition-opacity duration-400 ${focus ? "opacity-100" : "opacity-0"}`}
-      >
+      <g className="opacity-0 transition-opacity duration-400 group-data-[focus]/console:opacity-100">
         <rect
           x={2}
           y={36}
@@ -45,7 +44,7 @@ export function SchemaTrains({ schema }: Props) {
         return (
           <g
             key={train.label}
-            className={`transition-opacity duration-400 ${train.dimmed ? "opacity-30" : ""}`}
+            className={`transition-opacity duration-400 ${train.quiet ? "group-data-[focus]/console:opacity-30" : ""}`}
           >
             <rect
               x={train.x}
