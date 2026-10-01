@@ -27,7 +27,7 @@ export async function getStationConsole(
     plan: trackPlan(state, live),
     incident: incidentCard(state, neighbors, live),
     comparison: optionComparison(state, live, neighbors),
-    pager: pagerCard(live, clock),
+    pager: pagerCard(live),
     workOrder: live.workOrder,
   };
 }

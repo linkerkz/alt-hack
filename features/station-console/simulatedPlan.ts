@@ -1,5 +1,4 @@
-import { stationMinutes, toClock, toMinutes } from "@/lib/clock";
-import { currentMinute, networkTrains } from "@/lib/simulation/network";
+import { networkTrains } from "@/lib/simulation/network";
 import type { Train } from "@/lib/simulation/trains";
 import { createSupabaseClient } from "@/lib/supabase";
 import { chooseTrack, type Occupancy, type Visit } from "./trackChoice";
@@ -24,15 +23,24 @@ const BEFORE_START: Record<Train["kind"], number> = {
 };
 const AFTER_END: Record<Train["kind"], number> = { passenger: 20, freight: 40 };
 
-// reserved — поезда, у которых путь уже назначен (сценарий сбоя): они
-// занимают пути первыми, поезда симуляции с теми же номерами не берём.
-export async function simulatedPlan(
-  stationId: string,
-  layout: StationLayout,
-  reserved: PlannedTrain[],
-) {
-  const epochMinute = currentMinute();
-  const now = stationMinutes(new Date(epochMinute * 60_000));
+type Params = {
+  stationId: string;
+  layout: StationLayout;
+  // Поезда, у которых путь уже назначен (сценарий сбоя): они занимают пути
+  // первыми, поезда симуляции с теми же номерами не берём.
+  reserved: PlannedTrain[];
+  // Момент симуляции — минуты эпохи Unix — и он же в минутах плана.
+  epochMinute: number;
+  now: number;
+};
+
+export async function simulatedPlan({
+  stationId,
+  layout,
+  reserved,
+  epochMinute,
+  now,
+}: Params) {
   const [trains, throats] = await Promise.all([
     networkTrains(epochMinute, AHEAD_MINUTES),
     throatsOf(stationId),
@@ -44,10 +52,7 @@ export async function simulatedPlan(
     .filter((visit) => isInWindow(visit, now))
     .toSorted((a, b) => a.arrival - b.arrival);
 
-  return {
-    plan: [...reserved, ...assignTracks(visits, layout, reserved)],
-    now,
-  };
+  return [...reserved, ...assignTracks(visits, layout, reserved)];
 }
 
 // Пути назначаем по порядку прибытия: занятые раньше пришедшими и
@@ -59,8 +64,8 @@ function assignTracks(
 ) {
   const busy: Occupancy[] = reserved.map((train) => ({
     track: train.track,
-    from: toMinutes(train.arrival),
-    to: toMinutes(train.departure),
+    from: train.arrival,
+    to: train.departure,
   }));
   return visits.flatMap((visit): PlannedTrain[] => {
     const choice = chooseTrack(visit, layout, busy);
@@ -74,8 +79,8 @@ function assignTracks(
         track,
         entryRoute: choice.entryRoute,
         exitRoute: choice.exitRoute,
-        arrival: toClock(visit.arrival),
-        departure: toClock(visit.departure),
+        arrival: visit.arrival,
+        departure: visit.departure,
       },
     ];
   });
@@ -113,13 +118,10 @@ function visitOf(
   ];
 }
 
-// Полночь не переходим: время плана — минуты одних суток.
+// Время плана через полночь не заворачиваем, поэтому поезд, который
+// прибыл вчера и ещё стоит, остаётся в плане и держит свой путь.
 function isInWindow({ arrival, departure }: Visit, now: number) {
-  return (
-    arrival >= 0 &&
-    departure >= now - PAST_MINUTES &&
-    arrival <= now + AHEAD_MINUTES
-  );
+  return departure >= now - PAST_MINUTES && arrival <= now + AHEAD_MINUTES;
 }
 
 // Сосед по участку, где мы конец, — со стороны нечётной горловины, где

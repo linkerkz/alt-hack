@@ -1,3 +1,4 @@
+import { toClock } from "@/lib/clock";
 import { REPAIR } from "./fault";
 import { STEP } from "./mock";
 import { type OptionChange, optionChanges, replanOptions } from "./replan";
@@ -262,7 +263,7 @@ function trackText(changes: OptionChange[], train: string) {
   const change = changes.find((item) => item.train === train);
   return change == null
     ? "новый путь"
-    : `путь ${change.track} в ${change.arrival}`;
+    : `путь ${change.track} в ${toClock(change.arrival)}`;
 }
 
 // «чеклист 5 из 5» и комментарий рабочего, если он его оставил.

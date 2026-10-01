@@ -1,3 +1,4 @@
+import { toClock } from "@/lib/clock";
 import type { OptionChange } from "./replan";
 import type { ChosenOption, Command, RouteTask, Status } from "./types";
 
@@ -131,7 +132,9 @@ function routeEntries(task: RouteTask, { routed, changes }: Context) {
   const train = task === "r101" ? "101" : "2001";
   const change = changes.find((item) => item.train === train);
   const where =
-    change == null ? "новый путь" : `путь ${change.track} в ${change.arrival}`;
+    change == null
+      ? "новый путь"
+      : `путь ${change.track} в ${toClock(change.arrival)}`;
   const entries: JournalEntry[] = [
     task === "r101"
       ? {

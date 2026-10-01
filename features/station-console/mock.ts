@@ -29,8 +29,9 @@ export const FAULT = { switchId: "С3", repairMinutes: 21 };
 
 // Поезда сценария подходят к станции, когда камера замечает предмет: 101 и
 // 2001 идут на пути через С3, 2114 держит путь 4, 2236 — главный путь 2.
-// Остальные поезда плана — из симуляции, вокруг этих.
-export const SCENARIO_TRAINS: ScenarioTrain[] = [
+// Остальные поезда плана — из симуляции, вокруг этих. Время здесь — минуты
+// от t0, а не от полуночи.
+export const SCENARIO_TRAINS: PlannedTrain[] = [
   {
     train: "2114",
     kind: "freight",
@@ -102,12 +103,6 @@ export const OPTION_MOVES: Record<OptionId, Move[]> = {
       hold: true,
     },
   ],
-};
-
-// Поезд сценария; время — минуты от t0.
-export type ScenarioTrain = Omit<PlannedTrain, "arrival" | "departure"> & {
-  arrival: number;
-  departure: number;
 };
 
 // Перевод поезда на другой путь; hold — удержать у соседней станции, пока

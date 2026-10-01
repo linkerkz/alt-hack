@@ -61,7 +61,7 @@ function toPlannedTrain(run: Run): PlannedTrain {
     track: run.track,
     entryRoute: run.entryRoute,
     exitRoute: run.exitRoute,
-    arrival: toClock(run.forecast.from),
-    departure: toClock(run.forecast.to),
+    arrival: run.forecast.from,
+    departure: run.forecast.to,
   };
 }

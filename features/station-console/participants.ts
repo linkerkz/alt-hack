@@ -1,3 +1,4 @@
+import { toClock } from "@/lib/clock";
 import { REPAIR } from "./fault";
 import { STEP } from "./mock";
 import { type OptionChange, optionChanges } from "./replan";
@@ -89,7 +90,7 @@ function trainParticipants(
     },
     {
       who: "ДСП",
-      what: `Приём 2001 на путь ${to2001?.track ?? "—"} в ${to2001?.arrival ?? "—"}`,
+      what: `Приём 2001 на путь ${to2001?.track ?? "—"} в ${to2001 == null ? "—" : toClock(to2001.arrival)}`,
       ...(routed.r2001 ? done("Подтверждён") : PENDING),
     },
     {

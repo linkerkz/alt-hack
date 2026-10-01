@@ -1,4 +1,4 @@
-import { toClock, toMinutes } from "@/lib/clock";
+import { toClock } from "@/lib/clock";
 import type { PlanSource } from "./activePlan";
 import { type Move, OPTION_MOVES, SCENARIO_TRAINS } from "./mock";
 import type {
@@ -34,7 +34,7 @@ export function optionChanges(
   return OPTION_MOVES[option].flatMap((move) => {
     const train = plan.find((item) => item.train === move.train);
     if (train == null) return [];
-    const planned = toMinutes(train.arrival);
+    const planned = train.arrival;
     const arrival = move.hold ? freeSlot(plan, move, train) : planned;
     return [
       {
@@ -42,7 +42,7 @@ export function optionChanges(
         track: move.track,
         entryRoute: move.entryRoute,
         exitRoute: move.exitRoute,
-        arrival: toClock(arrival),
+        arrival,
         fromTrack: train.track,
         hold: arrival - planned,
       },
@@ -75,15 +75,15 @@ export function needsDnc(option: OptionId) {
 function changeText(change: OptionChange, odd: string) {
   const { track, arrival, hold, fromTrack } = change;
   return hold > 0
-    ? `Удержать на ст. ${odd} ${hold} мин, затем на путь ${track} в ${arrival}`
-    : `Путь ${fromTrack} → путь ${track}, прибытие ${arrival}`;
+    ? `Удержать на ст. ${odd} ${hold} мин, затем на путь ${track} в ${toClock(arrival)}`
+    : `Путь ${fromTrack} → путь ${track}, прибытие ${toClock(arrival)}`;
 }
 
 // Первое окно на пути перевода не раньше планового прибытия, где поезд
 // простоит свою стоянку и не пересечётся с поездами сценария. Поезда
 // симуляции на этом пути ДСП задержит сам — их ожидание покажет прогноз.
 function freeSlot(plan: PlannedTrain[], move: Move, train: PlannedTrain) {
-  const dwell = toMinutes(train.departure) - toMinutes(train.arrival);
+  const dwell = train.departure - train.arrival;
   const busy = plan
     .filter(
       (item) =>
@@ -91,13 +91,10 @@ function freeSlot(plan: PlannedTrain[], move: Move, train: PlannedTrain) {
         item.train !== move.train &&
         SCENARIO_NUMBERS.has(item.train),
     )
-    .map((item) => ({
-      from: toMinutes(item.arrival),
-      to: toMinutes(item.departure),
-    }))
+    .map((item) => ({ from: item.arrival, to: item.departure }))
     .toSorted((a, b) => a.from - b.from);
 
-  let start = toMinutes(train.arrival);
+  let start = train.arrival;
   for (const span of busy) {
     const overlaps =
       span.from < start + dwell + GAP_MINUTES && start < span.to + GAP_MINUTES;

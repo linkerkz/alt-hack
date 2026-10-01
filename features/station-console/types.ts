@@ -105,15 +105,17 @@ export type PagerMessageStatus =
   | "escalated"
   | "cancelled";
 
-// Поезд в плане путей станции: путь, маршруты приёма и отправления, время «14:12».
+// Поезд в плане путей станции: путь, маршруты приёма и отправления и
+// время — минуты от полуночи текущих суток станции. Через полночь время не
+// заворачиваем: вчера — меньше нуля, завтра — больше 1440.
 export type PlannedTrain = {
   train: string;
   kind: "passenger" | "freight";
   track: number;
   entryRoute: string;
   exitRoute: string;
-  arrival: string;
-  departure: string;
+  arrival: number;
+  departure: number;
 };
 
 // Устройство станции для расчёта индекса и живого плана: пути, маршруты со
@@ -197,11 +199,12 @@ export type ReplanOption = {
   changes: { train: string; text: string }[];
 };
 
-// Изменение плана одного поезда: новый путь, маршруты и прибытие; стоянка та же.
+// Изменение плана одного поезда: новый путь, маршруты и прибытие (минуты,
+// как в PlannedTrain); стоянка та же.
 export type PlanChange = {
   train: string;
   track: number;
   entryRoute: string;
   exitRoute: string;
-  arrival: string;
+  arrival: number;
 };

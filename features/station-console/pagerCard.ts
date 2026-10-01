@@ -1,3 +1,4 @@
+import { toClock } from "@/lib/clock";
 import { activePlan } from "./activePlan";
 import { upcomingOperations } from "./operations";
 import type {
@@ -19,15 +20,15 @@ const STATUS: Record<PagerMessageStatus, { label: string; tone: Status }> = {
   cancelled: { label: "Отбой, камера: свободно", tone: "normal" },
 };
 
-// now — время станции «14:05»: операции показываем от него вперёд, по
-// действующему плану — после сбоя поезда идут на другие пути и позже.
-export function pagerCard(live: Live, now: string) {
-  const { pager } = live;
+// Операции показываем от времени станции вперёд, по действующему плану —
+// после сбоя поезда идут на другие пути и позже.
+export function pagerCard(live: Live) {
+  const { pager, now } = live;
   return {
     operations: upcomingOperations(activePlan(live), now, pager).map(
       (operation) => ({
         id: operation.id,
-        time: operation.time,
+        time: toClock(operation.time),
         text: operation.text,
         status:
           operation.message == null ? null : STATUS[operation.message.status],

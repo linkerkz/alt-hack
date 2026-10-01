@@ -1,3 +1,4 @@
+import { toClock } from "@/lib/clock";
 import { indexStatus } from "@/lib/efficiencyIndex";
 import { anchorOf, forecastFor, type PlanSource } from "./activePlan";
 import { scoreBaseline } from "./efficiency";
@@ -102,7 +103,7 @@ function toRequest(
     code: incident.code,
     from: `ДСЦС ст. ${name}`,
     title: titleOf(state, odd, held),
-    reason: `На ст. ${name} повреждена стрелка С3 (${incident.code}).${held == null ? "" : ` После удержания ${held.train} принимается на путь ${held.track} в ${held.arrival}.`}`,
+    reason: `На ст. ${name} повреждена стрелка С3 (${incident.code}).${held == null ? "" : ` После удержания ${held.train} принимается на путь ${held.track} в ${toClock(held.arrival)}.`}`,
     trains: held == null ? [] : [heldTrain(source, held, odd)],
     unchanged: unchangedOf(source, held),
     index: [
@@ -136,7 +137,7 @@ function outcomeOf(
     return `Станция выбирает другой вариант. Без удержания поезд ждёт у входного ст. ${name}.`;
   }
   if (held == null) return "";
-  return `Приём ${held.train} на путь ${held.track} ст. ${name} в ${held.arrival}.`;
+  return `Приём ${held.train} на путь ${held.track} ст. ${name} в ${toClock(held.arrival)}.`;
 }
 
 // Удержанный поезд: с удержанием ждёт у соседа, без — у входного у нас.
