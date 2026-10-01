@@ -1,3 +1,4 @@
+import { activePlan } from "./activePlan";
 import { upcomingOperations } from "./operations";
 import type {
   Command,
@@ -18,17 +19,21 @@ const STATUS: Record<PagerMessageStatus, { label: string; tone: Status }> = {
   cancelled: { label: "Отбой, камера: свободно", tone: "normal" },
 };
 
-// now — время станции «14:05»: операции показываем от него вперёд.
-export function pagerCard({ plan, pager }: Live, now: string) {
+// now — время станции «14:05»: операции показываем от него вперёд, по
+// действующему плану — после сбоя поезда идут на другие пути и позже.
+export function pagerCard(live: Live, now: string) {
+  const { pager } = live;
   return {
-    operations: upcomingOperations(plan, now, pager).map((operation) => ({
-      id: operation.id,
-      time: operation.time,
-      text: operation.text,
-      status:
-        operation.message == null ? null : STATUS[operation.message.status],
-      command: { kind: "assign", operation: operation.id } satisfies Command,
-    })),
+    operations: upcomingOperations(activePlan(live), now, pager).map(
+      (operation) => ({
+        id: operation.id,
+        time: operation.time,
+        text: operation.text,
+        status:
+          operation.message == null ? null : STATUS[operation.message.status],
+        command: { kind: "assign", operation: operation.id } satisfies Command,
+      }),
+    ),
     messages: pager.map((message) => ({
       id: message.id,
       kind: kindOf(message),

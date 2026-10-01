@@ -1,34 +1,72 @@
-import { BASELINE, MAX_SCORE, METRIC_VALUES, METRICS, STEP } from "./mock";
-import { formatNumber, indexStatus, scoreStatus } from "./status";
+import { toMinutes } from "@/lib/clock";
+import {
+  activeOption,
+  forecastFor,
+  forecastUntil,
+  type PlanSource,
+} from "./activePlan";
+import { evaluatePlan } from "./metrics";
+import { FAULT, STEP, STEP_MINUTE } from "./mock";
+import {
+  clockAt,
+  formatNumber,
+  indexStatus,
+  MAX_SCORE,
+  METRICS,
+  scoreStatus,
+} from "./status";
+import type { ConsoleState, OptionId } from "./types";
 
-// Индекс эффективности станции на шаге сценария и показатели, из которых он сложен.
-export function stationEfficiency(step: number) {
-  const { values, scores } = METRIC_VALUES[step];
-  const index = scores.reduce((sum, score) => sum + score, 0);
+// Оценка плана варианта option при закрытой стрелке. Окно — полчаса от
+// обнаружения сбоя: прогноз не «плывёт», пока диспетчеры решают, и после
+// решения показывает то же, что обещало сравнение вариантов.
+export function scorePlan(source: PlanSource, option: OptionId) {
+  const runs = forecastFor(source, option);
+  return evaluatePlan(runs, source.layout, toMinutes(FAULT.from));
+}
+
+// Исходный план без сбоя — с ним сравниваем индекс после сбоя.
+export function scoreBaseline(source: PlanSource) {
+  const now = clockAt(STEP_MINUTE[STEP.normal]);
+  return evaluatePlan(forecastFor(source, null), source.layout, toMinutes(now));
+}
+
+// Индекс эффективности станции на шаге сценария: до сбоя — исходный план,
+// до решения — «ничего не менять», после — принятый вариант.
+export function stationEfficiency(state: ConsoleState, source: PlanSource) {
+  const { step } = state;
+  const option = activeOption(step, state.option);
+  const baseline = scoreBaseline(source);
+  const { values, scores, index } =
+    option == null ? baseline : scorePlan(source, option);
   const metrics = METRICS.map((metric, i) => ({
     label: metric.label,
     value: formatNumber(values[i]) + metric.unit,
     share: (scores[i] / MAX_SCORE) * 100,
     status: scoreStatus(scores[i]),
-    loss: METRIC_VALUES[STEP.normal].scores[i] - scores[i],
+    loss: baseline.scores[i] - scores[i],
   }));
 
   return {
     index,
     status: indexStatus(index),
-    trend: trendOf(step, index),
+    trend: trendOf(step, index, baseline.index),
     metrics,
     reason: reasonOf(metrics),
-    // Прогноз «если ничего не менять» — пока решение не принято.
-    showForecast: step >= STEP.suspected && step <= STEP.approval,
+    // Пока решение не принято, индекс — прогноз «если ничего не менять».
+    forecast:
+      step >= STEP.suspected && step <= STEP.approval
+        ? `Прогноз до ${forecastUntil()}, если ничего не менять`
+        : null,
   };
 }
 
-function trendOf(step: number, index: number) {
-  if (step === STEP.normal) return "Все показатели в норме";
-  const delta = index - BASELINE.index;
-  const sign = delta > 0 ? "+" : "−";
-  return `было ${BASELINE.index} в ${BASELINE.time} · ${sign}${Math.abs(delta)}`;
+function trendOf(step: number, index: number, baseline: number) {
+  if (step === STEP.normal) return "Штатная работа по графику";
+  const delta = index - baseline;
+  const sign = delta >= 0 ? "+" : "−";
+  const time = clockAt(STEP_MINUTE[STEP.normal]);
+  return `было ${baseline} в ${time} · ${sign}${Math.abs(delta)}`;
 }
 
 // Два показателя, которые сильнее всего снизили индекс: диспетчеру нужна причина.

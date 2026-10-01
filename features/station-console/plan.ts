@@ -1,8 +1,14 @@
-import { STEP, STEP_MINUTE } from "./mock";
+import { toMinutes } from "@/lib/clock";
+import { activeOption, forecastFor, type PlanSource } from "./activePlan";
+import type { Run } from "./forecast";
+import { FAULT, OPTION_CHANGES, SHUNTING, STEP, STEP_MINUTE } from "./mock";
 import { isFocusAvailable } from "./schema";
-import type { ConsoleState } from "./types";
+import { clockAt } from "./status";
+import type { ConsoleState, OptionId } from "./types";
 
-// План занятости путей (диаграмма Ганта) на окне 14:00–14:45.
+// План занятости путей (диаграмма Ганта) на окне 14:00–14:45 по прогнозу
+// действующего плана: до решения поезда, которым мешает сбой, — конфликты,
+// после — нитки принятого варианта.
 
 export type PlanBarKind =
   | "fact"
@@ -12,7 +18,7 @@ export type PlanBarKind =
   | "new"
   | "closed";
 
-const WINDOW_MINUTES = 45;
+const WINDOW = { from: toMinutes("14:00"), minutes: 45 };
 const TICK_MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40];
 
 const ROWS = [
@@ -27,16 +33,19 @@ const ROWS = [
 // Пути вне инцидента: в фокусе приглушаем.
 const QUIET_TRACKS = [2, 6];
 
-export function trackPlan(state: ConsoleState) {
-  const now = STEP_MINUTE[state.step];
-  const bars = barsAt(state);
+// Стоянка не короче — подписываем род поезда: на полосе хватает места.
+const LONG_STOP_MINUTES = 8;
+
+export function trackPlan(state: ConsoleState, source: PlanSource) {
+  const now = toMinutes(clockAt(STEP_MINUTE[state.step]));
+  const bars = barsAt(state, source);
   const focus = isFocusAvailable(state) && state.focus;
 
   return {
     nowPercent: percentOf(now),
     ticks: TICK_MINUTES.map((minute) => ({
-      left: percentOf(minute),
-      label: `14:${String(minute).padStart(2, "0")}`,
+      left: percentOf(WINDOW.from + minute),
+      label: clockAt(minute),
     })),
     rows: ROWS.map((row) => ({
       ...row,
@@ -54,50 +63,70 @@ export function trackPlan(state: ConsoleState) {
   };
 }
 
-function barsAt({ step, option }: ConsoleState) {
-  const bars: Bar[] = [];
-  const add = (
-    track: number,
-    from: number,
-    to: number,
-    label: string,
-    kind: PlanBarKind,
-  ) => bars.push({ track, from, to, label, kind });
-  const fault = step >= STEP.suspected && step <= STEP.repaired;
-  const preview = step === STEP.choosing || step === STEP.approval;
-  const isB = option === "B";
+function barsAt(state: ConsoleState, source: PlanSource) {
+  const { step } = state;
+  const option = activeOption(step, state.option);
+  const isDeciding = step >= STEP.suspected && step < STEP.decided;
+  const changed = changedTrains(step >= STEP.decided ? option : null);
+  const bars: Bar[] = forecastFor(source, option).map((run) =>
+    isDeciding && run.waited
+      ? {
+          ...barOf(run, run.planned, "conflict"),
+          label: `${run.train} · конфликт`,
+        }
+      : barOf(run, run.forecast, changed.includes(run.train) ? "new" : "plan"),
+  );
 
-  add(2, 4, 7, "3307", "fact");
-  add(2, 26, 29, "2236", "plan");
-  add(3, 0, 7, "7015", "fact");
-  add(4, 0, 24, "2114 груз.", "plan");
-  add(1, 35, 37, "3412", "plan");
-  add(6, 20, 32, "Манёвры ТЭМ2", "plan");
+  // Пунктиром — нитки варианта, который диспетчер сейчас смотрит.
+  if (step === STEP.choosing || step === STEP.approval) {
+    const viewed = changedTrains(state.option);
+    for (const run of forecastFor(source, state.option)) {
+      if (!viewed.includes(run.train)) continue;
+      const label = `${run.train} → путь ${run.track}`;
+      bars.push({ ...barOf(run, run.forecast, "preview"), label });
+    }
+  }
 
-  if (step === STEP.normal) {
-    add(3, 12, 20, "101 пасс.", "plan");
-    add(5, 18, 40, "2001 груз.", "plan");
+  // С3 закрыта со сбоя; после возврата в эксплуатацию это уже факт.
+  if (step !== STEP.normal) {
+    const kind = step >= STEP.restored ? "fact" : "closed";
+    for (const track of closedTracks(source)) {
+      const label = "С3 закрыта";
+      bars.push({ track, ...span(FAULT.from, FAULT.until), label, kind });
+    }
   }
-  if (step >= STEP.suspected && step <= STEP.approval) {
-    add(3, 12, 20, "101 · конфликт", "conflict");
-    add(5, 18, 40, "2001 · конфликт", "conflict");
-  }
-  if (fault) {
-    add(3, 8, step >= STEP.repaired ? 29 : 30, "", "closed");
-    add(5, 8, step >= STEP.repaired ? 29 : 18, "С3 закрыта", "closed");
-  }
-  if (step >= STEP.restored) add(3, 8, 29, "С3 закрыта", "fact");
+  bars.push({
+    track: SHUNTING.track,
+    ...span(SHUNTING.from, SHUNTING.until),
+    label: "Манёвры ТЭМ2",
+    kind: "plan",
+  });
+  return bars.filter(
+    (bar) => bar.to > WINDOW.from && bar.from < WINDOW.from + WINDOW.minutes,
+  );
+}
 
-  // Новые нитки поездов: пунктиром — предпросмотр, сплошной — принятый план.
-  const decision = preview ? "preview" : step >= STEP.decided ? "new" : null;
-  if (decision != null) {
-    const labelOf = (train: string, track: number) =>
-      decision === "preview" ? `${train} → путь ${track}` : train;
-    add(1, 15, 23, labelOf("101", 1), decision);
-    if (isB) add(4, 27, 45, labelOf("2001", 4), decision);
-    else add(1, 24, 34, labelOf("2001", 1), decision);
-  }
-  return bars;
+function barOf(run: Run, at: Run["planned"], kind: PlanBarKind) {
+  const isLong = at.to - at.from >= LONG_STOP_MINUTES;
+  const suffix = run.kind === "freight" ? " груз." : " пасс.";
+  const label = isLong ? run.train + suffix : run.train;
+  return { track: run.track, from: at.from, to: at.to, label, kind };
+}
+
+function changedTrains(option: OptionId | null) {
+  return option == null ? [] : OPTION_CHANGES[option].map((c) => c.train);
+}
+
+// Пути, маршруты на которые идут через закрытую стрелку.
+function closedTracks({ layout }: PlanSource) {
+  const routes = layout.routes.filter((r) =>
+    r.switches.includes(FAULT.switchId),
+  );
+  return [...new Set(routes.map((route) => route.track))];
+}
+
+function span(from: string, until: string) {
+  return { from: toMinutes(from), to: toMinutes(until) };
 }
 
 type Bar = {
@@ -108,6 +137,8 @@ type Bar = {
   kind: PlanBarKind;
 };
 
+// Полосы за краями окна обрезаем.
 function percentOf(minute: number) {
-  return (minute / WINDOW_MINUTES) * 100;
+  const offset = Math.min(Math.max(minute - WINDOW.from, 0), WINDOW.minutes);
+  return (offset / WINDOW.minutes) * 100;
 }

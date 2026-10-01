@@ -5,7 +5,7 @@ import { TONE_TEXT_CLASS } from "@/components/ui/tone";
 import type { ApprovalRequest } from "../approval";
 import { STATUS_LABEL } from "../status";
 
-// Индекс станции: сейчас, если ничего не менять и с удержанием.
+// Индекс станции: до сбоя, если ничего не менять и с удержанием.
 export function ApprovalIndex({ index }: Pick<ApprovalRequest, "index">) {
   return (
     <div className="space-y-2 border-line border-b pb-2">

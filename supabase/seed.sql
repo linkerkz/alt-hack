@@ -58,7 +58,7 @@ drop table demo_users;
 -- Станция Алматы-1 для демо (docs/case_solution.md §4): один парк, нечётная
 -- горловина — стрелки С1, С3, С5, С7, чётная — С2, С4, С6, С8. Пути 1–2 главные,
 -- 3–5 приёмо-отправочные, 6 — тупик маневрового локомотива; платформа у 1 и 3.
--- План — час 14:00–15:00 в штатном режиме, инцидентов нет.
+-- План — 13:20–16:20 в штатном режиме, инцидентов нет.
 
 insert into public.stations (id, name, dispatch_area_id) values
   ('almaty-1', 'Алматы-1', 'almaty')
@@ -102,22 +102,42 @@ on conflict (station_id, id) do update set
   switches = excluded.switches;
 
 insert into public.trains (number, kind) values
-  ('7015', 'passenger'), ('101', 'passenger'), ('3412', 'passenger'),
-  ('7016', 'passenger'), ('3307', 'freight'),  ('2114', 'freight'),
-  ('2001', 'freight'),   ('3308', 'freight')
+  ('7013', 'passenger'), ('7015', 'passenger'), ('101', 'passenger'),
+  ('2236', 'passenger'), ('3412', 'passenger'), ('7018', 'passenger'),
+  ('7016', 'passenger'), ('107', 'passenger'),  ('3416', 'passenger'),
+  ('7020', 'passenger'), ('2112', 'freight'),   ('2114', 'freight'),
+  ('3307', 'freight'),   ('2001', 'freight'),   ('3308', 'freight'),
+  ('2003', 'freight'),   ('2116', 'freight'),   ('3309', 'freight'),
+  ('2005', 'freight'),   ('2120', 'freight')
 on conflict (number) do update set kind = excluded.kind;
 
+-- Три часа плана без конфликтов: враждебные маршруты (общая стрелка) не
+-- собираются ближе 2 мин, путь не занят двумя поездами. Индекс считается по
+-- этому плану (features/station-console/metrics.ts), поэтому правь время так,
+-- чтобы исходный план оставался без конфликтов.
 insert into public.track_plan
   (station_id, train_number, track, entry_route, exit_route, arrives_at, departs_at)
 values
-  ('almaty-1', '2114', 4, 'НП-4', 'Ч-4',  '13:50', '14:45'),
+  ('almaty-1', '2112', 5, 'ЧП-5', 'Н-5',  '13:20', '14:02'),
+  ('almaty-1', '2114', 4, 'НП-4', 'Ч-4',  '13:40', '14:24'),
+  ('almaty-1', '7013', 1, 'Н-1',  'ЧП-1', '13:44', '13:50'),
   ('almaty-1', '7015', 3, 'Н-3',  'ЧП-3', '13:55', '14:05'),
   ('almaty-1', '3307', 2, 'НП-2', 'Ч-2',  '14:03', '14:04'),
   ('almaty-1', '101',  3, 'Н-3',  'ЧП-3', '14:12', '14:20'),
   ('almaty-1', '2001', 5, 'Н-5',  'ЧП-5', '14:18', '14:40'),
-  ('almaty-1', '3308', 2, 'Ч-2',  'НП-2', '14:30', '14:31'),
-  ('almaty-1', '3412', 1, 'Н-1',  'ЧП-1', '14:35', '14:36'),
-  ('almaty-1', '7016', 1, 'ЧП-1', 'Н-1',  '14:48', '14:52')
+  ('almaty-1', '2236', 2, 'Ч-2',  'НП-2', '14:26', '14:29'),
+  ('almaty-1', '3308', 2, 'Ч-2',  'НП-2', '14:32', '14:33'),
+  ('almaty-1', '3412', 1, 'Н-1',  'ЧП-1', '14:35', '14:37'),
+  ('almaty-1', '7018', 3, 'ЧП-3', 'Н-3',  '14:42', '14:50'),
+  ('almaty-1', '2003', 5, 'Н-5',  'ЧП-5', '14:44', '15:20'),
+  ('almaty-1', '7016', 1, 'ЧП-1', 'Н-1',  '14:48', '14:52'),
+  ('almaty-1', '2116', 4, 'Ч-4',  'НП-4', '14:52', '15:34'),
+  ('almaty-1', '107',  3, 'Н-3',  'ЧП-3', '15:02', '15:12'),
+  ('almaty-1', '3309', 2, 'НП-2', 'Ч-2',  '15:10', '15:12'),
+  ('almaty-1', '3416', 1, 'Н-1',  'ЧП-1', '15:20', '15:22'),
+  ('almaty-1', '2005', 5, 'ЧП-5', 'Н-5',  '15:26', '16:05'),
+  ('almaty-1', '7020', 3, 'ЧП-3', 'Н-3',  '15:30', '15:40'),
+  ('almaty-1', '2120', 4, 'НП-4', 'Ч-4',  '15:40', '16:20')
 on conflict (station_id, train_number) do update set
   track = excluded.track,
   entry_route = excluded.entry_route,
@@ -128,7 +148,11 @@ on conflict (station_id, train_number) do update set
 insert into public.resources (station_id, id, kind, name, train_number) values
   ('almaty-1', 'tem2-0412', 'shunting_locomotive', 'ТЭМ2-0412', null),
   ('almaty-1', 'crew-1',    'crew',                'Бригада 1', '2001'),
-  ('almaty-1', 'crew-2',    'crew',                'Бригада 2', '2114')
+  ('almaty-1', 'crew-2',    'crew',                'Бригада 2', '2114'),
+  ('almaty-1', 'crew-3',    'crew',                'Бригада 3', '2003'),
+  ('almaty-1', 'crew-4',    'crew',                'Бригада 4', '2116'),
+  ('almaty-1', 'crew-5',    'crew',                'Бригада 5', '2005'),
+  ('almaty-1', 'crew-6',    'crew',                'Бригада 6', '2120')
 on conflict (station_id, id) do update set
   kind = excluded.kind,
   name = excluded.name,

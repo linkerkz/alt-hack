@@ -1,20 +1,11 @@
+import type { PlanSource } from "./activePlan";
 import { STEP } from "./mock";
 import { routeDone } from "./routing";
+import { schemaTrainsAt } from "./schemaTrains";
 import type { ChosenOption, ConsoleState, Neighbors, Status } from "./types";
 
 // Динамика схемы станции на шаге сценария: занятость путей, поезда,
 // закрытые съезды и предпросмотр варианта. Геометрия — в StationSchema.
-
-export type SchemaTrain = {
-  label: string;
-  track: TrackNumber;
-  x: number;
-  width: number;
-  kind: "passenger" | "freight";
-  // Затронут инцидентом — обводка цветом «Критично».
-  late: boolean;
-  dimmed: boolean;
-};
 
 // Линии поверх путей: предпросмотр варианта (пунктир) или заданный маршрут.
 type Overlay = {
@@ -25,37 +16,29 @@ type Overlay = {
   dashed: boolean;
 };
 
-export type TrackNumber = 1 | 2 | 3 | 4 | 5 | 6;
-
-// Пути сверху вниз: ось y и края на схеме 1000×360.
-export const TRACKS: { n: TrackNumber; y: number; from: number; to: number }[] =
-  [
-    { n: 5, y: 60, from: 225, to: 775 },
-    { n: 3, y: 115, from: 145, to: 855 },
-    { n: 1, y: 170, from: 0, to: 1000 },
-    { n: 2, y: 230, from: 0, to: 1000 },
-    { n: 4, y: 285, from: 165, to: 835 },
-    { n: 6, y: 335, from: 520, to: 750 },
-  ];
-
 // Поезда инцидента: в фокусе остальные приглушаются.
 const INCIDENT_TRAINS = ["101", "2001"];
 
-export function stationSchema(state: ConsoleState, neighbors: Neighbors) {
+export function stationSchema(
+  state: ConsoleState,
+  neighbors: Neighbors,
+  source: PlanSource,
+) {
   const { step, option } = state;
   const fault = step >= STEP.suspected && step <= STEP.repaired;
   const preview = step === STEP.choosing || step === STEP.approval;
   const focus = isFocusAvailable(state) && state.focus;
+  const trains = schemaTrainsAt(state, source);
 
   return {
-    occupied: occupiedTracks(step, option),
+    occupied: trains.filter((train) => train.onTrack).map((t) => t.track),
     fault,
     switchC3: switchC3(step, fault),
     entrySignal: entrySignal(state),
     overlay: preview ? previewRoute(option) : issuedRoute(state),
-    trains: trainsAt(step, option).map((train) => ({
-      ...train,
-      dimmed: focus && !INCIDENT_TRAINS.includes(train.label.split(" ")[0]),
+    trains: trains.map(({ train, onTrack, ...rest }) => ({
+      ...rest,
+      dimmed: focus && !INCIDENT_TRAINS.includes(train),
     })),
     offNote: offNoteAt(step, option, neighbors),
     note: fault
@@ -68,18 +51,6 @@ export function stationSchema(state: ConsoleState, neighbors: Neighbors) {
 
 export function isFocusAvailable({ step, tab }: ConsoleState) {
   return tab === "incident" && step >= STEP.suspected && step <= STEP.restored;
-}
-
-function occupiedTracks(step: number, option: ChosenOption) {
-  const occupied: TrackNumber[] = [6];
-  const onTrack1 =
-    step === STEP.decided ||
-    step === STEP.repairing ||
-    (step >= STEP.repaired && option === "A");
-  if (onTrack1) occupied.push(1);
-  if (step === STEP.normal) occupied.push(2, 3);
-  if (step <= STEP.repairing || option === "B") occupied.push(4);
-  return occupied;
 }
 
 // Пока путейцы не нашли повреждения, стрелка лишь «Внимание»: предмет уберут.
@@ -119,7 +90,7 @@ function previewRoute(option: ChosenOption): Overlay {
   return {
     paths: [
       "M0 170 H420",
-      option === "B" ? "M0 230 H110 L165 285 H300" : "M0 170 H300",
+      option === "B" ? "M0 230 H110 L165 285 H300" : "M0 230 H300",
     ],
     label: `Предпросмотр: ${option === "B" ? "вариант б" : "вариант а"}`,
     labelX: 200,
@@ -128,42 +99,10 @@ function previewRoute(option: ChosenOption): Overlay {
   };
 }
 
-function trainsAt(step: number, option: ChosenOption) {
-  const trains: Omit<SchemaTrain, "dimmed">[] = [];
-  const add = (
-    label: string,
-    track: TrackNumber,
-    x: number,
-    width: number,
-    kind: SchemaTrain["kind"],
-    late = false,
-  ) => trains.push({ label, track, x, width, kind, late });
-
-  if (step === STEP.normal) {
-    add("7015", 3, 420, 140, "passenger");
-    add("3307", 2, 600, 200, "freight");
-    add("101 →", 1, 4, 62, "passenger");
-  }
-  if (step >= STEP.suspected && step <= STEP.approval) {
-    add("101", 1, 2, 36, "passenger", true);
-  }
-  if (step === STEP.decided) add("101 →", 1, 200, 130, "passenger");
-  if (step === STEP.repairing) add("101", 1, 400, 150, "passenger");
-  if (step <= STEP.repairing) add("2114", 4, 290, 250, "freight");
-  if (step >= STEP.repaired) {
-    if (option === "B") add("2001", 4, 290, 250, "freight");
-    else add("2001", 1, 300, 250, "freight");
-  }
-  add("ТЭМ2", 6, 540, 46, "freight");
-  return trains;
-}
-
 // Подпись у входа: где стоит поезд, который ещё не на схеме.
 function offNoteAt(step: number, option: ChosenOption, { odd }: Neighbors) {
   if (step >= STEP.approval && step <= STEP.repairing) {
-    return option === "B"
-      ? `2001 удержан на ст. ${odd}`
-      : "2001 ждёт у входного Н";
+    return option === "B" ? `2001 удержан на ст. ${odd}` : "";
   }
   if (step >= STEP.suspected && step <= STEP.choosing) {
     return "101 остановлен у входного Н";

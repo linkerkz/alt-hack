@@ -2,7 +2,8 @@ import { IndexValue } from "@/components/ui/IndexValue";
 import { Kicker } from "@/components/ui/Kicker";
 import { Meter } from "@/components/ui/Meter";
 import { Metric } from "@/components/ui/Metric";
-import { TONE_BG_CLASS } from "@/components/ui/tone";
+import { StatusGlyph } from "@/components/ui/StatusGlyph";
+import { TONE_BG_CLASS, TONE_TEXT_CLASS } from "@/components/ui/tone";
 import type { StationConsoleData } from "../queries";
 import { STATUS_LABEL } from "../status";
 
@@ -10,7 +11,7 @@ type Props = { efficiency: StationConsoleData["efficiency"] };
 
 // Индекс станции, пять показателей и причина, почему он снизился.
 export function EfficiencySummary({ efficiency }: Props) {
-  const { index, status, trend, metrics, reason, showForecast } = efficiency;
+  const { index, status, trend, metrics, reason, forecast } = efficiency;
 
   return (
     <div className="flex flex-wrap items-center gap-x-6 gap-y-4 border-line border-b px-5 py-3.5">
@@ -54,9 +55,9 @@ export function EfficiencySummary({ efficiency }: Props) {
         </dl>
         <p className="flex flex-wrap gap-4 text-[12px]">
           <span className="text-muted">{reason}</span>
-          {showForecast && (
-            <span className="text-critical">
-              ■ Если ничего не менять: 48 к 14:30, «Критично»
+          {forecast != null && (
+            <span className={TONE_TEXT_CLASS[status]}>
+              <StatusGlyph tone={status} /> {forecast}
             </span>
           )}
         </p>
