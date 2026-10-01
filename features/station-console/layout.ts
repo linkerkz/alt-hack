@@ -11,7 +11,7 @@ export const stationLayout = cache(
     const [tracks, routes, crews] = await Promise.all([
       supabase
         .from("tracks")
-        .select("number, kind")
+        .select("number, kind, has_platform")
         .eq("station_id", stationId)
         .overrideTypes<TrackRow[], { merge: false }>(),
       supabase
@@ -29,14 +29,18 @@ export const stationLayout = cache(
     ]);
 
     return {
-      tracks: tracks.data ?? [],
+      tracks: (tracks.data ?? []).map((row) => ({
+        number: row.number,
+        kind: row.kind,
+        hasPlatform: row.has_platform,
+      })),
       routes: routes.data ?? [],
       crewTrains: (crews.data ?? []).map((row) => row.train_number),
     };
   },
 );
 
-type TrackRow = { number: number; kind: TrackKind };
+type TrackRow = { number: number; kind: TrackKind; has_platform: boolean };
 
 type RouteRow = {
   id: string;

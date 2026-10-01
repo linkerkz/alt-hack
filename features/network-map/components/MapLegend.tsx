@@ -47,7 +47,17 @@ export function MapLegend() {
             Пассажирский поезд в пути
           </LegendItem>
           <LegendItem swatch={<TrainSwatch kind="freight" />}>
-            Грузовой поезд в пути — по расписанию, в реальном времени
+            Грузовой поезд в пути — по графику, в реальном времени
+          </LegendItem>
+          <LegendItem
+            swatch={<span className="size-3 rounded-full bg-warning/50" />}
+          >
+            Поезд опаздывает на 10 мин и больше
+          </LegendItem>
+          <LegendItem
+            swatch={<span className="size-3 rounded-full bg-critical/50" />}
+          >
+            Поезд опаздывает на 30 мин и больше
           </LegendItem>
         </ul>
         <p className="mt-2 border-line border-t pt-2">

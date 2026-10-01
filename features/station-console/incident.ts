@@ -1,8 +1,11 @@
+import { toClock } from "@/lib/clock";
+import { activePlan } from "./activePlan";
 import { DAMAGE, OBSTRUCTION } from "./fault";
-import { baselineEvents, INCIDENT, STEP } from "./mock";
+import { INCIDENT, STEP } from "./mock";
 import { participantsOf } from "./participants";
 import { incidentProgress } from "./progress";
 import { snapshotOf } from "./snapshot";
+import { trainEvents } from "./trainEvents";
 import { turnOf } from "./turn";
 import type {
   ConsoleState,
@@ -22,14 +25,14 @@ export function incidentCard(
 ) {
   const { step } = state;
   const incidentId = live.incident?.id;
-  const feed: ScenarioEvent[] = [...live.events, ...baselineEvents(neighbors)];
+  const feed = feedOf(live);
   // Путейцы нашли повреждение: инцидент уже не про предмет, а про ремонт.
   const damaged = step >= STEP.escalated;
   const tone: Status = damaged ? "critical" : "warning";
 
   return {
     code: live.incident?.code ?? INCIDENT.id,
-    detectedAt: INCIDENT.detectedAt,
+    detectedAt: live.anchor == null ? "" : toClock(live.anchor),
     fault: damaged ? { ...OBSTRUCTION, ...DAMAGE } : OBSTRUCTION,
     tone,
     snapshot: snapshotOf(live.incident),
@@ -37,12 +40,19 @@ export function incidentCard(
     isActive: step >= STEP.suspected && step <= STEP.restored,
     progress: incidentProgress(state),
     turn: turnOf(state, live, neighbors),
-    suggestion: suggestionAt(step, neighbors),
+    suggestion: suggestionAt(step),
     sections: sectionsAt(step),
     participants: participantsOf(state, neighbors, live),
     events: live.events.filter((event) => event.incidentId === incidentId),
     feed,
   };
+}
+
+// Лента станции: хронология и движение поездов вперемешку, свежие сверху.
+function feedOf(live: Live): ScenarioEvent[] {
+  return [...live.events, ...trainEvents(activePlan(live), live.now)].toSorted(
+    (a, b) => b.time.localeCompare(a.time),
+  );
 }
 
 // Подробности под ходом: какие есть на этом этапе и какие раскрыты.
@@ -60,12 +70,12 @@ function sectionsAt(step: number) {
   };
 }
 
-function suggestionAt(step: number, { odd }: Neighbors) {
+function suggestionAt(step: number) {
   if (step <= STEP.dispatched) {
     return "Путейцы уберут предмет — перепланирование пока не нужно.";
   }
   if (step <= STEP.choosing) {
-    return `Система предлагает вариант Б: 101 на путь 1, 2001 удержать на ст. ${odd}.`;
+    return "Система рассчитала варианты перепланирования — выберите на вкладке инцидента.";
   }
   if (step === STEP.approval) return "Вариант Б ждёт согласования ДНЦ.";
   if (step <= STEP.repairing) return "Решение принято, идут работы.";

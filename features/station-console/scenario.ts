@@ -1,5 +1,11 @@
 import { STEP } from "./mock";
-import type { Command, Live, LiveIncident, LiveWorkOrder } from "./types";
+import type {
+  ChosenOption,
+  Command,
+  Live,
+  LiveIncident,
+  LiveWorkOrder,
+} from "./types";
 
 // Шаг сценария из того, что лежит в базе: статус инцидента, решение по нему
 // и ход наряда. Закрыт без решения (ложная тревога или путейцы убрали
@@ -32,7 +38,11 @@ export function stepOf({
 // «Далее» на демо-пульте: следующее действие за того участника, чья очередь.
 // Путейцы в демо идут по длинному пути — сообщают о повреждении. null — до
 // инцидента (его открывает только камера) и в конце сценария.
-export function nextCommand(live: Live): Command | null {
+// recommended — вариант, который предлагает система.
+export function nextCommand(
+  live: Live,
+  recommended: ChosenOption,
+): Command | null {
   const { incident } = live;
   switch (stepOf(live)) {
     case STEP.suspected:
@@ -43,7 +53,10 @@ export function nextCommand(live: Live): Command | null {
       return { kind: "callRepair" };
     case STEP.choosing:
       // ДНЦ уже отклонил Б — станция берёт вариант А.
-      return { kind: "accept", option: incident?.dncRejected ? "A" : "B" };
+      return {
+        kind: "accept",
+        option: incident?.dncRejected ? "A" : recommended,
+      };
     case STEP.approval:
       return { kind: "approve", comment: null };
     case STEP.decided:

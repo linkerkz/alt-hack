@@ -5,6 +5,8 @@ import { STATUS_LABEL } from "../status";
 
 type Props = { impact: StationConsoleData["comparison"]["impact"] };
 
+const KIND = { passenger: "пасс.", freight: "груз." };
+
 // Влияние инцидента на работу станции: поезда, маршруты, ресурсы, индекс.
 export function IncidentImpact({ impact }: Props) {
   return (
@@ -13,18 +15,23 @@ export function IncidentImpact({ impact }: Props) {
       <dl className="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1.5 text-[13px]">
         <dt className="text-muted">Поезда</dt>
         <dd className="flex flex-col gap-0.5">
-          <span>
-            <b className="font-semibold">101</b> пасс. · путь 3, прибытие 14:12
-            → стоит у входного Н
-          </span>
-          <span>
-            <b className="font-semibold">2001</b> груз. · путь 5, прибытие 14:18
-          </span>
+          {impact.trains.length === 0 && <span>Не затронуты</span>}
+          {impact.trains.map((train) => (
+            <span key={train.train}>
+              <b className="font-semibold">{train.train}</b> {KIND[train.kind]}{" "}
+              · путь {train.track}, прибытие {train.arrival}
+              {train.waits && " → ждёт у входного"}
+            </span>
+          ))}
         </dd>
         <dt className="text-muted">Маршруты</dt>
-        <dd>Н → путь 3, Н → путь 5 недоступны</dd>
+        <dd>{impact.routes.join(", ")} недоступны</dd>
         <dt className="text-muted">Ресурсы</dt>
-        <dd>Бригада поезда 2001 в ожидании</dd>
+        <dd>
+          {impact.crews.length === 0
+            ? "Без простоя"
+            : `Бригады поездов ${impact.crews.join(", ")} в ожидании`}
+        </dd>
         <dt className="text-muted">Индекс</dt>
         <dd className={TONE_TEXT_CLASS[impact.status]}>
           {impact.before} → {impact.after} «{STATUS_LABEL[impact.status]}» к{" "}

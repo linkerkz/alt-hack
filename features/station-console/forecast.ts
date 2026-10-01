@@ -1,4 +1,3 @@
-import { toMinutes } from "@/lib/clock";
 import type { PlanChange, PlannedTrain, StationLayout } from "./types";
 
 // Прогноз плана путей без симулятора: поезда по порядку прибытия идут по
@@ -51,13 +50,13 @@ export function forecastPlan({ plan, layout, changes, closures }: Params) {
 // при изменении та же.
 function targetOf(train: PlannedTrain, changes: PlanChange[]): Target {
   const planned = {
-    from: toMinutes(train.arrival),
-    to: toMinutes(train.departure),
+    from: train.arrival,
+    to: train.departure,
   };
   const change = changes.find((item) => item.train === train.train);
   if (change == null) return { ...train, planned, span: planned };
 
-  const from = toMinutes(change.arrival);
+  const from = change.arrival;
   const span = { from, to: from + planned.to - planned.from };
   return { ...train, ...change, planned, span };
 }

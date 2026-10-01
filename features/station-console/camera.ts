@@ -73,7 +73,6 @@ export async function reportCamera(
   }
   await log(stationId, last.id, [
     {
-      minute: 26,
       actor: "iot",
       text: `${seenBy(ai != null)}: стрелка С3 свободна, предмет убран`,
       level: "normal",
@@ -99,7 +98,6 @@ async function resolve(stationId: string, incidentId: string, withAi: boolean) {
   await closeCall(incidentId, "cancelled");
   await log(stationId, incidentId, [
     {
-      minute: 9,
       actor: "iot",
       text: `${seenBy(withAi)}: стрелка С3 свободна, предмет убран. Инцидент закрыт`,
       level: "normal",

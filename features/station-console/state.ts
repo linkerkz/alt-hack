@@ -1,3 +1,4 @@
+import { recommendedFor } from "./advice";
 import { stepOf } from "./scenario";
 import type { ChosenOption, ConsoleState, Live } from "./types";
 
@@ -16,18 +17,19 @@ export function parseConsoleState(
     // Принятый вариант — из базы; до решения ДСЦС смотрит любой.
     option:
       incident?.option ??
-      viewedOption(first(params.opt), incident?.dncRejected === true),
+      viewedOption(first(params.opt), incident?.dncRejected === true, live),
     done: incident?.routeTasks ?? [],
   };
 }
 
-// По умолчанию — рекомендованный Б, а если ДНЦ его отклонил — А.
+// По умолчанию — рекомендованный системой, а если ДНЦ отклонил Б — А.
 function viewedOption(
   value: string | undefined,
   dncRejected: boolean,
+  live: Live,
 ): ChosenOption {
   if (value === "A" || value === "B") return value;
-  return dncRejected ? "A" : "B";
+  return dncRejected ? "A" : recommendedFor(live);
 }
 
 function first(value: string | string[] | undefined) {

@@ -1,9 +1,9 @@
 import { cache } from "react";
 import { simClock } from "@/lib/clock";
 import { createSupabaseClient, supabaseAdmin } from "@/lib/supabase";
-import { stationLayout } from "./layout";
-import { stationPlan } from "./operations";
 import { stationPager } from "./pager";
+import { planSourceOf } from "./planSource";
+import { stepOf } from "./scenario";
 import type {
   ChosenOption,
   IncidentStatus,
@@ -21,22 +21,23 @@ const FEED_LIMIT = 40;
 
 // Поля инцидента, из которых складывается ход сценария.
 export const INCIDENT_COLUMNS =
-  "id, code, station_id, status, option, route_tasks, dnc_rejected_at, dnc_comment, analysis";
+  "id, code, station_id, status, option, route_tasks, dnc_rejected_at, dnc_comment, analysis, detected_at";
 
 // Ход станции из базы: последний инцидент, его наряд, пейджер, план путей
-// с устройством станции и хронология. Кэш на запрос: страница и действие читают по разу. Всё,
-// кроме наряда, читается параллельно с инцидентом, наряд — следом за ним.
+// с устройством станции и хронология. Кэш на запрос: страница и действие
+// читают по разу. Наряд и план — следом за инцидентом: от наряда зависит
+// шаг сценария, а от шага — откуда план (planSource.ts).
 export const getLive = cache(async (stationId: string): Promise<Live> => {
-  const [incident, pager, plan, layout, events] = await Promise.all([
+  const [incident, pager, events] = await Promise.all([
     lastIncident(stationId),
     stationPager(stationId),
-    stationPlan(stationId),
-    stationLayout(stationId),
     stationEvents(stationId),
   ]);
   const workOrder = incident == null ? null : await incidentWorkOrder(incident);
+  const step = stepOf({ incident, workOrder });
+  const source = await planSourceOf(stationId, step, incident);
 
-  return { incident, workOrder, pager, plan, layout, events };
+  return { incident, workOrder, pager, events, ...source };
 });
 
 async function lastIncident(stationId: string) {
@@ -110,6 +111,7 @@ export function toIncident(row: IncidentRow): LiveIncident {
     dncRejected: row.dnc_rejected_at != null,
     dncComment: row.dnc_comment,
     analysis: row.analysis,
+    detectedAt: row.detected_at,
   };
 }
 
@@ -151,6 +153,7 @@ export type IncidentRow = {
   dnc_rejected_at: string | null;
   dnc_comment: string | null;
   analysis: string | null;
+  detected_at: string;
 };
 
 type WorkOrderRow = {

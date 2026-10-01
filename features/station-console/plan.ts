@@ -1,11 +1,15 @@
-import { toMinutes } from "@/lib/clock";
-import { activeOption, forecastFor, type PlanSource } from "./activePlan";
-import type { Run } from "./forecast";
-import { FAULT, OPTION_CHANGES, SHUNTING, STEP, STEP_MINUTE } from "./mock";
-import { clockAt } from "./status";
+import { toClock } from "@/lib/clock";
+import {
+  activeOption,
+  faultClosure,
+  forecastFor,
+  type PlanSource,
+} from "./activePlan";
+import type { Run, Span } from "./forecast";
+import { FAULT, OPTION_MOVES, STEP } from "./mock";
 import type { ConsoleState, OptionId } from "./types";
 
-// План занятости путей (диаграмма Ганта) на окне 14:00–14:45 по прогнозу
+// План занятости путей (диаграмма Ганта) на окне 45 минут по прогнозу
 // действующего плана: до решения поезда, которым мешает сбой, — конфликты,
 // после — нитки принятого варианта.
 
@@ -17,7 +21,10 @@ export type PlanBarKind =
   | "new"
   | "closed";
 
-const WINDOW = { from: toMinutes("14:00"), minutes: 45 };
+const WINDOW_MINUTES = 45;
+// Сколько прошлого видно на плане; начало окна — кратно шагу шкалы.
+const PAST_MINUTES = 15;
+const TICK_STEP = 5;
 const TICK_MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40];
 
 const ROWS = [
@@ -36,14 +43,19 @@ const QUIET_TRACKS = [2, 6];
 const LONG_STOP_MINUTES = 8;
 
 export function trackPlan(state: ConsoleState, source: PlanSource) {
-  const now = toMinutes(clockAt(STEP_MINUTE[state.step]));
-  const bars = barsAt(state, source);
+  const { now } = source;
+  const window = windowOf(source);
+  const percentOf = (minute: number) => percentIn(window, minute);
+  const bars = barsAt(state, source).filter(
+    (bar) => bar.to > window.from && bar.from < window.to,
+  );
 
   return {
+    window: `${toClock(window.from)}–${toClock(window.to)}`,
     nowPercent: percentOf(now),
     ticks: TICK_MINUTES.map((minute) => ({
-      left: percentOf(WINDOW.from + minute),
-      label: clockAt(minute),
+      left: percentOf(window.from + minute),
+      label: toClock(window.from + minute),
     })),
     rows: ROWS.map((row) => ({
       ...row,
@@ -89,19 +101,17 @@ function barsAt(state: ConsoleState, source: PlanSource) {
   if (step !== STEP.normal) {
     const kind = step >= STEP.restored ? "fact" : "closed";
     for (const track of closedTracks(source)) {
-      const label = "С3 закрыта";
-      bars.push({ track, ...span(FAULT.from, FAULT.until), label, kind });
+      const label = `${FAULT.switchId} закрыта`;
+      bars.push({ track, ...faultClosure(source).span, label, kind });
     }
   }
-  bars.push({
-    track: SHUNTING.track,
-    ...span(SHUNTING.from, SHUNTING.until),
-    label: "Манёвры ТЭМ2",
-    kind: "plan",
-  });
-  return bars.filter(
-    (bar) => bar.to > WINDOW.from && bar.from < WINDOW.from + WINDOW.minutes,
-  );
+  return bars;
+}
+
+// Окно идёт за часами: начало — четверть часа назад, кратно шагу шкалы.
+function windowOf({ now }: PlanSource): Span {
+  const from = Math.floor((now - PAST_MINUTES) / TICK_STEP) * TICK_STEP;
+  return { from, to: from + WINDOW_MINUTES };
 }
 
 function barOf(run: Run, at: Run["planned"], kind: PlanBarKind) {
@@ -112,7 +122,7 @@ function barOf(run: Run, at: Run["planned"], kind: PlanBarKind) {
 }
 
 function changedTrains(option: OptionId | null) {
-  return option == null ? [] : OPTION_CHANGES[option].map((c) => c.train);
+  return option == null ? [] : OPTION_MOVES[option].map((move) => move.train);
 }
 
 // Пути, маршруты на которые идут через закрытую стрелку.
@@ -121,10 +131,6 @@ function closedTracks({ layout }: PlanSource) {
     r.switches.includes(FAULT.switchId),
   );
   return [...new Set(routes.map((route) => route.track))];
-}
-
-function span(from: string, until: string) {
-  return { from: toMinutes(from), to: toMinutes(until) };
 }
 
 type Bar = {
@@ -136,7 +142,7 @@ type Bar = {
 };
 
 // Полосы за краями окна обрезаем.
-function percentOf(minute: number) {
-  const offset = Math.min(Math.max(minute - WINDOW.from, 0), WINDOW.minutes);
-  return (offset / WINDOW.minutes) * 100;
+function percentIn(window: Span, minute: number) {
+  const offset = Math.min(Math.max(minute - window.from, 0), WINDOW_MINUTES);
+  return (offset / WINDOW_MINUTES) * 100;
 }

@@ -1,3 +1,5 @@
+import type { Train, TrainKind, TrainStop } from "@/lib/simulation/trains";
+
 export type Station = {
   id: string;
   name: string;
@@ -50,22 +52,8 @@ export type ZoneSummary = {
   arrivingCount: number;
   incidentCount: number;
 };
-// Поезд и его маршрут по станциям сети; время — минуты от текущего момента.
-export type Train = {
-  id: string;
-  number: string;
-  kind: TrainKind;
-  route: TrainStop[];
-};
-
-export type TrainKind = "freight" | "passenger";
-
-// arrival === departure — поезд проходит станцию без остановки.
-export type TrainStop = {
-  stationId: string;
-  arrival: number;
-  departure: number;
-};
+// Поезда сети приходят из симуляции; время — минуты от текущего момента.
+export type { Train, TrainKind, TrainStop };
 
 // Куда поезд движется относительно станции: к нам — остановится у нас и ещё
 // не прибыл, от нас — стоит у нас или ушёл, проездом — идёт без остановки.
@@ -96,19 +84,24 @@ export type StationTrain = {
   departure: number;
   // Прибытие к соседу toName.
   nextArrival: number | null;
+  // Опоздание к нашей станции против графика, минуты.
+  delay: number;
   isTerminal: boolean;
 };
 
-// Поезд в пути по участку fromId → toId. Время — минуты от текущего момента:
-// отправился (departure ≤ 0) и ещё не прибыл (arrival > 0).
+// Поезд в пути по участку fromId → toId: отправился и ещё не прибыл.
+// Время — мс эпохи Unix: карта двигает значок по своим часам между
+// автообновлениями, и свежие данные не сбивают её отсчёт.
 export type MovingTrain = {
   trainId: string;
   number: string;
   kind: TrainKind;
   fromId: string;
   toId: string;
-  departure: number;
-  arrival: number;
+  departsAt: number;
+  arrivesAt: number;
+  // Опоздание к станции toId против графика, минуты.
+  delay: number;
 };
 
 // Зона ответственности, которую показывает карта.

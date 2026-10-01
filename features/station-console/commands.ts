@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { activePlan } from "./activePlan";
+import { recommendedFor } from "./advice";
 import { CREW_CALL, REPAIR } from "./fault";
 import { journalOf } from "./journal";
 import { STEP } from "./mock";
@@ -13,6 +14,7 @@ import {
   resetStation,
   updateWorkOrder,
 } from "./records";
+import { optionChanges } from "./replan";
 import { nextCommand, stepOf } from "./scenario";
 import type {
   ChosenOption,
@@ -74,7 +76,7 @@ async function dispatch(context: Context, command: Command) {
   if (command.kind === "assign") return assign(context, command.operation);
   if (command.kind === "note") return note(context, command.text);
   if (command.kind === "advance") {
-    const next = nextCommand(live);
+    const next = nextCommand(live, recommendedFor(live));
     if (next == null) return { error: advanceEnd(step) };
     return dispatch(context, next);
   }
@@ -189,14 +191,13 @@ async function note({ stationId }: Context, raw: unknown) {
 // наряд с QR. Без ответа ИИ наряд не выдаём: ДСП повторит.
 async function planWork(context: Context, incident: LiveIncident) {
   if (incident.option == null) return NOT_NOW;
-  const plan = await generateWorkPlan(incident.option);
+  const plan = await generateWorkPlan(incident.option, context.live);
   if (plan == null) {
     return { error: "ИИ не составил план работ — попробуйте ещё раз" };
   }
   await issueWorkOrder(context, incident, plan);
   await log(context.stationId, incident.id, [
     {
-      minute: 11,
       actor: "system",
       text: `ИИ составил план работ «${plan.title}»: ${plan.items.length} пунктов. Наряд ${REPAIR.crew.toLowerCase()} выдан`,
     },
@@ -206,7 +207,7 @@ async function planWork(context: Context, incident: LiveIncident) {
 
 // Меняет инцидент и пишет в хронологию, что сделал участник.
 async function updateIncident(
-  { stationId }: Context,
+  { stationId, live }: Context,
   incident: LiveIncident,
   command: Command,
   patch: IncidentPatch,
@@ -217,10 +218,12 @@ async function updateIncident(
     .eq("id", incident.id);
   if (error != null) throw error;
 
+  const option = patch.option === undefined ? incident.option : patch.option;
   const entries = journalOf(command, {
     code: incident.code,
-    option: patch.option === undefined ? incident.option : patch.option,
+    option,
     routed: patch.route_tasks ?? incident.routeTasks,
+    changes: option == null ? [] : optionChanges(live, option),
   });
   await log(stationId, incident.id, entries);
   return DONE;

@@ -41,10 +41,6 @@ export function formatNumber(value: number) {
   return String(value).replace(".", ",");
 }
 
-export function clockAt(minute: number) {
-  return `14:${String(minute).padStart(2, "0")}`;
-}
-
 // Полосы плана занятости путей: факт, план, конфликт, предпросмотр варианта,
 // принятый новый план и закрытый объект.
 export const PLAN_BAR_CLASS: Record<PlanBarKind, string> = {

@@ -1,20 +1,15 @@
-import { toMinutes } from "@/lib/clock";
+import { toClock } from "@/lib/clock";
 import { indexStatus } from "@/lib/efficiencyIndex";
 import {
   activeOption,
+  anchorOf,
   forecastFor,
   forecastUntil,
   type PlanSource,
 } from "./activePlan";
 import { evaluatePlan } from "./metrics";
-import { FAULT, STEP, STEP_MINUTE } from "./mock";
-import {
-  clockAt,
-  formatNumber,
-  MAX_SCORE,
-  METRICS,
-  scoreStatus,
-} from "./status";
+import { STEP } from "./mock";
+import { formatNumber, MAX_SCORE, METRICS, scoreStatus } from "./status";
 import type { ConsoleState, OptionId } from "./types";
 
 // Оценка плана варианта option при закрытой стрелке. Окно — полчаса от
@@ -22,13 +17,14 @@ import type { ConsoleState, OptionId } from "./types";
 // решения показывает то же, что обещало сравнение вариантов.
 export function scorePlan(source: PlanSource, option: OptionId) {
   const runs = forecastFor(source, option);
-  return evaluatePlan(runs, source.layout, toMinutes(FAULT.from));
+  return evaluatePlan(runs, source.layout, anchorOf(source));
 }
 
-// Исходный план без сбоя — с ним сравниваем индекс после сбоя.
+// Исходный план без сбоя — с ним сравниваем индекс после сбоя. Без
+// сценария — на текущую минуту, в сценарии — на минуту обнаружения.
 export function scoreBaseline(source: PlanSource) {
-  const now = clockAt(STEP_MINUTE[STEP.normal]);
-  return evaluatePlan(forecastFor(source, null), source.layout, toMinutes(now));
+  const runs = forecastFor(source, null);
+  return evaluatePlan(runs, source.layout, anchorOf(source));
 }
 
 // Оценка действующего плана; null — исходный план, сбоя нет.
@@ -54,23 +50,22 @@ export function stationEfficiency(state: ConsoleState, source: PlanSource) {
   return {
     index,
     status: indexStatus(index),
-    trend: trendOf(step, index, baseline.index),
+    trend: trendOf(step, index, baseline.index, anchorOf(source)),
     metrics,
     reason: reasonOf(metrics),
     // Пока решение не принято, индекс — прогноз «если ничего не менять».
     forecast:
       step >= STEP.suspected && step <= STEP.approval
-        ? `Прогноз до ${forecastUntil()}, если ничего не менять`
+        ? `Прогноз до ${forecastUntil(source)}, если ничего не менять`
         : null,
   };
 }
 
-function trendOf(step: number, index: number, baseline: number) {
+function trendOf(step: number, index: number, baseline: number, at: number) {
   if (step === STEP.normal) return "Штатная работа по графику";
   const delta = index - baseline;
   const sign = delta >= 0 ? "+" : "−";
-  const time = clockAt(STEP_MINUTE[STEP.normal]);
-  return `было ${baseline} в ${time} · ${sign}${Math.abs(delta)}`;
+  return `было ${baseline} в ${toClock(at)} · ${sign}${Math.abs(delta)}`;
 }
 
 // Два показателя, которые сильнее всего снизили индекс: диспетчеру нужна причина.

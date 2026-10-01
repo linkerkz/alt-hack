@@ -4,7 +4,7 @@ import { PLAN_BAR_CLASS } from "../status";
 
 type Props = {
   plan: StationConsoleData["plan"];
-  // Время сценария: по нему стоит линия «сейчас».
+  // Время станции: по нему стоит линия «сейчас».
   clock: string;
 };
 
@@ -21,7 +21,7 @@ export function TrackPlan({ plan, clock }: Props) {
 
   return (
     <div className="flex flex-col gap-2 border-line border-t px-5 pt-2.5 pb-24">
-      <Heading note={`14:00–14:45 · сейчас ${clock}`}>
+      <Heading note={`${plan.window} · сейчас ${clock}`}>
         План занятости путей
       </Heading>
       <div className="grid grid-cols-[72px_minmax(0,1fr)]">

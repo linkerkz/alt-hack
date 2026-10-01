@@ -92,13 +92,14 @@ function trainsOf(network: Network, stationId: string): StationTrain[] {
       arrival: stop.arrival,
       departure: stop.departure,
       nextArrival: outgoing?.to.arrival ?? null,
+      delay: stop.delay,
       isTerminal: train.route[train.route.length - 1] === stop,
     }))
     .toSorted((a, b) => eventTime(a) - eventTime(b));
 }
 
 // Поезда в пути по участкам зоны — в любую сторону.
-function movingTrainsOn({ trains }: Network, sections: Section[]) {
+function movingTrainsOn({ trains, now }: Network, sections: Section[]) {
   const sectionKeys = new Set(
     sections.flatMap(({ fromId, toId }) => [
       `${fromId}>${toId}`,
@@ -116,10 +117,15 @@ function movingTrainsOn({ trains }: Network, sections: Section[]) {
         kind: train.kind,
         fromId: from.stationId,
         toId: to.stationId,
-        departure: from.departure,
-        arrival: to.arrival,
+        departsAt: epochMs(now + from.departure),
+        arrivesAt: epochMs(now + to.arrival),
+        delay: to.delay,
       }),
     );
+}
+
+function epochMs(minutes: number) {
+  return minutes * 60_000;
 }
 
 function eventTime(train: StationTrain) {

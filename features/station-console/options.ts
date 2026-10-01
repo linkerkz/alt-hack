@@ -1,8 +1,11 @@
 import { indexStatus } from "@/lib/efficiencyIndex";
-import { forecastUntil, type PlanSource } from "./activePlan";
-import { scoreBaseline, scorePlan } from "./efficiency";
+import type { PlanSource } from "./activePlan";
+import { adviceOf, recommendedOf } from "./advice";
+import { scorePlan } from "./efficiency";
+import { incidentImpact } from "./impact";
 import type { PlanScore } from "./metrics";
-import { replanOptions, STEP } from "./mock";
+import { STEP } from "./mock";
+import { needsDnc, replanOptions } from "./replan";
 import { formatNumber } from "./status";
 import type {
   ConsoleState,
@@ -23,9 +26,8 @@ export type ComparisonCell = {
 };
 
 const ORDER: OptionId[] = ["none", "A", "B"];
-const RECOMMENDED: OptionId = "B";
 
-type ScoredOption = ReplanOption & PlanScore;
+type ScoredOption = ReplanOption & PlanScore & { why: string };
 
 export function optionComparison(
   state: ConsoleState,
@@ -33,25 +35,20 @@ export function optionComparison(
   neighbors: Neighbors,
 ) {
   const { step, option } = state;
-  const options = scoredOptions(live, neighbors);
+  const { options, recommended } = scoredOptions(live, neighbors);
   const decided = step >= STEP.decided;
   const selectable = step === STEP.escalated || step === STEP.choosing;
   const selected = options[option];
 
   return {
     note: noteAt(step, selected.name),
-    impact: {
-      before: scoreBaseline(live).index,
-      after: options.none.index,
-      status: indexStatus(options.none.index),
-      until: forecastUntil(),
-    },
+    impact: incidentImpact(live),
     decided,
     heads: ORDER.map((id) => ({
       id,
       name: options[id].name,
-      caption: captionOf(id, decided && id === option),
-      recommended: id === RECOMMENDED,
+      caption: captionOf(id, recommended, decided && id === option),
+      recommended: id === recommended,
       selected: id === option,
       selectable: id !== "none" && selectable,
       // Главное для выбора — прямо в плитке варианта.
@@ -64,19 +61,32 @@ export function optionComparison(
     selected: {
       ...selected,
       recommendation:
-        option === RECOMMENDED ? "★ рекомендован системой" : "альтернатива",
+        option === recommended ? "★ рекомендован системой" : "альтернатива",
+      // Ключ анимации «ИИ пишет рекомендацию»: один раз на вариант инцидента.
+      adviceKey: `${live.incident?.code ?? "—"}-${option}`,
     },
   };
 }
 
-// Варианты вместе с показателями их планов.
-export function scoredOptions(live: PlanSource, neighbors: Neighbors) {
-  const options = replanOptions(neighbors);
-  const score = (id: OptionId): ScoredOption => ({
-    ...options[id],
-    ...scorePlan(live, id),
+// Варианты с показателями их планов, рекомендованный и рекомендация ИИ.
+export function scoredOptions(source: PlanSource, neighbors: Neighbors) {
+  const named = replanOptions(source, neighbors);
+  const scores = {
+    none: scorePlan(source, "none"),
+    A: scorePlan(source, "A"),
+    B: scorePlan(source, "B"),
+  };
+  const recommended = recommendedOf(scores);
+  const advice = { source, neighbors, options: scores, recommended };
+  const option = (id: OptionId): ScoredOption => ({
+    ...named[id],
+    ...scores[id],
+    why: id === "none" ? "" : adviceOf(id, advice),
   });
-  return { none: score("none"), A: score("A"), B: score("B") };
+  return {
+    options: { none: option("none"), A: option("A"), B: option("B") },
+    recommended,
+  };
 }
 
 function noteAt(step: number, name: string) {
@@ -87,9 +97,10 @@ function noteAt(step: number, name: string) {
   return "Нажмите на вариант, чтобы увидеть изменения";
 }
 
-function captionOf(id: OptionId, accepted: boolean) {
+function captionOf(id: OptionId, recommended: OptionId, accepted: boolean) {
   if (id === "none") return "исходный сценарий";
-  const base = id === RECOMMENDED ? "★ рекомендован" : "без ДНЦ";
+  const base =
+    id === recommended ? "★ рекомендован" : needsDnc(id) ? "с ДНЦ" : "без ДНЦ";
   return accepted ? `${base} · принят` : base;
 }
 
