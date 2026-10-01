@@ -57,18 +57,16 @@ export default async function StationDashboardPage({
           efficiencyIndex={station.efficiencyIndex}
         />
 
-        <SummaryCards
-          efficiencyIndex={station.efficiencyIndex}
-          planPercent={planProgress.percent}
-          trainCount={station.trainCount}
-          delayCount={statistics.delayCount}
-          trackLoad={station.trackLoad}
-        />
-
         <div className="grid gap-4 md:grid-cols-2">
           <EfficiencyPanel value={station.efficiencyIndex} />
           <PlanProgressCard progress={planProgress} />
         </div>
+
+        <SummaryCards
+          trainCount={station.trainCount}
+          delayCount={statistics.delayCount}
+          trackLoad={station.trackLoad}
+        />
 
         <OperationsGantt operations={operations} />
 
