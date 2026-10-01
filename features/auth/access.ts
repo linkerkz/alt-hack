@@ -1,4 +1,4 @@
-import type { CurrentUser, Role } from "./types";
+import type { CurrentUser, Role, Scope } from "./types";
 
 // Все права на экраны — здесь. RLS в базе закрывает данные, а эти правила
 // решают, что показать и куда пустить.
@@ -28,6 +28,17 @@ export function homePath(user: CurrentUser) {
   if (user.role === "dnc") return "/";
   if (STATION_ROLES.includes(user.role) && user.stationId != null) {
     return `/stations/${user.stationId}`;
+  }
+  return null;
+}
+
+// Зона ответственности: круг ДНЦ или своя станция; null — зоны у роли нет.
+export function scopeOf(user: CurrentUser): Scope | null {
+  if (user.role === "dnc" && user.dispatchAreaId != null) {
+    return { kind: "dispatch-area", dispatchAreaId: user.dispatchAreaId };
+  }
+  if (STATION_ROLES.includes(user.role) && user.stationId != null) {
+    return { kind: "station", stationId: user.stationId };
   }
   return null;
 }

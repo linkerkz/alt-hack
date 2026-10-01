@@ -16,4 +16,9 @@ export type CurrentUser = {
   dispatchAreaId: string | null;
 };
 
+// Зона ответственности пользователя: диспетчерский круг или одна станция.
+export type Scope =
+  | { kind: "dispatch-area"; dispatchAreaId: string }
+  | { kind: "station"; stationId: string };
+
 export type SignInState = { error: string | null };
