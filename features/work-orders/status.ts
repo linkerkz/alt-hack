@@ -17,9 +17,14 @@ export const SERVICE_LABEL: Record<Service, string> = {
   power: "Служба электроснабжения",
 };
 
-// Пока наряд открыт, рабочий отмечает пункты; после «выполнено» — только просмотр.
+// Наряд открыт: выдан или в работе; после «выполнено» — только просмотр.
 export function isOpen(status: WorkOrderStatus) {
   return status === "issued" || status === "in_progress";
+}
+
+// Пункты отмечают только после «Взять в работу»: этап виден ДСП и ДСЦС.
+export function isTaken(status: WorkOrderStatus) {
+  return status === "in_progress";
 }
 
 // «14:21» — время отметки в часовом поясе станции.

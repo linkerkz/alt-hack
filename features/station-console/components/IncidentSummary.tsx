@@ -11,7 +11,7 @@ export function IncidentSummary({ incident }: Props) {
       <div className="flex flex-col gap-1.5">
         <div className="flex justify-between gap-2.5 text-[11px] uppercase tracking-[0.08em]">
           <span className="text-critical">
-            ■ Высокая критичность · {INCIDENT.id}
+            ■ Высокая критичность · {incident.code}
           </span>
           <span className="text-muted">{incident.dncBadge}</span>
         </div>
@@ -27,8 +27,7 @@ export function IncidentSummary({ incident }: Props) {
           ))}
         </dl>
         <p className="mt-1 text-justify text-[13px] text-neutral-800">
-          Нет контроля положения стрелки С3. Маршруты с нечётной стороны на пути
-          3 и 5 закрыты автоматически.
+          {INCIDENT.description}
         </p>
       </div>
       <ol className="grid grid-cols-6 gap-1">

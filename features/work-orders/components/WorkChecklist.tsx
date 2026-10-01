@@ -11,7 +11,7 @@ import { CompleteForm } from "./CompleteForm";
 type Props = {
   orderId: string;
   items: ChecklistItem[];
-  // Наряд открыт — пункты можно отмечать и сообщить о выполнении.
+  // Наряд в работе — пункты можно отмечать и сообщить о выполнении.
   isOpen: boolean;
 };
 

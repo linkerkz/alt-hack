@@ -1,12 +1,20 @@
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Card } from "@/components/ui/Card";
-import { STEP } from "../mock";
+import { checklistText } from "../dsp";
 import { consoleHref } from "../state";
-import type { ConsoleState } from "../types";
+import type { ConsoleState, LiveWorkOrder } from "../types";
+import { CommandButton } from "./CommandButton";
+
+type Props = {
+  stationId: string;
+  state: ConsoleState;
+  workOrder: LiveWorkOrder | null;
+};
 
 // Подтверждение возврата С3 в эксплуатацию: решает только ДСП,
 // отметки «работы выполнены» от службы для этого мало.
-export function ReturnToServiceDialog({ state }: { state: ConsoleState }) {
+// Диалог закроется сам: после возврата шаг сменится.
+export function ReturnToServiceDialog({ stationId, state, workOrder }: Props) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-neutral-900/50 p-[18px]">
       <Card
@@ -24,26 +32,26 @@ export function ReturnToServiceDialog({ state }: { state: ConsoleState }) {
         </h2>
         <div className="flex flex-col gap-1.5 text-[14px] text-neutral-800">
           <p>
-            Электромеханик сообщил: работы выполнены в 14:27, чеклист 5 из 5,
-            контроль восстановлен.
+            Электромеханик сообщил: работы выполнены, {checklistText(workOrder)}
+            .
           </p>
           <p>На пульте: контроль положения С3 есть в обоих положениях.</p>
           <p>Маршруты через С3 на пути 3 и 5 снова станут доступны.</p>
         </div>
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
           <ButtonLink
             href={consoleHref(state, { confirm: false })}
             scroll={false}
           >
             Отмена
           </ButtonLink>
-          <ButtonLink
-            href={consoleHref(state, { step: STEP.restored, confirm: false })}
-            scroll={false}
+          <CommandButton
+            stationId={stationId}
+            command={{ kind: "restore" }}
             variant="primary"
           >
             Вернуть в эксплуатацию
-          </ButtonLink>
+          </CommandButton>
         </div>
       </Card>
     </div>

@@ -7,6 +7,7 @@ import { IncidentImpact } from "./IncidentImpact";
 import { IncidentSummary } from "./IncidentSummary";
 import { OptionComparison } from "./OptionComparison";
 import { TaskList } from "./TaskList";
+import { WorkOrderCard } from "./WorkOrderCard";
 
 type Props = {
   data: StationConsoleData;
@@ -22,15 +23,16 @@ export function IncidentPanel({ data, state, mapHref }: Props) {
     <div className="flex flex-col gap-[18px]">
       <IncidentSummary incident={incident} />
       <ActionCard
+        stationId={data.stationId}
         action={incident.action}
         statusName={incident.statusName}
-        state={state}
         mapHref={mapHref}
       />
       <IncidentImpact />
       <OptionComparison comparison={comparison} state={state} />
       {chain.length > 0 && <DecisionChain chain={chain} />}
       {incident.tasks.length > 0 && <TaskList tasks={incident.tasks} />}
+      {data.workOrder != null && <WorkOrderCard workOrder={data.workOrder} />}
       <IncidentEvents events={incident.events} />
     </div>
   );

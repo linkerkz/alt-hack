@@ -1,9 +1,9 @@
 import type { StationConsoleData } from "../queries";
 import type { ConsoleRole, ConsoleState, Neighbors } from "../types";
 import { ConsoleBar } from "./ConsoleBar";
-import { DemoBar } from "./DemoBar";
 import { EfficiencySummary } from "./EfficiencySummary";
 import { IncidentBanner } from "./IncidentBanner";
+import { LiveRefresh } from "./LiveRefresh";
 import { ReturnToServiceDialog } from "./ReturnToServiceDialog";
 import { SidePanel } from "./SidePanel";
 import { StationSchema } from "./StationSchema";
@@ -38,13 +38,18 @@ export function StationConsole(props: Props) {
         mapHref={mapHref}
       />
       {showBanner && (
-        <IncidentBanner suggestion={incident.suggestion} state={state} />
+        <IncidentBanner
+          code={incident.code}
+          suggestion={incident.suggestion}
+          state={state}
+        />
       )}
       <main className="flex flex-1 flex-wrap">
         <section className="flex min-w-0 flex-[999_1_620px] flex-col border-line border-r">
           <EfficiencySummary efficiency={data.efficiency} />
           <StationSchema
             schema={data.schema}
+            incidentCode={incident.code}
             state={state}
             neighbors={neighbors}
           />
@@ -58,10 +63,14 @@ export function StationConsole(props: Props) {
           mapHref={mapHref}
         />
       </main>
-      <DemoBar state={state} stepName={data.stepName} />
       {role === "dsp" && dsp.confirmOpen && (
-        <ReturnToServiceDialog state={state} />
+        <ReturnToServiceDialog
+          stationId={data.stationId}
+          state={state}
+          workOrder={data.workOrder}
+        />
       )}
+      <LiveRefresh />
     </>
   );
 }

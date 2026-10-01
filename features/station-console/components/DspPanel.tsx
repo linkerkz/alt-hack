@@ -6,6 +6,7 @@ import { DecisionChain } from "./DecisionChain";
 import { DspObjects } from "./DspObjects";
 import { DspReports } from "./DspReports";
 import { DspTaskCard } from "./DspTaskCard";
+import { WorkOrderCard } from "./WorkOrderCard";
 
 type Props = {
   operatorName: string;
@@ -41,10 +42,16 @@ export function DspPanel({ operatorName, data, state }: Props) {
             </p>
           )}
           {tasks.map((task) => (
-            <DspTaskCard key={task.title} task={task} state={state} />
+            <DspTaskCard
+              key={task.title}
+              stationId={data.stationId}
+              task={task}
+              state={state}
+            />
           ))}
         </section>
         <DspObjects objects={objects} />
+        {data.workOrder != null && <WorkOrderCard workOrder={data.workOrder} />}
         {chain.length > 0 && <DecisionChain chain={chain} />}
         {reports.length > 0 && <DspReports reports={reports} />}
       </div>

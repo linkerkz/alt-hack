@@ -4,16 +4,17 @@ import { consoleHref } from "../state";
 import type { ConsoleState } from "../types";
 
 type Props = {
+  code: string;
   suggestion: string;
   state: ConsoleState;
 };
 
 // Полоса над пультом: новый инцидент, пока диспетчер на вкладке обзора.
-export function IncidentBanner({ suggestion, state }: Props) {
+export function IncidentBanner({ code, suggestion, state }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-x-[18px] gap-y-2 border-critical border-t-2 border-b px-5 py-2.5">
       <span className="whitespace-nowrap text-[11px] text-critical uppercase tracking-[0.08em]">
-        ■ Новый инцидент · {INCIDENT.id} · {INCIDENT.detectedAt}
+        ■ Новый инцидент · {code} · {INCIDENT.detectedAt}
       </span>
       <span className="font-heading font-semibold text-[19px]">
         {INCIDENT.title}

@@ -1,22 +1,21 @@
 import Link from "next/link";
-import { INCIDENT } from "../mock";
 import { consoleHref } from "../state";
 import type { ConsoleState, ConsoleTab } from "../types";
 import { CollapseLink } from "./CollapseLink";
 
 type Props = {
   state: ConsoleState;
-  // Вкладка инцидента появляется, когда инцидент возник.
-  hasIncident: boolean;
+  // Код инцидента; null — инцидента нет, и вкладки для него тоже.
+  incidentCode: string | null;
 };
 
 // Вкладки правой панели: обзор станции и карточка инцидента.
-export function ConsoleTabs({ state, hasIncident }: Props) {
+export function ConsoleTabs({ state, incidentCode }: Props) {
   const tabs: { id: ConsoleTab; label: string }[] = [
     { id: "overview", label: "Обзор" },
-    ...(hasIncident
-      ? [{ id: "incident" as const, label: `Инцидент ${INCIDENT.id}` }]
-      : []),
+    ...(incidentCode == null
+      ? []
+      : [{ id: "incident" as const, label: `Инцидент ${incidentCode}` }]),
   ];
 
   return (

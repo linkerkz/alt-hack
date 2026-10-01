@@ -9,8 +9,10 @@ export function decisionChain(state: ConsoleState, neighbors: Neighbors) {
   const { step, option } = state;
   if (step < STEP.decided) return [];
   const name = replanOptions(neighbors)[option].name.toLowerCase();
-  const routed = routeDone(state).r101;
-  const acknowledged = step >= STEP.repairing;
+  const { r101, r2001 } = routeDone(state);
+  const routed = r101;
+  // Машинисты подтверждают, когда ДСП принял оба поезда.
+  const acknowledged = r101 && r2001;
   const links = [
     { who: "ДСЦС", what: `выбрал ${name}`, done: true },
     ...(option === "B"

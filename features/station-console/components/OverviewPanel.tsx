@@ -22,7 +22,7 @@ export function OverviewPanel({ incident, state }: Props) {
           <Card emphasis="critical" className="flex flex-col gap-1.5 p-3.5">
             <div className="flex justify-between gap-2.5 text-[11px]">
               <span className="text-critical uppercase tracking-[0.08em]">
-                ■ Высокая · {INCIDENT.id}
+                ■ Высокая · {incident.code}
               </span>
               <span className="text-muted">{incident.statusName}</span>
             </div>

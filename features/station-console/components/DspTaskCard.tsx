@@ -1,13 +1,15 @@
+import type { ButtonVariant } from "@/components/ui/Button";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Card } from "@/components/ui/Card";
 import type { DspTask } from "../dsp";
 import { consoleHref } from "../state";
-import type { ConsoleState } from "../types";
+import type { ActionLink, ConsoleState } from "../types";
+import { CommandButton } from "./CommandButton";
 
-type Props = { task: DspTask; state: ConsoleState };
+type Props = { stationId: string; task: DspTask; state: ConsoleState };
 
 // Входящая задача ДСП: от кого, что сделать и кнопки; выполненная — с итогом.
-export function DspTaskCard({ task, state }: Props) {
+export function DspTaskCard({ stationId, task, state }: Props) {
   const { from, time, title, detail, result, done, primary, secondary } = task;
 
   return (
@@ -33,25 +35,54 @@ export function DspTaskCard({ task, state }: Props) {
           <p className="text-justify text-[13px] text-neutral-800">{detail}</p>
           <div className="flex flex-wrap gap-2">
             {primary != null && (
-              <ButtonLink
-                href={consoleHref(state, primary.patch)}
-                scroll={false}
+              <TaskButton
+                stationId={stationId}
+                action={primary}
+                state={state}
                 variant="primary"
-              >
-                {primary.label}
-              </ButtonLink>
+              />
             )}
             {secondary != null && (
-              <ButtonLink
-                href={consoleHref(state, secondary.patch)}
-                scroll={false}
-              >
-                {secondary.label}
-              </ButtonLink>
+              <TaskButton
+                stationId={stationId}
+                action={secondary}
+                state={state}
+              />
             )}
           </div>
         </>
       )}
     </Card>
+  );
+}
+
+type TaskButtonProps = {
+  stationId: string;
+  action: ActionLink;
+  state: ConsoleState;
+  variant?: ButtonVariant;
+};
+
+// Команда уходит в базу; смена вида (открыть диалог) — ссылкой в URL.
+function TaskButton({ stationId, action, state, variant }: TaskButtonProps) {
+  if ("command" in action) {
+    return (
+      <CommandButton
+        stationId={stationId}
+        command={action.command}
+        variant={variant}
+      >
+        {action.label}
+      </CommandButton>
+    );
+  }
+  return (
+    <ButtonLink
+      href={consoleHref(state, action.patch)}
+      scroll={false}
+      variant={variant}
+    >
+      {action.label}
+    </ButtonLink>
   );
 }

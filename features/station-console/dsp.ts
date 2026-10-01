@@ -2,7 +2,12 @@ import { dspObjects } from "./dspObjects";
 import { dspReports } from "./dspReports";
 import { STEP } from "./mock";
 import { routeDone } from "./routing";
-import type { ActionLink, ConsoleState, Neighbors } from "./types";
+import type {
+  ActionLink,
+  ConsoleState,
+  LiveWorkOrder,
+  Neighbors,
+} from "./types";
 
 // Панель исполнения ДСП: входящие задачи, состояние объектов и отправленные донесения.
 
@@ -23,8 +28,12 @@ const SENSOR = "Система · датчик ЭЦ";
 const DSCS = "ДСЦС";
 const MECHANIC = "Электромеханик";
 
-export function dspPanel(state: ConsoleState, neighbors: Neighbors) {
-  const tasks = tasksAt(state);
+export function dspPanel(
+  state: ConsoleState,
+  neighbors: Neighbors,
+  workOrder: LiveWorkOrder | null,
+) {
+  const tasks = tasksAt(state, workOrder);
   const pending = tasks.filter((task) => !task.done);
 
   return {
@@ -39,7 +48,10 @@ export function dspPanel(state: ConsoleState, neighbors: Neighbors) {
   };
 }
 
-function tasksAt(state: ConsoleState): DspTask[] {
+function tasksAt(
+  state: ConsoleState,
+  workOrder: LiveWorkOrder | null,
+): DspTask[] {
   const { step, option } = state;
   const routed = routeDone(state);
   const isB = option === "B";
@@ -59,9 +71,9 @@ function tasksAt(state: ConsoleState): DspTask[] {
       done: false,
       primary: {
         label: "Подтвердить, закрыть С3, вызвать службу",
-        patch: { step: STEP.choosing },
+        command: { kind: "confirm" },
       },
-      secondary: { label: "Ложная тревога", patch: { step: STEP.normal } },
+      secondary: { label: "Ложная тревога", command: { kind: "dismiss" } },
     });
   }
   if (step >= STEP.choosing) {
@@ -87,7 +99,7 @@ function tasksAt(state: ConsoleState): DspTask[] {
         done: routed.r101,
         primary: {
           label: "Подтвердить и задать маршрут",
-          patch: { done: [...state.done, "r101"] },
+          command: { kind: "route", task: "r101" },
         },
       },
       {
@@ -101,7 +113,7 @@ function tasksAt(state: ConsoleState): DspTask[] {
         done: routed.r2001,
         primary: {
           label: "Подтвердить",
-          patch: { done: [...state.done, "r2001"] },
+          command: { kind: "route", task: "r2001" },
         },
       },
     );
@@ -111,8 +123,7 @@ function tasksAt(state: ConsoleState): DspTask[] {
       from: MECHANIC,
       time: "14:27",
       title: "Вернуть С3 в эксплуатацию",
-      detail:
-        "Работы выполнены, чеклист 5 из 5, контроль восстановлен. Проверьте контроль положения на пульте.",
+      detail: `Работы выполнены, ${checklistText(workOrder)}. Проверьте контроль положения на пульте.`,
       result: "",
       done: false,
       primary: { label: "Вернуть в эксплуатацию…", patch: { confirm: true } },
@@ -129,6 +140,14 @@ function tasksAt(state: ConsoleState): DspTask[] {
     });
   }
   return tasks;
+}
+
+// «чеклист 5 из 5» и комментарий рабочего, если он его оставил.
+export function checklistText(workOrder: LiveWorkOrder | null) {
+  if (workOrder == null) return "чеклист закрыт";
+  const { checked, total, resultNote } = workOrder;
+  const note = resultNote == null ? "" : `, «${resultNote}»`;
+  return `чеклист ${checked} из ${total}${note}`;
 }
 
 function idleTextAt(step: number) {
