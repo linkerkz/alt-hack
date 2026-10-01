@@ -36,10 +36,6 @@ export default async function StationDashboardPage({
     statistics,
     efficiencyHistory,
   } = dashboard;
-  const planPercent =
-    planProgress.total === 0
-      ? 0
-      : Math.round((planProgress.completed / planProgress.total) * 100);
 
   return (
     <>
@@ -59,7 +55,7 @@ export default async function StationDashboardPage({
 
         <SummaryCards
           efficiencyIndex={station.efficiencyIndex}
-          planPercent={planPercent}
+          planPercent={planProgress.percent}
           trainCount={station.trainCount}
           delayCount={statistics.delayCount}
           trackLoad={station.trackLoad}
