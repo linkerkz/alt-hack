@@ -13,11 +13,11 @@ type Props = {
 };
 
 const SIZE_CLASS = {
-  md: "text-[40px]",
-  lg: "text-[52px]",
+  md: "text-[36px]",
+  lg: "text-[44px]",
 };
 
-// Крупное серифное число в цвете состояния, рядом — плашка и подпись.
+// Крупное число в цвете состояния, рядом — плашка и подпись.
 export function IndexValue({
   value,
   tone,
@@ -28,7 +28,7 @@ export function IndexValue({
   return (
     <div className="flex items-center gap-3">
       <span
-        className={`font-heading leading-none ${SIZE_CLASS[size]} ${TONE_TEXT_CLASS[tone]}`}
+        className={`font-heading font-semibold leading-none tracking-[-0.02em] ${SIZE_CLASS[size]} ${TONE_TEXT_CLASS[tone]}`}
       >
         {value}
       </span>

@@ -1,44 +1,48 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
-/* Тема «Classical» (дизайн из Claude Design): светлая бумага, серифные шрифты,
-   тонкие линии и один золотой акцент. Цвет — обводкой и линиями, не заливкой.
-   Каталог компонентов и правила — docs/ui.md. */
+/* Тема «Диспетчерская»: холодный светлый фон, белые карточки, тёмная шапка
+   и один синий акцент — цвет действия. Зелёный, янтарный и красный заняты
+   состояниями, поэтому акцент с ними не спорит. Каталог и правила — docs/ui.md. */
 @theme {
-  --color-paper: #f3f2f2;
-  --color-surface: #eae9e9;
-  --color-ink: #201f1d;
-  --color-muted: #605d5d;
-  --color-line: color-mix(in srgb, #201f1d 16%, transparent);
+  --color-paper: #f4f6f9;
+  --color-card: #ffffff;
+  --color-surface: #e9edf2;
+  --color-ink: #141b26;
+  --color-muted: #5a6577;
+  --color-line: color-mix(in srgb, #141b26 13%, transparent);
 
-  --color-accent: #b68235;
-  --color-accent-100: #fff3e4;
-  --color-accent-200: #ffe3bf;
-  --color-accent-300: #facb8d;
-  --color-accent-400: #e1ad66;
-  --color-accent-500: #c28d41;
-  --color-accent-600: #a06f24;
-  --color-accent-700: #7d5411;
-  --color-accent-800: #5a3b0a;
-  --color-accent-900: #3a270d;
+  --color-accent: #2563d8;
+  --color-accent-100: #ebf1fd;
+  --color-accent-200: #d4e2fb;
+  --color-accent-300: #a8c4f6;
+  --color-accent-400: #6f9bee;
+  --color-accent-500: #3b74e0;
+  --color-accent-600: #2563d8;
+  --color-accent-700: #1d50b4;
+  --color-accent-800: #183f8b;
+  --color-accent-900: #132f66;
 
-  --color-neutral-100: #f8f4f4;
-  --color-neutral-200: #eae7e7;
-  --color-neutral-300: #d7d3d3;
-  --color-neutral-400: #bab6b6;
-  --color-neutral-500: #9b9797;
-  --color-neutral-600: #7d7979;
-  --color-neutral-700: #605d5d;
-  --color-neutral-800: #444141;
-  --color-neutral-900: #2d2b2b;
+  --color-neutral-100: #f4f6f9;
+  --color-neutral-200: #e6eaf0;
+  --color-neutral-300: #d2d8e1;
+  --color-neutral-400: #b0b9c6;
+  --color-neutral-500: #8a94a4;
+  --color-neutral-600: #6b7586;
+  --color-neutral-700: #505a6a;
+  --color-neutral-800: #363f4d;
+  --color-neutral-900: #1f2632;
+
+  /* Шапка — тёмная рамка приложения, как табло диспетчерской. */
+  --color-chrome: #121a27;
 
   /* Состояния: Норма / Внимание / Критично (значки ● ▲ ■ — в components/ui/tone.ts). */
-  --color-normal: #337344;
-  --color-warning: #a06f24;
-  --color-critical: #b6322b;
+  --color-normal: #1d7a47;
+  --color-warning: #b35c00;
+  --color-critical: #c8302a;
 
   /* Экраны полевых устройств (камера, пейджер): прошивка на тёмном экране,
-     моноширинный шрифт. Исключение из Classical — только app/(device). */
+     моноширинный шрифт. Исключение из основной темы — только app/(device). */
   --color-device: #0d100f;
   --color-device-panel: #151a18;
   --color-device-line: #2a332f;
@@ -48,9 +52,9 @@
   --color-device-warn: #f2b84b;
   --color-device-alert: #ff5c50;
 
-  --shadow-sm: 0 1px 2px color-mix(in srgb, #2d2b2b 14%, transparent);
-  --shadow-md: 0 3px 10px color-mix(in srgb, #2d2b2b 16%, transparent);
-  --shadow-lg: 0 12px 32px color-mix(in srgb, #2d2b2b 22%, transparent);
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #141b26 10%, transparent);
+  --shadow-md: 0 4px 12px color-mix(in srgb, #141b26 12%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #141b26 18%, transparent);
 
   /* Медленное «дыхание» поезда на карте: живость без ускорения движения. */
   --animate-breathe: breathe 3.2s ease-in-out infinite;
@@ -69,8 +73,8 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-lora);
-  --font-heading: var(--font-cormorant);
+  --font-sans: var(--font-plex);
+  --font-heading: var(--font-plex);
   --font-mono: var(--font-jetbrains);
 }
 
@@ -81,8 +85,8 @@ html {
 body {
   background: var(--color-paper);
   color: var(--color-ink);
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 14px;
+  line-height: 1.5;
   /* Цифры везде табличные: индексы, время и счётчики стоят столбцами. */
   font-variant-numeric: tabular-nums;
 }
@@ -102,9 +106,9 @@ body {
   font-family: inherit;
 }
 
-/* Подложку приглушаем в тёплый серый, чтобы линии сети читались поверх неё. */
+/* Подложку приглушаем в светлый серый, чтобы линии сети читались поверх неё. */
 .leaflet-tile-pane {
-  filter: grayscale(1) sepia(0.12) contrast(0.92);
+  filter: grayscale(1) contrast(0.88) brightness(1.04);
 }
 
 .leaflet-container .leaflet-control-attribution {
@@ -117,7 +121,7 @@ body {
 }
 
 .leaflet-tooltip.map-tooltip {
-  background: var(--color-paper);
+  background: var(--color-card);
   border: 1px solid var(--color-line);
   border-radius: 4px;
   box-shadow: var(--shadow-md);

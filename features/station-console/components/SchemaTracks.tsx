@@ -47,7 +47,7 @@ export function SchemaTracks({ schema }: Props) {
           y={overlay.labelY}
           fontSize={12}
           fontStyle="italic"
-          className="fill-accent-700"
+          className="fill-accent-700 stroke-paper [paint-order:stroke] [stroke-linejoin:round] [stroke-width:4px]"
         >
           {overlay.label}
         </text>

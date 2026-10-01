@@ -15,6 +15,11 @@ type Section = "network" | "station" | "analytics";
 
 type NavItem = { id: Section; label: string; href: string | null };
 
+// Шапка тёмная: переопределяем токены текста, линий и акцента внутри неё, и
+// блок пользователя, который собирает страница, светлеет сам — без своих классов.
+const CHROME_TOKENS =
+  "[--color-ink:#e8edf5] [--color-muted:#93a0b4] [--color-line:rgb(255_255_255/0.16)] [--color-card:transparent] [--color-neutral-100:rgb(255_255_255/0.08)] [--color-neutral-200:rgb(255_255_255/0.14)] [--color-neutral-300:rgb(255_255_255/0.24)] [--color-neutral-400:rgb(255_255_255/0.4)] [--color-accent:#6f9bee] [--color-accent-700:#a8c4f6] [--color-accent-800:#d4e2fb]";
+
 // Пункт без адреса показываем, только пока он открыт: ДНЦ попадает на пульт
 // и в эффективность из карточки станции на карте.
 function navItems(
@@ -39,11 +44,13 @@ export function AppHeader({
   );
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-6 border-line border-b bg-paper px-5">
+    <header
+      className={`flex h-14 shrink-0 items-center gap-6 bg-chrome px-5 text-ink ${CHROME_TOKENS}`}
+    >
       <Link
         prefetch={false}
         href="/"
-        className="flex items-center gap-2.5 font-heading font-semibold text-[21px]"
+        className="flex items-center gap-2.5 font-heading font-semibold text-[17px] tracking-[-0.01em]"
       >
         <Logo />
         Цифровая станция
@@ -70,7 +77,7 @@ function NavLink({ item, isCurrent }: { item: NavItem; isCurrent: boolean }) {
     return (
       <span
         aria-current="page"
-        className={`${base} border-accent text-accent-700`}
+        className={`${base} border-accent font-medium text-ink`}
       >
         {item.label}
       </span>
@@ -80,7 +87,7 @@ function NavLink({ item, isCurrent }: { item: NavItem; isCurrent: boolean }) {
     <Link
       prefetch={false}
       href={item.href}
-      className={`${base} border-transparent text-ink hover:text-accent-700`}
+      className={`${base} border-transparent text-muted hover:text-ink`}
     >
       {item.label}
     </Link>
@@ -91,7 +98,7 @@ function Logo() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="size-6 text-accent"
+      className="size-6 text-accent-700"
       fill="none"
       stroke="currentColor"
       strokeWidth={1.5}

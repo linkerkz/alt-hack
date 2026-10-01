@@ -10,7 +10,7 @@ export function ReportKpis({ kpis }: { kpis: ReportKpi[] }) {
             {kpi.label}
           </dt>
           <dd className="flex items-baseline gap-2.5">
-            <span className="font-heading text-[34px] leading-none">
+            <span className="whitespace-nowrap font-heading font-semibold text-[28px] leading-none tracking-[-0.01em]">
               {kpi.fact}
             </span>
             <span className="text-[12px] text-neutral-600">{kpi.compare}</span>
