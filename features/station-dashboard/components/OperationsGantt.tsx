@@ -12,6 +12,17 @@ const STATUS_BAR_CLASS: Record<OperationStatus, string> = {
 type Bounds = { min: number; max: number };
 
 export function OperationsGantt({ operations }: { operations: Operation[] }) {
+  if (operations.length === 0) {
+    return (
+      <Card className="space-y-2 p-5">
+        <Kicker>Операции · временная шкала</Kicker>
+        <p className="text-[13px] text-muted">
+          За горизонт прогноза (3 ч) операций нет
+        </p>
+      </Card>
+    );
+  }
+
   const bounds = getBounds(operations);
   const hours = getHourTicks(bounds);
 

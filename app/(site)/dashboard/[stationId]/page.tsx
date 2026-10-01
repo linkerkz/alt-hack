@@ -31,10 +31,8 @@ export default async function StationDashboardPage({
   // Индекс станции с планом путей считает пульт — отчёт показывает его же.
   const efficiencyIndex = liveIndexes.get(found.id) ?? found.efficiencyIndex;
   const station = { ...found, efficiencyIndex };
-  const [dashboard, trains] = await Promise.all([
-    getStationDashboard(station),
-    getStationTrains(station.id),
-  ]);
+  const trains = await getStationTrains(station.id);
+  const dashboard = await getStationDashboard(station, trains);
   const {
     planProgress,
     operations,
