@@ -49,13 +49,32 @@ export async function loadDetector() {
     "@mediapipe/tasks-vision"
   );
   const fileset = await FilesetResolver.forVisionTasks(WASM);
-  return ObjectDetector.createFromOptions(fileset, {
-    baseOptions: { modelAssetPath: MODEL, delegate: "CPU" },
-    runningMode: "VIDEO",
-    scoreThreshold: MIN_SCORE,
-    categoryDenylist: BACKGROUND,
-    maxResults: 5,
-  });
+  return withoutInfoLogs(() =>
+    ObjectDetector.createFromOptions(fileset, {
+      baseOptions: { modelAssetPath: MODEL, delegate: "CPU" },
+      runningMode: "VIDEO",
+      scoreThreshold: MIN_SCORE,
+      categoryDenylist: BACKGROUND,
+      maxResults: 5,
+    }),
+  );
+}
+
+// WASM модели пишет служебное «INFO: …» в console.error, а dev-оверлей Next
+// показывает его красной ошибкой. Ссылку на console.error загрузчик WASM
+// запоминает при загрузке — на это время подставляем фильтр без «INFO:»,
+// потом возвращаем настоящий: остальные ошибки идут как обычно.
+async function withoutInfoLogs<T>(load: () => Promise<T>) {
+  const { error } = console;
+  console.error = (...args: unknown[]) => {
+    if (typeof args[0] === "string" && args[0].startsWith("INFO:")) return;
+    error(...args);
+  };
+  try {
+    return await load();
+  } finally {
+    console.error = error;
+  }
 }
 
 // Находки модели на кадре, которые задевают зону объекта.
