@@ -1,3 +1,4 @@
+import { GeneratedText } from "@/components/ui/GeneratedText";
 import type { StationConsoleData } from "../queries";
 
 type Props = { option: StationConsoleData["comparison"]["selected"] };
@@ -22,9 +23,11 @@ export function SelectedOption({ option }: Props) {
           </div>
         ))}
       </dl>
-      <p className="text-justify text-[12.5px] text-neutral-800 italic">
-        {option.why}
-      </p>
+      <GeneratedText
+        text={option.why}
+        storageKey={option.adviceKey}
+        className="text-justify text-[12.5px] text-neutral-800 italic"
+      />
       <span className="text-[11px] text-neutral-600">
         Новый маршрут показан пунктиром на схеме и в плане.
       </span>

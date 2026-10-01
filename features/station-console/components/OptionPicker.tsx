@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GeneratedText } from "@/components/ui/GeneratedText";
 import { StatusGlyph } from "@/components/ui/StatusGlyph";
 import { TONE_TEXT_CLASS } from "@/components/ui/tone";
 import type { StationConsoleData } from "../queries";
@@ -16,7 +17,7 @@ type Head = Props["comparison"]["heads"][number];
 type OptionHead = Head & { id: ChosenOption };
 
 // Выбор варианта в ходе ДСЦС: плитки А / Б с главными цифрами рядом с
-// «ничего не менять» и что меняет выбранный. Переключение — только вид
+// «ничего не менять», что меняет выбранный и рекомендация ИИ. Переключение — только вид
 // (URL); в базу уходит кнопка «Принять».
 export function OptionPicker({ comparison, state }: Props) {
   const { heads, selected } = comparison;
@@ -49,6 +50,11 @@ export function OptionPicker({ comparison, state }: Props) {
           </div>
         ))}
       </dl>
+      <GeneratedText
+        text={selected.why}
+        storageKey={selected.adviceKey}
+        className="text-[12.5px] text-neutral-800 italic"
+      />
     </div>
   );
 }
