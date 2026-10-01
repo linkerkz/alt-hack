@@ -1,4 +1,5 @@
 import { createSupabaseClient } from "@/lib/supabase";
+import { isUuid } from "@/lib/uuid";
 import type { LiveIncident } from "./types";
 
 const JPEG_PREFIX = "data:image/jpeg;base64,";
@@ -13,6 +14,8 @@ export function snapshotOf(incident: LiveIncident | null) {
 
 // JPEG снимка инцидента; null — нет инцидента, снимка или прав на станцию.
 export async function getSnapshot(incidentId: string) {
+  if (!isUuid(incidentId)) return null;
+
   const supabase = await createSupabaseClient();
   const { data } = await supabase
     .from("incidents")

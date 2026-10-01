@@ -1,8 +1,7 @@
 import { cache } from "react";
 import { createSupabaseAdminClient } from "@/lib/supabase";
+import { isUuid } from "@/lib/uuid";
 import type { Service, WorkOrder, WorkOrderStatus } from "./types";
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const COLUMNS =
   "id, station_id, object_id, service, title, description, status, created_at, done_at, result_note, work_order_items(id, position, text, done_at)";
@@ -15,7 +14,7 @@ const ACTIVE: WorkOrderStatus[] = ["issued", "in_progress", "done"];
 // Кэш на запрос: страница и её метаданные читают наряд по разу.
 export const getWorkOrder = cache(
   async (id: string): Promise<WorkOrder | null> => {
-    if (!UUID.test(id)) return null;
+    if (!isUuid(id)) return null;
 
     const supabase = createSupabaseAdminClient();
     const { data } = await supabase

@@ -1,14 +1,13 @@
 import { cache } from "react";
 import { createSupabaseAdminClient } from "@/lib/supabase";
+import { isUuid } from "@/lib/uuid";
 import type { Device, Service } from "./types";
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Устройство по uuid из ссылки; null — нет такого. Устройство открывают без
 // входа, поэтому читаем секретным ключом. Кэш на запрос: страница и её
 // метаданные читают по разу.
 export const getDevice = cache(async (id: string): Promise<Device | null> => {
-  if (!UUID.test(id)) return null;
+  if (!isUuid(id)) return null;
 
   const { data } = await createSupabaseAdminClient()
     .from("devices")
