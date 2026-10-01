@@ -6,9 +6,8 @@ export function PagerIdle() {
       <p className="font-bold text-[26px] uppercase tracking-[0.06em]">
         Заданий нет
       </p>
-      <p className="max-w-xs text-[13px] text-device-dim">
-        Вызов или задача от ДСП придёт со звуком и вибрацией — коснитесь экрана,
-        чтобы включить звук сигнала.
+      <p className="text-[12px] text-device-dim uppercase">
+        Коснитесь экрана — включить звук
       </p>
     </section>
   );

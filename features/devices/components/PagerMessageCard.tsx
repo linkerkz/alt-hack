@@ -38,9 +38,8 @@ export function PagerMessageCard({ deviceId, message, time }: Props) {
         {message.text}
       </p>
       {isCall && status === "accepted" && (
-        <p className="text-[13px] text-device-dim">
-          Камера следит за стрелкой: как только предмет уберут, вызов закроется
-          сам.
+        <p className="text-[12px] text-device-dim uppercase">
+          Уберёте предмет — камера закроет вызов сама
         </p>
       )}
       <div className="grid gap-2">
@@ -63,7 +62,7 @@ export function PagerMessageCard({ deviceId, message, time }: Props) {
               disabled={isPending}
               onClick={() => answer("escalated")}
             >
-              ■ Серьёзная проблема — нужен ремонт
+              ■ Нужен ремонт
             </DeviceButton>
           </>
         )}
