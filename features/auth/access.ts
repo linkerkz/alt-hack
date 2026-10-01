@@ -37,6 +37,14 @@ export function ownConsolePath(user: CurrentUser) {
   return null;
 }
 
+// Dashboard своей станции; null — у роли нет своей станции (ДНЦ выбирает на карте).
+export function ownDashboardPath(user: CurrentUser) {
+  if (STATION_ROLES.includes(user.role) && user.stationId != null) {
+    return `/dashboard/${user.stationId}`;
+  }
+  return null;
+}
+
 // Зона ответственности: круг ДНЦ или своя станция; null — зоны у роли нет.
 export function scopeOf(user: CurrentUser): Scope | null {
   if (user.role === "dnc" && user.dispatchAreaId != null) {

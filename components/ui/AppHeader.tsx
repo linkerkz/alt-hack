@@ -4,16 +4,17 @@ import { LiveClock } from "./LiveClock";
 
 type Props = {
   current: Section;
-  // Пульт своей станции; null — у пользователя её нет, пункт неактивен.
+  // Пульт и dashboard своей станции; null — у роли нет своей станции (ДНЦ выбирает на карте).
   stationHref: string | null;
+  dashboardHref: string | null;
   // Блок пользователя справа: его собирает страница, шапка о входе не знает.
   account?: ReactNode;
 };
 
-type Section = "network" | "station";
+type Section = "network" | "station" | "analytics";
 
 type NavItem = {
-  id: Section | "analytics" | "scenarios" | "settings";
+  id: Section | "scenarios" | "settings";
   label: string;
   href?: string;
   // Подсказка для неактивного пункта.
@@ -22,7 +23,10 @@ type NavItem = {
 
 // Пункты без href неактивны: ещё не реализованы или недоступны роли —
 // показываем их, чтобы было видно план продукта.
-function navItems(stationHref: string | null): NavItem[] {
+function navItems(
+  stationHref: string | null,
+  dashboardHref: string | null,
+): NavItem[] {
   return [
     { id: "network", label: "Карта сети", href: "/" },
     {
@@ -31,13 +35,23 @@ function navItems(stationHref: string | null): NavItem[] {
       href: stationHref ?? undefined,
       hint: "Откройте пульт из карточки станции на карте",
     },
-    { id: "analytics", label: "Эффективность" },
+    {
+      id: "analytics",
+      label: "Эффективность",
+      href: dashboardHref ?? undefined,
+      hint: "Откройте dashboard из карточки станции на карте",
+    },
     { id: "scenarios", label: "Сценарии сбоев" },
     { id: "settings", label: "Настройки индекса" },
   ];
 }
 
-export function AppHeader({ current, stationHref, account }: Props) {
+export function AppHeader({
+  current,
+  stationHref,
+  dashboardHref,
+  account,
+}: Props) {
   return (
     <header className="flex h-14 shrink-0 items-center gap-6 border-line border-b bg-paper px-5">
       <Link
@@ -49,7 +63,7 @@ export function AppHeader({ current, stationHref, account }: Props) {
       </Link>
 
       <nav className="flex h-full items-stretch gap-1">
-        {navItems(stationHref).map((item) => (
+        {navItems(stationHref, dashboardHref).map((item) => (
           <NavLink key={item.id} item={item} isCurrent={item.id === current} />
         ))}
       </nav>

@@ -7,6 +7,7 @@ import {
   canOpenStation,
   homePath,
   ownConsolePath,
+  ownDashboardPath,
 } from "@/features/auth/access";
 import { AccountMenu } from "@/features/auth/components/AccountMenu";
 import { requireUser } from "@/features/auth/queries";
@@ -36,6 +37,7 @@ export default async function StationPage({
     <AppHeader
       current="station"
       stationHref={ownConsolePath(user)}
+      dashboardHref={ownDashboardPath(user)}
       account={<AccountMenu user={user} />}
     />
   );

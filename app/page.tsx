@@ -5,6 +5,7 @@ import {
   canOpenStation,
   homePath,
   ownConsolePath,
+  ownDashboardPath,
   scopeOf,
 } from "@/features/auth/access";
 import { AccountMenu } from "@/features/auth/components/AccountMenu";
@@ -29,6 +30,7 @@ export default async function ZoneMapPage() {
       <AppHeader
         current="network"
         stationHref={ownConsolePath(user)}
+        dashboardHref={ownDashboardPath(user)}
         account={<AccountMenu user={user} />}
       />
       <ZoneMapView

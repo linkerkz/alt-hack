@@ -67,18 +67,29 @@ export function StationPreview({
         <IncidentList incidents={station.incidents} />
       </div>
 
-      <footer className="border-line border-t p-4">
+      <footer className="space-y-2 border-line border-t p-4">
         {canOpenConsole ? (
-          <ButtonLink
-            href={`/stations/${station.id}`}
-            // Без предзагрузки: иначе каждый выбор станции дёргает сервер и Supabase.
-            prefetch={false}
-            variant="primary"
-            className="w-full"
-          >
-            Открыть пульт станции
-            <span aria-hidden>→</span>
-          </ButtonLink>
+          <>
+            <ButtonLink
+              href={`/stations/${station.id}`}
+              // Без предзагрузки: иначе каждый выбор станции дёргает сервер и Supabase.
+              prefetch={false}
+              variant="primary"
+              className="w-full"
+            >
+              Открыть пульт станции
+              <span aria-hidden>→</span>
+            </ButtonLink>
+            <ButtonLink
+              href={`/dashboard/${station.id}`}
+              prefetch={false}
+              variant="secondary"
+              className="w-full"
+            >
+              Открыть dashboard
+              <span aria-hidden>→</span>
+            </ButtonLink>
+          </>
         ) : (
           <p className="text-center text-[12px] text-muted">
             Пульт этой станции вне вашей зоны ответственности
