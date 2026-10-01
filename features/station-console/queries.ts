@@ -1,4 +1,5 @@
 import { decisionChain } from "./chain";
+import { dspPanel } from "./dsp";
 import { stationEfficiency } from "./efficiency";
 import { incidentCard } from "./incident";
 import { STEP_MINUTE, STEP_NAME } from "./mock";
@@ -23,6 +24,7 @@ export async function getStationConsole(
     incident: incidentCard(state, neighbors),
     comparison: optionComparison(state, neighbors),
     chain: decisionChain(state, neighbors),
+    dsp: dspPanel(state, neighbors),
   };
 }
 
