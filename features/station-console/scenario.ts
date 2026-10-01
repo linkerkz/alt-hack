@@ -4,7 +4,10 @@ import type { Command, Live, LiveIncident, LiveWorkOrder } from "./types";
 // Шаг сценария из того, что лежит в базе: статус инцидента, решение по нему
 // и ход наряда. Закрыт без решения (ложная тревога или путейцы убрали
 // предмет) — снова штатная работа.
-export function stepOf({ incident, workOrder }: Live) {
+export function stepOf({
+  incident,
+  workOrder,
+}: Pick<Live, "incident" | "workOrder">) {
   if (incident == null) return STEP.normal;
 
   switch (incident.status) {

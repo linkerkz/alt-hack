@@ -1,4 +1,5 @@
 import { toMinutes } from "@/lib/clock";
+import { indexStatus } from "@/lib/efficiencyIndex";
 import {
   activeOption,
   forecastFor,
@@ -10,7 +11,6 @@ import { FAULT, STEP, STEP_MINUTE } from "./mock";
 import {
   clockAt,
   formatNumber,
-  indexStatus,
   MAX_SCORE,
   METRICS,
   scoreStatus,
@@ -31,14 +31,18 @@ export function scoreBaseline(source: PlanSource) {
   return evaluatePlan(forecastFor(source, null), source.layout, toMinutes(now));
 }
 
+// Оценка действующего плана; null — исходный план, сбоя нет.
+export function scoreActive(source: PlanSource, option: OptionId | null) {
+  return option == null ? scoreBaseline(source) : scorePlan(source, option);
+}
+
 // Индекс эффективности станции на шаге сценария: до сбоя — исходный план,
 // до решения — «ничего не менять», после — принятый вариант.
 export function stationEfficiency(state: ConsoleState, source: PlanSource) {
   const { step } = state;
   const option = activeOption(step, state.option);
   const baseline = scoreBaseline(source);
-  const { values, scores, index } =
-    option == null ? baseline : scorePlan(source, option);
+  const { values, scores, index } = scoreActive(source, option);
   const metrics = METRICS.map((metric, i) => ({
     label: metric.label,
     value: formatNumber(values[i]) + metric.unit,

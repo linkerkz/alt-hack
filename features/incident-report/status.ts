@@ -1,4 +1,5 @@
 import type { Tone } from "@/components/ui/tone";
+import { INDEX_THRESHOLDS } from "@/lib/efficiencyIndex";
 import type { ReportState } from "./types";
 
 export const REPORT_STATE_LABEL: Record<ReportState, string> = {
@@ -6,9 +7,12 @@ export const REPORT_STATE_LABEL: Record<ReportState, string> = {
   final: "сформирован автоматически",
 };
 
-// Пороги индекса эффективности — те же, что в features/station-dashboard/status.ts:
-// ниже warning — «Внимание», ниже critical — «Критично».
-export const STATUS_THRESHOLDS = { warning: 75, critical: 55 };
+// Границы полос состояния на графике: ниже warning — «Внимание», ниже
+// critical — «Критично». Пороги общие — lib/efficiencyIndex.ts.
+export const STATUS_THRESHOLDS = {
+  warning: INDEX_THRESHOLDS.normal,
+  critical: INDEX_THRESHOLDS.warning,
+};
 
 export const STATUS_LABEL: Record<Tone, string> = {
   normal: "Норма",
