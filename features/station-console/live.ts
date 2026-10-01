@@ -20,11 +20,14 @@ import type {
 const FEED_LIMIT = 40;
 
 // Ход сценария станции из базы: последний инцидент, его наряд и хронология.
-// Кэш на запрос: страница и действие читают по разу.
+// Кэш на запрос: страница и действие читают по разу. Хронология читается
+// параллельно с инцидентом, наряд — следом за ним.
 export const getLive = cache(async (stationId: string): Promise<Live> => {
-  const incident = await lastIncident(stationId);
+  const [incident, events] = await Promise.all([
+    lastIncident(stationId),
+    stationEvents(stationId),
+  ]);
   const workOrder = incident == null ? null : await incidentWorkOrder(incident);
-  const events = await stationEvents(stationId);
 
   return { incident, workOrder, events };
 });
