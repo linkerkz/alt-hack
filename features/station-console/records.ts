@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { OBSTRUCTION, REPAIR } from "./fault";
-import { type JournalEntry, simAt } from "./journal";
+import type { JournalEntry } from "./journal";
 import type { LiveIncident } from "./types";
 import type { WorkPlan } from "./workPlan";
 
@@ -41,17 +41,15 @@ export async function openIncident(stationId: string, sighting: Sighting) {
   if (error != null) throw error;
 
   const entries: JournalEntry[] = [
-    { minute: 8, actor: "iot", text: OBSTRUCTION.signal, level: "warning" },
+    { actor: "iot", text: OBSTRUCTION.signal, level: "warning" },
   ];
   if (sighting.analysis != null) {
     entries.push({
-      minute: 8,
       actor: "system",
       text: `ИИ: ${sighting.analysis}`,
     });
   }
   entries.push({
-    minute: 8,
     actor: "system",
     text: `Создан инцидент ${data.code} «подозрение». Маршруты через С3 закрыты`,
     level: "warning",
@@ -134,7 +132,7 @@ export async function log(
   const rows = entries.map((entry) => ({
     station_id: stationId,
     incident_id: incidentId,
-    at: simAt(entry.minute),
+    at: now(),
     actor: entry.actor,
     text: entry.text,
     level: entry.level ?? null,

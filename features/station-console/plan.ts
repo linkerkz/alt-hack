@@ -1,14 +1,18 @@
-import { toClock, toMinutes } from "@/lib/clock";
-import { activeOption, forecastFor, type PlanSource } from "./activePlan";
+import { toClock } from "@/lib/clock";
+import {
+  activeOption,
+  faultClosure,
+  forecastFor,
+  type PlanSource,
+} from "./activePlan";
 import type { Run, Span } from "./forecast";
-import { FAULT, OPTION_CHANGES, SHUNTING, STEP } from "./mock";
+import { FAULT, OPTION_MOVES, STEP } from "./mock";
 import { isFocusAvailable } from "./schema";
 import type { ConsoleState, OptionId } from "./types";
 
 // План занятости путей (диаграмма Ганта) на окне 45 минут по прогнозу
 // действующего плана: до решения поезда, которым мешает сбой, — конфликты,
-// после — нитки принятого варианта. Окно сценария — 14:00–14:45, живого
-// плана — от четверти часа назад.
+// после — нитки принятого варианта.
 
 export type PlanBarKind =
   | "fact"
@@ -19,8 +23,7 @@ export type PlanBarKind =
   | "closed";
 
 const WINDOW_MINUTES = 45;
-const SCENARIO_FROM = toMinutes("14:00");
-// Сколько прошлого видно в живом плане; начало окна — кратно шагу шкалы.
+// Сколько прошлого видно на плане; начало окна — кратно шагу шкалы.
 const PAST_MINUTES = 15;
 const TICK_STEP = 5;
 const TICK_MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40];
@@ -100,26 +103,16 @@ function barsAt(state: ConsoleState, source: PlanSource) {
   if (step !== STEP.normal) {
     const kind = step >= STEP.restored ? "fact" : "closed";
     for (const track of closedTracks(source)) {
-      const label = "С3 закрыта";
-      bars.push({ track, ...span(FAULT.from, FAULT.until), label, kind });
+      const label = `${FAULT.switchId} закрыта`;
+      bars.push({ track, ...faultClosure(source).span, label, kind });
     }
-  }
-  // Манёвры ТЭМ2 — часть сценария: в живом плане их нет.
-  if (!source.simulated) {
-    bars.push({
-      track: SHUNTING.track,
-      ...span(SHUNTING.from, SHUNTING.until),
-      label: "Манёвры ТЭМ2",
-      kind: "plan",
-    });
   }
   return bars;
 }
 
-function windowOf({ now, simulated }: PlanSource): Span {
-  const from = simulated
-    ? Math.floor((now - PAST_MINUTES) / TICK_STEP) * TICK_STEP
-    : SCENARIO_FROM;
+// Окно идёт за часами: начало — четверть часа назад, кратно шагу шкалы.
+function windowOf({ now }: PlanSource): Span {
+  const from = Math.floor((now - PAST_MINUTES) / TICK_STEP) * TICK_STEP;
   return { from, to: from + WINDOW_MINUTES };
 }
 
@@ -131,7 +124,7 @@ function barOf(run: Run, at: Run["planned"], kind: PlanBarKind) {
 }
 
 function changedTrains(option: OptionId | null) {
-  return option == null ? [] : OPTION_CHANGES[option].map((c) => c.train);
+  return option == null ? [] : OPTION_MOVES[option].map((move) => move.train);
 }
 
 // Пути, маршруты на которые идут через закрытую стрелку.
@@ -140,10 +133,6 @@ function closedTracks({ layout }: PlanSource) {
     r.switches.includes(FAULT.switchId),
   );
   return [...new Set(routes.map((route) => route.track))];
-}
-
-function span(from: string, until: string) {
-  return { from: toMinutes(from), to: toMinutes(until) };
 }
 
 type Bar = {

@@ -1,5 +1,7 @@
+import { toClock } from "@/lib/clock";
 import { askText } from "@/lib/openrouter";
-import { replanOptions } from "./mock";
+import { faultClosure, type PlanSource } from "./activePlan";
+import { replanOptions } from "./replan";
 import type { ChosenOption } from "./types";
 
 // План работ ремонтной бригаде от ИИ: модель знает сбой по сценарию демо
@@ -17,6 +19,9 @@ export type WorkPlan = {
 
 // Имена соседних станций модели не нужны: окно работ от них не зависит.
 const NEIGHBORS = { odd: "соседней", even: "соседней" };
+
+// Ремонт заканчивают раньше возврата: ДСП ещё проверяет стрелку с пульта.
+const CHECK_MINUTES = 2;
 
 // План составляют, пока ДСП ждёт на пульте. Текстом модель отвечает за
 // 15–20 с; запас — на случай, если основная занята и отвечает запасная.
@@ -56,17 +61,21 @@ const SCHEMA = {
 };
 
 // План работ; null — ИИ не подключён, не успел или ответил не по формату.
-export async function generateWorkPlan(option: ChosenOption) {
+export async function generateWorkPlan(
+  option: ChosenOption,
+  source: PlanSource,
+) {
   const answer = await askText({
-    prompt: promptFor(option),
+    prompt: promptFor(option, source),
     schema: SCHEMA,
     timeoutMs: TIMEOUT_MS,
   });
   return parsePlan(answer);
 }
 
-function promptFor(option: ChosenOption) {
-  const chosen = replanOptions(NEIGHBORS)[option];
+function promptFor(option: ChosenOption, source: PlanSource) {
+  const chosen = replanOptions(source, NEIGHBORS)[option];
+  const restoreAt = faultClosure(source).span.to;
   const changes = chosen.changes.map(
     (change) => `- поезд ${change.train}: ${change.text}`,
   );
@@ -74,9 +83,9 @@ function promptFor(option: ChosenOption) {
     "Ты — инженер дистанции пути. Составь план работ для ремонтной бригады по стрелочному переводу С3 в нечётной горловине станции.",
     "Камера в горловине заметила пластиковую бутылку у остряка стрелки С3: перевод не доходил до конца.",
     "Путейцы убрали бутылку и доложили: остряк повреждён, нужен ремонт. Маршруты через С3 на пути 3 и 5 закрыты.",
-    `Сейчас 14:11. ДСЦС принял «${chosen.name}», движение идёт в обход С3:`,
+    `Сейчас ${toClock(source.now)}. ДСЦС принял «${chosen.name}», движение идёт в обход С3:`,
     ...changes,
-    "Ремонт нужно закончить к 14:27, чтобы к 14:29 вернуть С3 в эксплуатацию и пути 3 и 5 — к исходному плану.",
+    `Ремонт нужно закончить к ${toClock(restoreAt - CHECK_MINUTES)}, чтобы к ${toClock(restoreAt)} вернуть С3 в эксплуатацию и пути 3 и 5 — к исходному плану.`,
     "Пиши по-русски, коротко, языком наряда. Чеклист — 5–8 пунктов, каждый — одно действие до 100 знаков, без нумерации: от разрешения ДСП и записи в журнал ДУ-46 до проверки перевода с пульта и доклада ДСП.",
   ].join("\n");
 }

@@ -1,5 +1,6 @@
 import { REPAIR } from "./fault";
-import { replanOptions, STEP } from "./mock";
+import { STEP } from "./mock";
+import { type OptionChange, optionChanges, replanOptions } from "./replan";
 import { routeDone } from "./routing";
 import type {
   Command,
@@ -74,7 +75,7 @@ function draftOf(
   live: Live,
   neighbors: Neighbors,
 ): Draft | null {
-  const { incident, workOrder } = live;
+  const { incident } = live;
   switch (state.step) {
     case STEP.suspected:
       return {
@@ -110,17 +111,17 @@ function draftOf(
     case STEP.choosing:
       return incident?.dncRejected ? rejected(incident) : choosing(state);
     case STEP.approval:
-      return approval(neighbors);
+      return approval(live, neighbors);
     case STEP.decided:
     case STEP.repairing:
     case STEP.repaired:
-      return afterDecision(state, workOrder);
+      return afterDecision(state, live);
     case STEP.restored:
       return {
         owner: "dscs",
         what: "закрытие инцидента",
         title: "С3 в работе — закройте инцидент",
-        text: "Пути 3 и 5 снова доступны. Система предлагает вернуть остаток плана к исходному: 2236 на путь 2 в 14:26 уже по графику.",
+        text: "Пути 3 и 5 снова доступны. Система предлагает вернуть остаток плана к исходному.",
         buttons: [
           {
             label: "Вернуться к исходному плану",
@@ -174,8 +175,8 @@ function rejected({ dncComment }: LiveIncident): Draft {
   };
 }
 
-function approval(neighbors: Neighbors): Draft {
-  const { changes } = replanOptions(neighbors).B;
+function approval(live: Live, neighbors: Neighbors): Draft {
+  const { changes } = replanOptions(live, neighbors).B;
   return {
     owner: "dnc",
     what: "согласование варианта Б",
@@ -187,11 +188,9 @@ function approval(neighbors: Neighbors): Draft {
 
 // Решение принято: у ДСП приём поездов и план работ, затем работает
 // бригада, затем ДСП возвращает стрелку.
-function afterDecision(
-  state: ConsoleState,
-  workOrder: LiveWorkOrder | null,
-): Draft {
-  const items = dspItems(state, workOrder);
+function afterDecision(state: ConsoleState, live: Live): Draft {
+  const { workOrder } = live;
+  const items = dspItems(state, live);
   if (state.step === STEP.repaired) {
     return {
       owner: "dsp",
@@ -224,12 +223,12 @@ function afterDecision(
   };
 }
 
-function dspItems(state: ConsoleState, workOrder: LiveWorkOrder | null) {
+function dspItems(state: ConsoleState, { workOrder, ...live }: Live) {
   const routed = routeDone(state);
-  const track2001 = state.option === "B" ? "путь 4 в 14:27" : "путь 1 в 14:32";
+  const changes = optionChanges(live, state.option);
   const items: TurnItem[] = [
     {
-      text: "Принять 101 на путь 1",
+      text: `Принять 101 на ${trackText(changes, "101")}`,
       result: routed.r101 ? "маршрут задан, машинист уведомлён" : null,
       action: {
         label: "Задать маршрут",
@@ -237,7 +236,7 @@ function dspItems(state: ConsoleState, workOrder: LiveWorkOrder | null) {
       },
     },
     {
-      text: `Принять 2001 на ${track2001}`,
+      text: `Принять 2001 на ${trackText(changes, "2001")}`,
       result: routed.r2001 ? "подтверждено, машинист уведомлён" : null,
       action: {
         label: "Подтвердить",
@@ -256,6 +255,14 @@ function dspItems(state: ConsoleState, workOrder: LiveWorkOrder | null) {
   return items.map((item) =>
     item.result == null ? item : { ...item, action: null },
   );
+}
+
+// «путь 4 в 14:27» — куда и когда вариант принимает поезд.
+function trackText(changes: OptionChange[], train: string) {
+  const change = changes.find((item) => item.train === train);
+  return change == null
+    ? "новый путь"
+    : `путь ${change.track} в ${change.arrival}`;
 }
 
 // «чеклист 5 из 5» и комментарий рабочего, если он его оставил.

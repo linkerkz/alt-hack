@@ -1,10 +1,12 @@
 import { indexStatus } from "@/lib/efficiencyIndex";
-import type { PlanSource } from "./activePlan";
+import { anchorOf, forecastFor, type PlanSource } from "./activePlan";
 import { scoreBaseline } from "./efficiency";
+import type { Span } from "./forecast";
 import { lastIncidents } from "./live";
-import { APPROVAL, approvalTrains } from "./mock";
+import { WINDOW_MINUTES } from "./metrics";
 import { scoredOptions } from "./options";
 import { planSourceOf } from "./planSource";
+import { type OptionChange, optionChanges } from "./replan";
 import { stepOf } from "./scenario";
 import type { LiveIncident, Neighbors, Status } from "./types";
 
@@ -30,17 +32,24 @@ export type ApprovalRequest = {
 // pending — ждёт ответа ДНЦ, rejected — отклонён, approved — согласован.
 export type ApprovalState = "pending" | "rejected" | "approved";
 
-export type ApprovalTrain = ReturnType<typeof approvalTrains>[number];
+// Поезд, которого касается удержание: задержка с удержанием и без него.
+export type ApprovalTrain = {
+  train: string;
+  kind: string;
+  what: string;
+  withHold: number;
+  without: number;
+};
+
+// Сколько поездов «без изменений» перечисляем в карточке.
+const UNCHANGED_LIMIT = 3;
 
 type ApprovalStation = { id: string; name: string; neighbors: Neighbors };
 
 const VERDICT: Record<ApprovalState, ApprovalRequest["verdict"]> = {
   pending: { label: "Запрос на согласование", tone: "warning" },
-  rejected: { label: `Отклонено в ${APPROVAL.requestedAt}`, tone: "critical" },
-  approved: {
-    label: `Согласовано ДНЦ · ${APPROVAL.approvedAt}`,
-    tone: "normal",
-  },
+  rejected: { label: "Отклонено", tone: "critical" },
+  approved: { label: "Согласовано ДНЦ", tone: "normal" },
 };
 
 // Запросы станций круга по их последним инцидентам; без запроса — пропускаем.
@@ -56,7 +65,7 @@ export async function getApprovalRequests(stations: ApprovalStation[]) {
   return Promise.all(
     pending.map(async ({ station, incident, state }) => {
       const step = stepOf({ incident, workOrder: null });
-      const source = await planSourceOf(station.id, step);
+      const source = await planSourceOf(station.id, step, incident);
       return toRequest(station, incident, state, source);
     }),
   );
@@ -82,41 +91,89 @@ function toRequest(
   source: PlanSource,
 ): ApprovalRequest {
   const { odd } = neighbors;
-  const options = scoredOptions(source, neighbors);
+  const { options } = scoredOptions(source, neighbors);
   const before = scoreBaseline(source).index;
+  const held = optionChanges(source, "B").find((change) => change.hold > 0);
 
   return {
     stationId: id,
     state,
     verdict: VERDICT[state],
     code: incident.code,
-    from: `ДСЦС ст. ${name} · ${APPROVAL.requestedAt}`,
-    title: titleOf(state, odd),
-    reason: `На ст. ${name} повреждена стрелка С3 (${incident.code}). После удержания 2001 принимается на путь 4 в 14:27.`,
-    trains: approvalTrains(neighbors),
-    unchanged: APPROVAL.unchanged,
+    from: `ДСЦС ст. ${name}`,
+    title: titleOf(state, odd, held),
+    reason: `На ст. ${name} повреждена стрелка С3 (${incident.code}).${held == null ? "" : ` После удержания ${held.train} принимается на путь ${held.track} в ${held.arrival}.`}`,
+    trains: held == null ? [] : [heldTrain(source, held, odd)],
+    unchanged: unchangedOf(source, held),
     index: [
       indexItem("До сбоя", before),
       indexItem("Не менять", options.none.index),
       indexItem("С удержанием", options.B.index),
     ],
-    outcome: outcomeOf(state, name),
+    outcome: outcomeOf(state, name, held),
     comment: incident.dncComment,
   };
 }
 
-function titleOf(state: ApprovalState, odd: string) {
-  if (state === "pending")
-    return `Удержать грузовой 2001 на ст. ${odd} на 9 мин`;
-  if (state === "rejected") return `Удержание 2001 на ст. ${odd}, 9 мин`;
-  return `2001 удержан на ст. ${odd}`;
+function titleOf(
+  state: ApprovalState,
+  odd: string,
+  held: OptionChange | undefined,
+) {
+  const train = held?.train ?? "поезд";
+  const minutes = held == null ? "" : `, ${held.hold} мин`;
+  if (state === "pending") return `Удержать ${train} на ст. ${odd}${minutes}`;
+  if (state === "rejected") return `Удержание ${train} на ст. ${odd}${minutes}`;
+  return `${train} удержан на ст. ${odd}`;
 }
 
-function outcomeOf(state: ApprovalState, name: string) {
+function outcomeOf(
+  state: ApprovalState,
+  name: string,
+  held: OptionChange | undefined,
+) {
   if (state === "rejected") {
-    return `Станция выбирает другой вариант. Без удержания 2001 ждёт у входного ст. ${name}.`;
+    return `Станция выбирает другой вариант. Без удержания поезд ждёт у входного ст. ${name}.`;
   }
-  return `Отправление в 14:20, приём на путь 4 ст. ${name} в 14:27.`;
+  if (held == null) return "";
+  return `Приём ${held.train} на путь ${held.track} ст. ${name} в ${held.arrival}.`;
+}
+
+// Удержанный поезд: с удержанием ждёт у соседа, без — у входного у нас.
+function heldTrain(
+  source: PlanSource,
+  held: OptionChange,
+  odd: string,
+): ApprovalTrain {
+  const run = forecastFor(source, "none").find((r) => r.train === held.train);
+  const without = run == null ? 0 : delayOf(run);
+  return {
+    train: held.train,
+    kind: run?.kind === "passenger" ? "пасс." : "груз.",
+    what: `стоянка на ст. ${odd} ${held.hold} мин`,
+    withHold: held.hold,
+    without,
+  };
+}
+
+// Поезда окна решения, которых вариант Б не задерживает.
+function unchangedOf(source: PlanSource, held: OptionChange | undefined) {
+  const from = anchorOf(source);
+  const trains = forecastFor(source, "B")
+    .filter(
+      (run) =>
+        run.train !== held?.train &&
+        delayOf(run) === 0 &&
+        run.planned.from < from + WINDOW_MINUTES &&
+        run.planned.to > from,
+    )
+    .map((run) => run.train)
+    .slice(0, UNCHANGED_LIMIT);
+  return trains.length === 0 ? "" : `${trains.join(", ")} без изменений`;
+}
+
+function delayOf({ planned, forecast }: { planned: Span; forecast: Span }) {
+  return Math.max(0, forecast.from - planned.from, forecast.to - planned.to);
 }
 
 function indexItem(label: string, value: number) {

@@ -21,7 +21,7 @@ const FEED_LIMIT = 40;
 
 // Поля инцидента, из которых складывается ход сценария.
 export const INCIDENT_COLUMNS =
-  "id, code, station_id, status, option, route_tasks, dnc_rejected_at, dnc_comment, analysis";
+  "id, code, station_id, status, option, route_tasks, dnc_rejected_at, dnc_comment, analysis, detected_at";
 
 // Ход станции из базы: последний инцидент, его наряд, пейджер, план путей
 // с устройством станции и хронология. Кэш на запрос: страница и действие
@@ -34,7 +34,8 @@ export const getLive = cache(async (stationId: string): Promise<Live> => {
     stationEvents(stationId),
   ]);
   const workOrder = incident == null ? null : await incidentWorkOrder(incident);
-  const source = await planSourceOf(stationId, stepOf({ incident, workOrder }));
+  const step = stepOf({ incident, workOrder });
+  const source = await planSourceOf(stationId, step, incident);
 
   return { incident, workOrder, pager, events, ...source };
 });
@@ -110,6 +111,7 @@ export function toIncident(row: IncidentRow): LiveIncident {
     dncRejected: row.dnc_rejected_at != null,
     dncComment: row.dnc_comment,
     analysis: row.analysis,
+    detectedAt: row.detected_at,
   };
 }
 
@@ -151,6 +153,7 @@ export type IncidentRow = {
   dnc_rejected_at: string | null;
   dnc_comment: string | null;
   analysis: string | null;
+  detected_at: string;
 };
 
 type WorkOrderRow = {

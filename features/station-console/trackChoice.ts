@@ -39,10 +39,12 @@ export function chooseTrack(
     .toSorted((a, b) => rankOf(a.track, visit) - rankOf(b.track, visit));
 
   const free = candidates.find(
-    ({ track }) => freeFrom(track.number, busy) <= visit.arrival,
+    ({ track }) => blockedUntil(track.number, visit, busy) == null,
   );
   const earliest = candidates.toSorted(
-    (a, b) => freeFrom(a.track.number, busy) - freeFrom(b.track.number, busy),
+    (a, b) =>
+      (blockedUntil(a.track.number, visit, busy) ?? 0) -
+      (blockedUntil(b.track.number, visit, busy) ?? 0),
   )[0];
   return free ?? earliest ?? null;
 }
@@ -59,10 +61,17 @@ function rankOf(track: Track, { kind, passes }: Visit) {
   return isMain ? 1 : 0;
 }
 
-// Когда путь освободится с учётом времени на смену поезда.
-function freeFrom(track: number, busy: Occupancy[]) {
-  const ends = busy.filter((item) => item.track === track).map((i) => i.to);
-  return Math.max(-Infinity, ...ends) + GAP_MINUTES;
+// До какой минуты путь занят другими поездами во время стоянки этого;
+// null — свободен. Между поездами — время на смену.
+function blockedUntil(track: number, visit: Visit, busy: Occupancy[]) {
+  const overlapping = busy.filter(
+    (item) =>
+      item.track === track &&
+      item.from < visit.departure + GAP_MINUTES &&
+      visit.arrival < item.to + GAP_MINUTES,
+  );
+  if (overlapping.length === 0) return null;
+  return Math.max(...overlapping.map((item) => item.to)) + GAP_MINUTES;
 }
 
 function routeOf(layout: StationLayout, track: number, throat: Throat) {

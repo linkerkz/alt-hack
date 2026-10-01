@@ -1,4 +1,4 @@
-import { stationMinutes, toClock } from "@/lib/clock";
+import { stationMinutes, toClock, toMinutes } from "@/lib/clock";
 import { currentMinute, networkTrains } from "@/lib/simulation/network";
 import type { Train } from "@/lib/simulation/trains";
 import { createSupabaseClient } from "@/lib/supabase";
@@ -24,24 +24,44 @@ const BEFORE_START: Record<Train["kind"], number> = {
 };
 const AFTER_END: Record<Train["kind"], number> = { passenger: 20, freight: 40 };
 
-export async function simulatedPlan(stationId: string, layout: StationLayout) {
+// reserved — поезда, у которых путь уже назначен (сценарий сбоя): они
+// занимают пути первыми, поезда симуляции с теми же номерами не берём.
+export async function simulatedPlan(
+  stationId: string,
+  layout: StationLayout,
+  reserved: PlannedTrain[],
+) {
   const epochMinute = currentMinute();
   const now = stationMinutes(new Date(epochMinute * 60_000));
   const [trains, throats] = await Promise.all([
     networkTrains(epochMinute, AHEAD_MINUTES),
     throatsOf(stationId),
   ]);
+  const reservedNumbers = new Set(reserved.map((train) => train.train));
   const visits = trains
+    .filter((train) => !reservedNumbers.has(train.number))
     .flatMap((train) => visitOf(train, stationId, throats, now))
     .filter((visit) => isInWindow(visit, now))
     .toSorted((a, b) => a.arrival - b.arrival);
 
-  return { plan: assignTracks(visits, layout), now };
+  return {
+    plan: [...reserved, ...assignTracks(visits, layout, reserved)],
+    now,
+  };
 }
 
-// Пути назначаем по порядку прибытия: занятые раньше пришедшими не предлагаем.
-function assignTracks(visits: Visit[], layout: StationLayout) {
-  const busy: Occupancy[] = [];
+// Пути назначаем по порядку прибытия: занятые раньше пришедшими и
+// заранее назначенными не предлагаем.
+function assignTracks(
+  visits: Visit[],
+  layout: StationLayout,
+  reserved: PlannedTrain[],
+) {
+  const busy: Occupancy[] = reserved.map((train) => ({
+    track: train.track,
+    from: toMinutes(train.arrival),
+    to: toMinutes(train.departure),
+  }));
   return visits.flatMap((visit): PlannedTrain[] => {
     const choice = chooseTrack(visit, layout, busy);
     if (choice == null) return [];

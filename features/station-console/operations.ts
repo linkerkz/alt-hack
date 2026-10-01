@@ -1,5 +1,4 @@
 import { toClock, toMinutes } from "@/lib/clock";
-import { createSupabaseClient } from "@/lib/supabase";
 import type { PagerMessage, PlannedTrain } from "./types";
 
 // Ближайшие операции станции по плану путей: прибытия и отправления, по
@@ -22,31 +21,6 @@ const MIN_STOP_MINUTES = 2;
 
 // К отправлению грузовой собирают заранее: сцепка и опробование тормозов.
 const PREPARE_MINUTES = 15;
-
-// План путей станции: поезда, их пути и время. Читает вошедший диспетчер.
-export async function stationPlan(stationId: string) {
-  const supabase = await createSupabaseClient();
-  const { data } = await supabase
-    .from("track_plan")
-    .select(
-      "train_number, track, entry_route, exit_route, arrives_at, departs_at, trains(kind)",
-    )
-    .eq("station_id", stationId)
-    .order("arrives_at")
-    .overrideTypes<PlanRow[], { merge: false }>();
-
-  return (data ?? []).map(
-    (row): PlannedTrain => ({
-      train: row.train_number,
-      kind: row.trains?.kind ?? "freight",
-      track: row.track,
-      entryRoute: row.entry_route,
-      exitRoute: row.exit_route,
-      arrival: row.arrives_at.slice(0, 5),
-      departure: row.departs_at.slice(0, 5),
-    }),
-  );
-}
 
 // Операции от текущего времени станции «14:05», ближайшие сверху, со
 // статусом поручения: последнее сообщение пейджера по этой операции.
@@ -105,13 +79,3 @@ function departureOf({
       : `Подготовить ${train} к отправлению с пути ${track} в ${departure}: сцепить вагоны, опробовать тормоза к ${toClock(toMinutes(departure) - PREPARE_MINUTES)}`;
   return { id: `${train}-departure`, time: departure, train, text };
 }
-
-type PlanRow = {
-  train_number: string;
-  track: number;
-  entry_route: string;
-  exit_route: string;
-  arrives_at: string;
-  departs_at: string;
-  trains: { kind: PlannedTrain["kind"] } | null;
-};

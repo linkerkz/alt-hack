@@ -35,11 +35,11 @@ export type Live = {
   // считает индекс эффективности.
   plan: PlannedTrain[];
   layout: StationLayout;
-  // Время станции, минуты от полуночи: в сценарии — минута шага (14:05…),
-  // без сценария — реальные часы.
+  // Время станции — реальные часы, минуты от полуночи.
   now: number;
-  // План из симуляции поездов: сценария сбоя нет, пульт идёт по часам.
-  simulated: boolean;
+  // Обнаружение сбоя (t0), минуты от полуночи: от него идёт сценарий;
+  // null — сценария нет, план только из симуляции.
+  anchor: number | null;
   // Хронология станции, свежие сверху.
   events: JournalEvent[];
 };
@@ -56,6 +56,8 @@ export type LiveIncident = {
   dncComment: string | null;
   // Вывод ИИ по снимку; null — без анализа.
   analysis: string | null;
+  // Когда камера обнаружила сбой, ISO.
+  detectedAt: string;
 };
 
 // Совпадает с enum public.incident_status.
@@ -177,7 +179,7 @@ export type Status = "normal" | "warning" | "critical";
 // Соседние станции: нечётная горловина — от кого поезда идут к нам, чётная — к кому.
 export type Neighbors = { odd: string; even: string };
 
-// Событие ленты: время симуляции «14:08», текст и уровень. id — ключ строки:
+// Событие ленты: время станции «14:08», текст и уровень. id — ключ строки:
 // время и текст повторяются (камера дважды за минуту сообщила «свободно»).
 export type ScenarioEvent = {
   id: number | string;
@@ -186,14 +188,13 @@ export type ScenarioEvent = {
   level?: Status;
 };
 
-// Вариант перепланирования словами для диспетчера. Сами изменения плана —
-// PlanChange в OPTION_CHANGES; показатели считаются по ним.
+// Вариант перепланирования словами для диспетчера. Сами изменения плана
+// считает replan.ts; показатели — по ним.
 export type ReplanOption = {
   id: OptionId;
   name: string;
   dncApproval: string;
   changes: { train: string; text: string }[];
-  why: string;
 };
 
 // Изменение плана одного поезда: новый путь, маршруты и прибытие; стоянка та же.

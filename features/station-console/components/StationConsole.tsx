@@ -29,6 +29,7 @@ export function StationConsole(props: Props) {
       {showBanner && (
         <IncidentBanner
           code={incident.code}
+          detectedAt={incident.detectedAt}
           title={incident.fault.title}
           suggestion={incident.suggestion}
           tone={incident.tone}

@@ -1,3 +1,4 @@
+import { recommendedFor } from "./advice";
 import { STEP } from "./mock";
 import { stepOf } from "./scenario";
 import type { ChosenOption, ConsoleState, ConsoleTab, Live } from "./types";
@@ -17,7 +18,7 @@ export function parseConsoleState(
     // Принятый вариант — из базы; до решения ДСЦС смотрит любой.
     option:
       incident?.option ??
-      viewedOption(first(params.opt), incident?.dncRejected === true),
+      viewedOption(first(params.opt), incident?.dncRejected === true, live),
     tab: parseTab(first(params.tab), step),
     focus: first(params.focus) !== "off",
     panel: first(params.panel) !== "off",
@@ -34,13 +35,14 @@ export function consoleHref(state: ConsoleState, patch: Partial<ConsoleState>) {
   return `?${query}`;
 }
 
-// По умолчанию — рекомендованный Б, а если ДНЦ его отклонил — А.
+// По умолчанию — рекомендованный системой, а если ДНЦ отклонил Б — А.
 function viewedOption(
   value: string | undefined,
   dncRejected: boolean,
+  live: Live,
 ): ChosenOption {
   if (value === "A" || value === "B") return value;
-  return dncRejected ? "A" : "B";
+  return dncRejected ? "A" : recommendedFor(live);
 }
 
 // До инцидента вкладки инцидента нет; после — она открыта по умолчанию.

@@ -1,5 +1,6 @@
 import { REPAIR } from "./fault";
 import { STEP } from "./mock";
+import { type OptionChange, optionChanges } from "./replan";
 import { routeDone } from "./routing";
 import type {
   ConsoleState,
@@ -25,8 +26,9 @@ const PENDING = { status: "Ожидает", tone: "warning" } as const;
 export function participantsOf(
   state: ConsoleState,
   { odd }: Neighbors,
-  { incident, workOrder, pager }: Live,
+  live: Live,
 ) {
+  const { incident, workOrder, pager } = live;
   const { step, option } = state;
   const list: Participant[] = [];
   const call = pager.find((message) => message.incidentId === incident?.id);
@@ -49,11 +51,11 @@ export function participantsOf(
     list.push({
       who: "ДНЦ",
       what: "Согласование варианта Б",
-      ...(step === STEP.approval ? PENDING : done("Согласовано 14:11")),
+      ...(step === STEP.approval ? PENDING : done("Согласовано")),
     });
   }
   if (step >= STEP.decided) {
-    list.push(...trainParticipants(state, odd));
+    list.push(...trainParticipants(state, odd, optionChanges(live, option)));
   }
   if (step >= STEP.choosing) {
     list.push({
@@ -67,33 +69,47 @@ export function participantsOf(
 }
 
 // ДСП принимает поезда, машинисты подтверждают, когда приняты оба.
-function trainParticipants(state: ConsoleState, odd: string): Participant[] {
-  const isB = state.option === "B";
+function trainParticipants(
+  state: ConsoleState,
+  odd: string,
+  changes: OptionChange[],
+): Participant[] {
   const routed = routeDone(state);
   const acknowledged = routed.r101 && routed.r2001;
   const driver = acknowledged
     ? done("Подтвердил")
     : { status: "Уведомлён", tone: "warning" as const };
+  const to101 = changeOf(changes, "101");
+  const to2001 = changeOf(changes, "2001");
   return [
     {
       who: "ДСП",
-      what: "Приём 101 на путь 1",
+      what: `Приём 101 на путь ${to101?.track ?? "—"}`,
       ...(routed.r101 ? done("Маршрут задан") : PENDING),
     },
     {
       who: "ДСП",
-      what: isB
-        ? "Приём 2001 на путь 4 в 14:27"
-        : "Приём 2001 на путь 1 в 14:32",
+      what: `Приём 2001 на путь ${to2001?.track ?? "—"} в ${to2001?.arrival ?? "—"}`,
       ...(routed.r2001 ? done("Подтверждён") : PENDING),
     },
-    { who: "Машинист 101", what: "Приём на путь 1", ...driver },
+    {
+      who: "Машинист 101",
+      what: `Приём на путь ${to101?.track ?? "—"}`,
+      ...driver,
+    },
     {
       who: "Машинист 2001",
-      what: isB ? `Стоянка на ст. ${odd} ≈ 9 мин` : "Ожидание у входного Н",
+      what:
+        to2001 != null && to2001.hold > 0
+          ? `Стоянка на ст. ${odd} ≈ ${to2001.hold} мин`
+          : "Ожидание у входного Н",
       ...driver,
     },
   ];
+}
+
+function changeOf(changes: OptionChange[], train: string) {
+  return changes.find((change) => change.train === train) ?? null;
 }
 
 function done(status: string) {
