@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getStation } from "@/features/network-map/queries";
+import { TakeWorkButton } from "@/features/work-orders/components/TakeWorkButton";
 import { WorkChecklist } from "@/features/work-orders/components/WorkChecklist";
 import { WorkOrderSummary } from "@/features/work-orders/components/WorkOrderSummary";
 import { getWorkOrder } from "@/features/work-orders/queries";
-import { isOpen } from "@/features/work-orders/status";
+import { isTaken } from "@/features/work-orders/status";
 
 // Чеклист рабочего по QR из наряда. Открывается без входа: proxy пропускает
 // этот адрес, доступ даёт id наряда.
@@ -30,10 +31,11 @@ export default async function WorkOrderPage({
         order={order}
         stationName={station?.name ?? order.stationId}
       />
+      {order.status === "issued" && <TakeWorkButton orderId={order.id} />}
       <WorkChecklist
         orderId={order.id}
         items={order.items}
-        isOpen={isOpen(order.status)}
+        isOpen={isTaken(order.status)}
       />
     </main>
   );
