@@ -72,8 +72,6 @@ export function StationPreview({
           <>
             <ButtonLink
               href={`/stations/${station.id}`}
-              // Без предзагрузки: иначе каждый выбор станции дёргает сервер и Supabase.
-              prefetch={false}
               variant="primary"
               className="w-full"
             >
@@ -82,7 +80,6 @@ export function StationPreview({
             </ButtonLink>
             <ButtonLink
               href={`/dashboard/${station.id}`}
-              prefetch={false}
               variant="secondary"
               className="w-full"
             >

@@ -18,6 +18,8 @@ export type PlanProgress = {
   inProgress: number;
   problems: number;
   total: number;
+  // Доля выполненных операций, % — её показывают и сводка, и карточка плана.
+  percent: number;
 };
 
 export type OperationStatus =

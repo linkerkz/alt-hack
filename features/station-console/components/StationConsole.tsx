@@ -1,9 +1,9 @@
+import { LiveRefresh } from "@/components/ui/LiveRefresh";
 import type { StationConsoleData } from "../queries";
 import type { ConsoleRole, ConsoleState, Neighbors } from "../types";
 import { ConsoleBar } from "./ConsoleBar";
 import { EfficiencySummary } from "./EfficiencySummary";
 import { IncidentBanner } from "./IncidentBanner";
-import { LiveRefresh } from "./LiveRefresh";
 import { ReturnToServiceDialog } from "./ReturnToServiceDialog";
 import { SidePanel } from "./SidePanel";
 import { StationSchema } from "./StationSchema";
@@ -40,6 +40,7 @@ export function StationConsole(props: Props) {
       {showBanner && (
         <IncidentBanner
           code={incident.code}
+          title={incident.detection.title}
           suggestion={incident.suggestion}
           state={state}
         />
@@ -68,6 +69,7 @@ export function StationConsole(props: Props) {
           stationId={data.stationId}
           state={state}
           workOrder={data.workOrder}
+          crew={data.incident.detection.crew}
         />
       )}
       <LiveRefresh />

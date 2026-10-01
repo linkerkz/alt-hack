@@ -6,12 +6,9 @@ import { getStation } from "@/features/network-map/queries";
 import { PrintButton } from "@/features/work-orders/components/PrintButton";
 import { WorkOrderSheet } from "@/features/work-orders/components/WorkOrderSheet";
 import { getWorkOrder } from "@/features/work-orders/queries";
+import { SITE_URL } from "@/lib/site";
 
 // Печатный наряд для сотрудников станции. Заголовок вкладки станет именем PDF.
-
-// QR всегда ведёт на деплой: телефон рабочего откроет его откуда угодно,
-// даже если наряд напечатали с локальной машины.
-const SITE_URL = "https://alt-hack.vercel.app";
 
 export async function generateMetadata({
   params,
@@ -25,9 +22,8 @@ export async function generateMetadata({
 export default async function WorkOrderPrintPage({
   params,
 }: PageProps<"/work-orders/[id]/print">) {
-  const user = await requireUser();
   const { id } = await params;
-  const order = await getWorkOrder(id);
+  const [user, order] = await Promise.all([requireUser(), getWorkOrder(id)]);
   if (order == null) notFound();
   const station = await getStation(order.stationId);
   if (station == null) notFound();

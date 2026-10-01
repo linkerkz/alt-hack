@@ -5,8 +5,7 @@ import { Metric } from "@/components/ui/Metric";
 import type { PlanProgress } from "../types";
 
 export function PlanProgressCard({ progress }: { progress: PlanProgress }) {
-  const { completed, inProgress, problems, total } = progress;
-  const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
+  const { completed, inProgress, problems, total, percent } = progress;
 
   return (
     <Card className="space-y-3 p-5">

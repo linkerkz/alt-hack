@@ -12,7 +12,17 @@ export const env = {
     "SUPABASE_SECRET_KEY",
     process.env.SUPABASE_SECRET_KEY,
   ),
+  // ИИ по снимку камеры. Необязателен: без ключа камера работает без анализа,
+  // поэтому старт приложения от него не зависит.
+  openRouterApiKey: optional(process.env.OPENROUTER_API_KEY),
+  // Vision-модель OpenRouter с поддержкой JSON-схемы.
+  openRouterModel:
+    optional(process.env.OPENROUTER_MODEL) ?? "google/gemini-2.5-flash",
 };
+
+function optional(value: string | undefined) {
+  return value == null || value === "" ? null : value;
+}
 
 function required(name: string, value: string | undefined) {
   if (value == null || value === "") {

@@ -1,4 +1,5 @@
 import type { ComponentProps } from "react";
+import { FIREFOX_NO_RESTORE } from "./noRestore";
 
 type Props = ComponentProps<"button"> & {
   variant?: ButtonVariant;
@@ -20,6 +21,7 @@ export function Button({
   return (
     <button
       type={type}
+      {...FIREFOX_NO_RESTORE}
       className={`${buttonClass(variant, size)} ${className}`}
       {...props}
     />

@@ -1,8 +1,5 @@
 import { cache } from "react";
-import {
-  createSupabaseAdminClient,
-  createSupabaseClient,
-} from "@/lib/supabase";
+import { createSupabaseClient, supabaseAdmin } from "@/lib/supabase";
 import { simClock } from "./journal";
 import type {
   ChosenOption,
@@ -20,11 +17,14 @@ import type {
 const FEED_LIMIT = 40;
 
 // Ход сценария станции из базы: последний инцидент, его наряд и хронология.
-// Кэш на запрос: страница и действие читают по разу.
+// Кэш на запрос: страница и действие читают по разу. Хронология читается
+// параллельно с инцидентом, наряд — следом за ним.
 export const getLive = cache(async (stationId: string): Promise<Live> => {
-  const incident = await lastIncident(stationId);
+  const [incident, events] = await Promise.all([
+    lastIncident(stationId),
+    stationEvents(stationId),
+  ]);
   const workOrder = incident == null ? null : await incidentWorkOrder(incident);
-  const events = await stationEvents(stationId);
 
   return { incident, workOrder, events };
 });
@@ -33,7 +33,7 @@ async function lastIncident(stationId: string) {
   const supabase = await createSupabaseClient();
   const { data } = await supabase
     .from("incidents")
-    .select("id, code, status, option, route_tasks")
+    .select("id, code, status, option, route_tasks, device_id, analysis")
     .eq("station_id", stationId)
     .order("detected_at", { ascending: false })
     .limit(1)
@@ -44,7 +44,7 @@ async function lastIncident(stationId: string) {
 
 // Наряды закрыты RLS: их читает сервер секретным ключом, как и чеклист по QR.
 async function incidentWorkOrder({ id }: LiveIncident) {
-  const supabase = createSupabaseAdminClient();
+  const supabase = supabaseAdmin();
   const { data } = await supabase
     .from("work_orders")
     .select(
@@ -78,6 +78,8 @@ function toIncident(row: IncidentRow): LiveIncident {
     status: row.status,
     option: row.option,
     routeTasks: row.route_tasks.filter(isRouteTask),
+    detection: row.device_id == null ? "sensor" : "camera",
+    analysis: row.analysis,
   };
 }
 
@@ -114,6 +116,8 @@ type IncidentRow = {
   status: IncidentStatus;
   option: ChosenOption | null;
   route_tasks: string[];
+  device_id: string | null;
+  analysis: string | null;
 };
 
 type WorkOrderRow = {
