@@ -8,10 +8,12 @@ import {
 } from "@/features/auth/access";
 import { AccountMenu } from "@/features/auth/components/AccountMenu";
 import { requireUser } from "@/features/auth/queries";
+import { incidentReportPath } from "@/features/incident-report/paths";
 import { getStation } from "@/features/network-map/queries";
 import { AttentionList } from "@/features/station-dashboard/components/AttentionList";
 import { EfficiencyHistoryChart } from "@/features/station-dashboard/components/EfficiencyHistoryChart";
 import { EfficiencyPanel } from "@/features/station-dashboard/components/EfficiencyPanel";
+import { IncidentsCard } from "@/features/station-dashboard/components/IncidentsCard";
 import { OperationsGantt } from "@/features/station-dashboard/components/OperationsGantt";
 import { PlanProgressCard } from "@/features/station-dashboard/components/PlanProgressCard";
 import { ReportHeader } from "@/features/station-dashboard/components/ReportHeader";
@@ -36,6 +38,12 @@ export default async function StationDashboardPage({
     statistics,
     efficiencyHistory,
   } = dashboard;
+  const incidents = station.incidents.map((incident) => ({
+    code: incident.id,
+    title: incident.title,
+    startedAt: incident.startedAt,
+    reportHref: incidentReportPath(station.id, incident.id),
+  }));
 
   return (
     <>
@@ -60,6 +68,8 @@ export default async function StationDashboardPage({
           delayCount={statistics.delayCount}
           trackLoad={station.trackLoad}
         />
+
+        <IncidentsCard incidents={incidents} />
 
         <div className="grid gap-4 md:grid-cols-2">
           <EfficiencyPanel value={station.efficiencyIndex} />
