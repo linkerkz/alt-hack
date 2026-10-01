@@ -5,6 +5,7 @@ import {
   canOpenNetwork,
   canOpenStation,
   homePath,
+  ownConsolePath,
 } from "@/features/auth/access";
 import { AccountMenu } from "@/features/auth/components/AccountMenu";
 import { requireUser } from "@/features/auth/queries";
@@ -22,7 +23,11 @@ export default async function StationPage({
 
   return (
     <>
-      <AppHeader current="station" account={<AccountMenu user={user} />} />
+      <AppHeader
+        current="station"
+        stationHref={ownConsolePath(user)}
+        account={<AccountMenu user={user} />}
+      />
       <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
         <p className="font-mono text-muted text-xs uppercase tracking-widest">
           Пульт станции · ЕСР {station.code}

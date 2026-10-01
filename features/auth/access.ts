@@ -26,6 +26,11 @@ export function canOpenStation(user: CurrentUser, station: StationScope) {
 // Стартовый экран роли; null — экрана для роли ещё нет.
 export function homePath(user: CurrentUser) {
   if (user.role === "dnc") return "/";
+  return ownConsolePath(user);
+}
+
+// Пульт своей станции; null — у роли нет своей станции (ДНЦ выбирает на карте).
+export function ownConsolePath(user: CurrentUser) {
   if (STATION_ROLES.includes(user.role) && user.stationId != null) {
     return `/stations/${user.stationId}`;
   }
