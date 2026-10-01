@@ -52,9 +52,12 @@ export default async function StationPage({
     );
   }
 
-  const live = await getLive(station.id);
-  const state = parseConsoleState(await searchParams, live);
-  const found = await getStationNeighbors(station.id);
+  const [live, query, found] = await Promise.all([
+    getLive(station.id),
+    searchParams,
+    getStationNeighbors(station.id),
+  ]);
+  const state = parseConsoleState(query, live);
   const neighbors = {
     odd: found.odd ?? UNKNOWN_NEIGHBOR,
     even: found.even ?? UNKNOWN_NEIGHBOR,

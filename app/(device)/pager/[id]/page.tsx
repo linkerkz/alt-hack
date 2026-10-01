@@ -22,8 +22,10 @@ export const viewport = DEVICE_VIEWPORT;
 export default async function PagerPage({ params }: PageProps<"/pager/[id]">) {
   const device = await getDevice((await params).id);
   if (device?.kind !== "pager") notFound();
-  const station = await getStation(device.stationId);
-  const order = await getActiveWorkOrder(device.stationId, device.service);
+  const [station, order] = await Promise.all([
+    getStation(device.stationId),
+    getActiveWorkOrder(device.stationId, device.service),
+  ]);
 
   return (
     <DeviceFrame

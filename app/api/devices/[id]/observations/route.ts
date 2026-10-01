@@ -23,11 +23,10 @@ export async function POST(
   }
 
   try {
-    await markSeen(device.id);
-    const verdict = await analyzeSnapshot(
-      observation.snapshot,
-      device.objectId,
-    );
+    const [, verdict] = await Promise.all([
+      markSeen(device.id),
+      analyzeSnapshot(observation.snapshot, device.objectId),
+    ]);
     const reply = await reportCamera(device.stationId, {
       deviceId: device.id,
       ...observation,
