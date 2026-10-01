@@ -83,7 +83,7 @@ export function StationPreview({
               variant="secondary"
               className="w-full"
             >
-              Открыть dashboard
+              Посмотреть эффективность
               <span aria-hidden>→</span>
             </ButtonLink>
           </>
