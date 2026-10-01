@@ -15,7 +15,9 @@ export function StationList({ stations, selectedStationId, onSelect }: Props) {
         <h2 className="font-semibold text-[11px] text-muted uppercase tracking-widest">
           Станции · {stations.length}
         </h2>
-        <span className="text-[11px] text-muted">↓ приб. ↑ отпр. ⇢ проезд</span>
+        <span className="text-[11px] text-muted">
+          ↓ к нам ↑ от нас ⇢ проезд
+        </span>
       </header>
       <ul className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
         {stations.map((station) => (

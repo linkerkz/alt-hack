@@ -1,8 +1,8 @@
 import {
-  arrivalsFrom,
   isTrainWithin,
+  type Leg,
+  legsBetween,
   sectionFlow,
-  stationEvents,
   stationFlow,
 } from "./flows";
 import { DISPATCH_AREA_NAMES, SECTIONS, STATIONS } from "./mock";
@@ -14,11 +14,10 @@ import type {
   Section,
   Station,
   StationTraffic,
+  TrainMovement,
   ZoneStation,
   ZoneSummary,
 } from "./types";
-
-const EVENT_LIMIT = 12;
 
 export async function getZoneMap(scope: MapScope) {
   const scopeIds = stationIdsOf(scope);
@@ -52,7 +51,6 @@ export async function getStation(stationId: string) {
 function trafficOf(stationId: string): StationTraffic {
   return {
     directions: directionsOf(stationId),
-    events: stationEvents(TRAINS, stationId, nameOf).slice(0, EVENT_LIMIT),
   };
 }
 
@@ -96,10 +94,28 @@ function directionsOf(stationId: string): Direction[] {
     return {
       neighborId,
       neighborName: nameOf(neighborId),
-      toUs: arrivalsFrom(TRAINS, neighborId, stationId),
-      fromUs: arrivalsFrom(TRAINS, stationId, neighborId),
+      toUs: legsBetween(TRAINS, neighborId, stationId)
+        .map((leg) => toMovement(leg, leg.passesTo))
+        .toSorted((a, b) => a.arrival - b.arrival),
+      fromUs: legsBetween(TRAINS, stationId, neighborId)
+        .map((leg) => toMovement(leg, leg.passesFrom))
+        .toSorted((a, b) => a.departure - b.departure),
     };
   });
+}
+
+function toMovement(leg: Leg, passesStation: boolean): TrainMovement {
+  const { train, from, to } = leg;
+  return {
+    trainId: train.id,
+    number: train.number,
+    kind: train.kind,
+    originName: nameOf(train.route[0].stationId),
+    destinationName: nameOf(train.route[train.route.length - 1].stationId),
+    departure: from.departure,
+    arrival: to.arrival,
+    passesStation,
+  };
 }
 
 function nameOf(stationId: string) {

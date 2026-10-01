@@ -1,4 +1,3 @@
-import { HORIZON_MINUTES } from "../flows";
 import {
   STATUS_BADGE_CLASS,
   STATUS_DOT_CLASS,
@@ -45,10 +44,7 @@ export function ZoneSummaryPanel({ title, summary }: Props) {
 
       <dl className="grid grid-cols-3 gap-2">
         <Metric label="Поездов в зоне" value={summary.trainsWithinCount} />
-        <Metric
-          label={`Прибытий за ${HORIZON_MINUTES / 60} ч`}
-          value={summary.arrivingCount}
-        />
+        <Metric label="Идут к станциям зоны" value={summary.arrivingCount} />
         <Metric
           label="Сбоев"
           value={summary.incidentCount}
