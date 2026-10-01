@@ -22,7 +22,6 @@ export function parseConsoleState(
     focus: first(params.focus) !== "off",
     panel: first(params.panel) !== "off",
     done: incident?.routeTasks ?? [],
-    confirm: first(params.confirm) === "1",
   };
 }
 
@@ -32,7 +31,6 @@ export function consoleHref(state: ConsoleState, patch: Partial<ConsoleState>) {
   const query = new URLSearchParams({ opt: next.option, tab: next.tab });
   if (!next.focus) query.set("focus", "off");
   if (!next.panel) query.set("panel", "off");
-  if (next.confirm) query.set("confirm", "1");
   return `?${query}`;
 }
 

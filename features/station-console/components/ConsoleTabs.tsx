@@ -7,15 +7,22 @@ type Props = {
   state: ConsoleState;
   // Код инцидента; null — инцидента нет, и вкладки для него тоже.
   incidentCode: string | null;
+  // Ход за тем, кто смотрит: вкладку инцидента помечаем.
+  myTurn: boolean;
 };
 
-// Вкладки правой панели: обзор станции и карточка инцидента.
-export function ConsoleTabs({ state, incidentCode }: Props) {
+// Вкладки правой панели: станция и карточка инцидента.
+export function ConsoleTabs({ state, incidentCode, myTurn }: Props) {
   const tabs: { id: ConsoleTab; label: string }[] = [
-    { id: "overview", label: "Обзор" },
+    { id: "overview", label: "Станция" },
     ...(incidentCode == null
       ? []
-      : [{ id: "incident" as const, label: `Инцидент ${incidentCode}` }]),
+      : [
+          {
+            id: "incident" as const,
+            label: `${myTurn ? "▲ " : ""}Инцидент ${incidentCode}`,
+          },
+        ]),
   ];
 
   return (

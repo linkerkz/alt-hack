@@ -1,24 +1,15 @@
-"use client";
-
-import { useState } from "react";
 import { Card } from "@/components/ui/Card";
-import { Field } from "@/components/ui/Field";
 import { Kicker } from "@/components/ui/Kicker";
 import { TONE_GLYPH } from "@/components/ui/tone";
 import type { ApprovalRequest } from "../approval";
-import { ApprovalButton } from "./ApprovalButton";
+import { ApprovalForm } from "./ApprovalForm";
 import { ApprovalIndex } from "./ApprovalIndex";
 import { ApprovalTrains } from "./ApprovalTrains";
-
-// Комментарий длиннее не примет сервер.
-const COMMENT_LIMIT = 200;
 
 // Запрос ДСЦС ждёт ответа ДНЦ: слева — что меняется у поездов, справа —
 // индекс станции, комментарий и решение.
 export function ApprovalRequestCard({ request }: { request: ApprovalRequest }) {
-  const [comment, setComment] = useState("");
   const { stationId, verdict } = request;
-  const answerComment = comment.trim() === "" ? null : comment;
 
   return (
     <Card
@@ -43,28 +34,7 @@ export function ApprovalRequestCard({ request }: { request: ApprovalRequest }) {
 
       <div className="flex min-w-0 flex-col gap-2.5">
         <ApprovalIndex index={request.index} />
-        <Field
-          label="Комментарий для станции"
-          placeholder="Необязательно"
-          value={comment}
-          maxLength={COMMENT_LIMIT}
-          onChange={(event) => setComment(event.target.value)}
-        />
-        <div className="flex flex-wrap gap-2">
-          <ApprovalButton
-            stationId={stationId}
-            answer={{ kind: "approve", comment: answerComment }}
-            variant="primary"
-          >
-            Согласовать
-          </ApprovalButton>
-          <ApprovalButton
-            stationId={stationId}
-            answer={{ kind: "reject", comment: answerComment }}
-          >
-            Отклонить
-          </ApprovalButton>
-        </div>
+        <ApprovalForm stationId={stationId} />
       </div>
     </Card>
   );

@@ -3,87 +3,63 @@ import type { StationConsoleData } from "../queries";
 import type { ConsoleState, ConsoleViewer } from "../types";
 import { CollapsedPanel } from "./CollapsedPanel";
 import { ConsoleTabs } from "./ConsoleTabs";
-import { DspPanel } from "./DspPanel";
 import { IncidentPanel } from "./IncidentPanel";
 import { OverviewPanel } from "./OverviewPanel";
 
 type Props = {
   role: ConsoleViewer;
-  operatorName: string;
   data: StationConsoleData;
   state: ConsoleState;
-  mapHref: string | null;
 };
 
-// Правая панель пульта: у ДСЦС и ДНЦ обзор и инцидент, у ДСП — панель исполнения.
-// Свёрнутая превращается в узкую полосу.
-export function SidePanel({ role, operatorName, data, state, mapHref }: Props) {
-  if (!state.panel) return <Collapsed role={role} data={data} state={state} />;
+// Правая панель пульта, одна для всех ролей: вкладки «Станция» и
+// «Инцидент»; отличаются только кнопки в ходе. Свёрнутая — узкая полоса.
+export function SidePanel({ role, data, state }: Props) {
+  const myTurn = data.incident.turn?.owner === role;
+  if (!state.panel) {
+    return <Collapsed data={data} state={state} myTurn={myTurn} />;
+  }
 
   return (
     <aside className="sticky top-0 flex max-h-screen min-w-0 max-w-full flex-[1_1_380px] flex-col">
-      {role === "dsp" ? (
-        <DspPanel operatorName={operatorName} data={data} state={state} />
-      ) : (
-        <>
-          <ConsoleTabs
-            state={state}
-            incidentCode={state.step > 0 ? data.incident.code : null}
-          />
-          <div className="flex flex-1 flex-col gap-[18px] overflow-auto px-5 pt-4 pb-[120px]">
-            {state.tab === "incident" ? (
-              <IncidentPanel
-                data={data}
-                state={state}
-                mapHref={mapHref}
-                viewOnly={role === "dnc"}
-              />
-            ) : (
-              <OverviewPanel incident={data.incident} state={state} />
-            )}
-          </div>
-        </>
-      )}
+      <ConsoleTabs
+        state={state}
+        incidentCode={state.step > 0 ? data.incident.code : null}
+        myTurn={myTurn}
+      />
+      <div className="flex flex-1 flex-col gap-[18px] overflow-auto px-5 pt-4 pb-[120px]">
+        {state.tab === "incident" ? (
+          <IncidentPanel data={data} state={state} viewer={role} />
+        ) : (
+          <OverviewPanel data={data} state={state} viewer={role} />
+        )}
+      </div>
     </aside>
   );
 }
 
-type CollapsedProps = Pick<Props, "role" | "data" | "state">;
+type CollapsedProps = Omit<Props, "role"> & { myTurn: boolean };
 
-function Collapsed({ role, data, state }: CollapsedProps) {
-  if (role === "dsp") {
-    const { pendingCount } = data.dsp;
-    return (
-      <CollapsedPanel
-        state={state}
-        label="Панель ДСП"
-        marker={
-          pendingCount > 0 && (
-            <span
-              className="text-[12px] text-accent-700"
-              title="Есть новые задачи"
-            >
-              ▲ {pendingCount}
-            </span>
-          )
-        }
-      />
-    );
-  }
+function Collapsed({ data, state, myTurn }: CollapsedProps) {
+  const { incident } = data;
   return (
     <CollapsedPanel
       state={state}
-      label={
-        state.tab === "incident" ? `Инцидент ${data.incident.code}` : "Обзор"
-      }
+      label={state.tab === "incident" ? `Инцидент ${incident.code}` : "Станция"}
       marker={
-        data.incident.isActive && (
-          <span
-            className={`text-[12px] ${TONE_TEXT_CLASS[data.incident.tone]}`}
-            title="Активный инцидент"
-          >
-            {TONE_GLYPH[data.incident.tone]}
+        myTurn ? (
+          <span className="text-[12px] text-accent-700" title="Ваш ход">
+            ▲ ход
           </span>
+        ) : (
+          incident.isActive && (
+            <span
+              className={`text-[12px] ${TONE_TEXT_CLASS[incident.tone]}`}
+              title="Активный инцидент"
+            >
+              {TONE_GLYPH[incident.tone]}
+            </span>
+          )
         )
       }
     />

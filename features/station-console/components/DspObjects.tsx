@@ -3,7 +3,7 @@ import { StatusGlyph } from "@/components/ui/StatusGlyph";
 import { TONE_TEXT_CLASS } from "@/components/ui/tone";
 import type { StationConsoleData } from "../queries";
 
-type Props = { objects: StationConsoleData["dsp"]["objects"] };
+type Props = { objects: StationConsoleData["objects"] };
 
 // Объекты и маршруты ДСП с их состоянием.
 export function DspObjects({ objects }: Props) {
