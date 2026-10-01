@@ -1,13 +1,16 @@
 import { cache } from "react";
 import { createSupabaseClient } from "@/lib/supabase";
+import { simulateTrains } from "@/lib/trainSimulation";
+import { HORIZON_MINUTES } from "./flows";
 import { openIncidents } from "./live";
-import type { Section, Station, StationKind, Status, Train } from "./types";
+import type { Section, Station, StationKind, Status } from "./types";
 
-// Сеть из базы: станции с открытыми сбоями, участки, поезда и названия
-// кругов. Кэш на запрос: страница читает сеть один раз.
+// Сеть: станции с открытыми сбоями, участки и названия кругов — из базы,
+// поезда — из симуляции на текущую минуту. Кэш на запрос: страница читает
+// сеть один раз.
 export const getNetwork = cache(async () => {
   const supabase = await createSupabaseClient();
-  const [stations, sections, trains, areas, incidents] = await Promise.all([
+  const [stationRows, sections, areas, incidents] = await Promise.all([
     supabase
       .from("stations")
       .select(
@@ -20,25 +23,23 @@ export const getNetwork = cache(async () => {
       .select("id, from_id, to_id, status, note")
       .overrideTypes<SectionRow[], { merge: false }>(),
     supabase
-      .from("trains")
-      .select(
-        "number, kind, train_stops!inner(position, station_id, arrival_min, departure_min)",
-      )
-      .order("position", { referencedTable: "train_stops" })
-      .overrideTypes<TrainRow[], { merge: false }>(),
-    supabase
       .from("dispatch_areas")
       .select("id, name")
       .overrideTypes<{ id: string; name: string }[], { merge: false }>(),
     openIncidents(),
   ]);
 
+  const stations = (stationRows.data ?? []).map(
+    (row): Station => toStation(row, incidents.get(row.id) ?? []),
+  );
+  const now = Math.floor(Date.now() / 60_000);
+
   return {
-    stations: (stations.data ?? []).map(
-      (row): Station => toStation(row, incidents.get(row.id) ?? []),
-    ),
+    stations,
     sections: (sections.data ?? []).map(toSection),
-    trains: (trains.data ?? []).map(toTrain),
+    trains: simulateTrains({ stations, now, horizon: HORIZON_MINUTES }),
+    // Момент, от которого считано время поездов, — минуты эпохи Unix.
+    now,
     areaNames: new Map((areas.data ?? []).map((area) => [area.id, area.name])),
   };
 });
@@ -73,19 +74,6 @@ function toSection(row: SectionRow): Section {
   };
 }
 
-function toTrain(row: TrainRow): Train {
-  return {
-    id: `train-${row.number}`,
-    number: row.number,
-    kind: row.kind,
-    route: row.train_stops.map((stop) => ({
-      stationId: stop.station_id,
-      arrival: stop.arrival_min,
-      departure: stop.departure_min,
-    })),
-  };
-}
-
 // Строки из базы без сгенерированных типов — форму задаём руками.
 // Станции без координат (lat null) на карту не попадают — их отсекает запрос.
 type StationRow = {
@@ -109,15 +97,4 @@ type SectionRow = {
   to_id: string;
   status: Status;
   note: string | null;
-};
-
-type TrainRow = {
-  number: string;
-  kind: Train["kind"];
-  train_stops: {
-    position: number;
-    station_id: string;
-    arrival_min: number;
-    departure_min: number;
-  }[];
 };
