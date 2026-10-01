@@ -4,6 +4,13 @@ import type { Service, WorkOrder, WorkOrderStatus } from "./types";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const COLUMNS =
+  "id, station_id, object_id, service, title, description, status, created_at, done_at, result_note, work_order_items(id, position, text, done_at)";
+
+// Наряды бригады на пейджере: по инциденту и пока объект не вернули в
+// эксплуатацию. «Выполнено» остаётся на экране — бригада ждёт решения ДСП.
+const ACTIVE: WorkOrderStatus[] = ["issued", "in_progress", "done"];
+
 // Наряд с пунктами по порядку; null — нет такого наряда.
 // Кэш на запрос: страница и её метаданные читают наряд по разу.
 export const getWorkOrder = cache(
@@ -13,15 +20,30 @@ export const getWorkOrder = cache(
     const supabase = createSupabaseAdminClient();
     const { data } = await supabase
       .from("work_orders")
-      .select(
-        "id, station_id, object_id, service, title, description, status, created_at, done_at, result_note, work_order_items(id, position, text, done_at)",
-      )
+      .select(COLUMNS)
       .eq("id", id)
       .maybeSingle();
 
     return data == null ? null : toWorkOrder(data);
   },
 );
+
+// Свежий активный наряд службы на станции; null — бригаде нечего делать.
+export async function getActiveWorkOrder(stationId: string, service: Service) {
+  const supabase = createSupabaseAdminClient();
+  const { data } = await supabase
+    .from("work_orders")
+    .select(COLUMNS)
+    .eq("station_id", stationId)
+    .eq("service", service)
+    .in("status", ACTIVE)
+    .not("incident_id", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return data == null ? null : toWorkOrder(data);
+}
 
 // Строка из базы без сгенерированных типов — форму задаём руками.
 function toWorkOrder(row: WorkOrderRow): WorkOrder {
