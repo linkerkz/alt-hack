@@ -45,6 +45,16 @@ export async function getStation(stationId: string) {
   return STATIONS.find((station) => station.id === stationId) ?? null;
 }
 
+// Соседи по участкам: нечётная сторона — откуда поезда идут к нам, чётная — куда от нас.
+export async function getStationNeighbors(stationId: string) {
+  const incoming = SECTIONS.find((section) => section.toId === stationId);
+  const outgoing = SECTIONS.find((section) => section.fromId === stationId);
+  return {
+    odd: incoming == null ? null : nameOf(incoming.fromId),
+    even: outgoing == null ? null : nameOf(outgoing.toId),
+  };
+}
+
 // Ближайшие события станции сверху: прибытие или отправление.
 function trainsOf(stationId: string): StationTrain[] {
   return stationTrains(TRAINS, stationId)
