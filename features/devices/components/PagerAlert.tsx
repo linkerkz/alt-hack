@@ -44,14 +44,15 @@ export function PagerAlert({ orderId }: Props) {
     <button
       type="button"
       onClick={() => setFlash(false)}
-      className="fixed inset-0 z-50 flex animate-pulse flex-col items-center justify-center gap-2 border-8 border-critical bg-paper/95 p-8 text-center"
+      className="fixed inset-0 z-50 flex animate-pulse flex-col items-center justify-center gap-3 border-8 border-device-alert bg-device/95 p-8 text-center"
     >
-      <span className="text-[13px] text-critical uppercase tracking-[0.12em]">
+      <span className="text-[13px] text-device-alert uppercase tracking-[0.16em]">
         ■ Новый наряд
       </span>
-      <span className="font-heading font-semibold text-[34px] leading-tight">
-        Откройте наряд и возьмите его в работу
+      <span className="font-bold text-[28px] uppercase leading-tight">
+        Примите наряд в работу
       </span>
+      <span className="text-[12px] text-device-dim">Коснитесь экрана</span>
     </button>
   );
 }

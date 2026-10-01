@@ -40,6 +40,8 @@ export function useWatch({ deviceId, video, canvas, isLive }: Params) {
   const [share, setShare] = useState(0);
   const [reply, setReply] = useState<Reply | null>(null);
   const [sent, setSent] = useState<CameraState>("clear");
+  // Сигнал ушёл, ждём ответа: сервер и ИИ смотрят кадр.
+  const [sending, setSending] = useState(false);
 
   const frame = useCallback(() => {
     if (video.current == null || canvas.current == null) return null;
@@ -51,13 +53,10 @@ export function useWatch({ deviceId, video, canvas, isLive }: Params) {
       const parts = frame();
       if (parts == null) return;
       setSent(state);
-      setReply(
-        await postSignal(
-          deviceId,
-          state,
-          snapshotOf(parts.video, parts.canvas),
-        ),
-      );
+      setSending(true);
+      const snapshot = snapshotOf(parts.video, parts.canvas);
+      setReply(await postSignal(deviceId, state, snapshot));
+      setSending(false);
     },
     [deviceId, frame],
   );
@@ -98,7 +97,7 @@ export function useWatch({ deviceId, video, canvas, isLive }: Params) {
   // Без предмета в кадре: шлём противоположное тому, что ушло последним.
   const simulate = () => send(sent === "clear" ? "obstruction" : "clear");
 
-  return { watch, share, reply, sent, calibrate, simulate };
+  return { watch, share, reply, sent, sending, calibrate, simulate };
 }
 
 async function postSignal(
