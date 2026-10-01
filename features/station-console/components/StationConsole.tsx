@@ -1,7 +1,6 @@
 import type { StationConsoleData } from "../queries";
 import type { ConsoleRole, ConsoleState, Neighbors } from "../types";
 import { ConsoleBar } from "./ConsoleBar";
-import { DemoBar } from "./DemoBar";
 import { EfficiencySummary } from "./EfficiencySummary";
 import { IncidentBanner } from "./IncidentBanner";
 import { LiveRefresh } from "./LiveRefresh";
@@ -64,13 +63,6 @@ export function StationConsole(props: Props) {
           mapHref={mapHref}
         />
       </main>
-      <DemoBar
-        stationId={data.stationId}
-        step={state.step}
-        stepName={data.stepName}
-        next={data.demo}
-        workOrder={data.workOrder}
-      />
       {role === "dsp" && dsp.confirmOpen && (
         <ReturnToServiceDialog
           stationId={data.stationId}

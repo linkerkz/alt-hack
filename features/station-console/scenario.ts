@@ -45,32 +45,6 @@ export function nextCommand(live: Live): Command | null {
   }
 }
 
-// Подпись «Далее» на демо-пульте: кто и что сделает.
-export function commandLabel(command: Command) {
-  switch (command.kind) {
-    case "detect":
-      return "Датчик: отказ С3";
-    case "confirm":
-      return "ДСП подтверждает отказ";
-    case "accept":
-      return `ДСЦС принимает вариант ${command.option === "A" ? "А" : "Б"}`;
-    case "approve":
-      return "ДНЦ согласует";
-    case "route":
-      return `ДСП принимает ${command.task === "r101" ? "101" : "2001"}`;
-    case "startWork":
-      return "Служба берёт наряд в работу";
-    case "finishWork":
-      return "Служба: работы выполнены";
-    case "restore":
-      return "ДСП возвращает С3";
-    case "close":
-      return "ДСЦС закрывает инцидент";
-    default:
-      return "Далее";
-  }
-}
-
 // Решение принято: ДСП принимает поезда, служба ведёт работы, ДСП возвращает
 // стрелку. Рабочий мог закончить чеклист ещё до решения — поезда всё равно
 // принимаются первыми.
