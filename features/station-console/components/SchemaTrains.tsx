@@ -1,5 +1,5 @@
 import type { StationConsoleData } from "../queries";
-import { TRACKS } from "../schemaTrains";
+import { type SchemaTrain, TRACKS } from "../schemaTrains";
 
 type Props = { schema: StationConsoleData["schema"] };
 
@@ -46,24 +46,26 @@ export function SchemaTrains({ schema }: Props) {
             key={train.label}
             className={`transition-opacity duration-400 ${train.quiet ? "group-data-[focus]/console:opacity-30" : ""}`}
           >
-            <rect
-              x={train.x}
-              y={y - 8}
-              width={train.width}
-              height={16}
-              rx={3}
-              strokeWidth={train.late ? 2.5 : 1.5}
-              className={trainClass(isPassenger, train.late)}
-            />
-            <text
-              x={train.x + train.width / 2}
-              y={y + 4}
-              fontSize={11}
-              textAnchor="middle"
-              className={isPassenger ? "fill-ink" : "fill-neutral-100"}
-            >
-              {train.label}
-            </text>
+            <g className={leaveClass(train.leaving)}>
+              <rect
+                x={train.x}
+                y={y - 8}
+                width={train.width}
+                height={16}
+                rx={3}
+                strokeWidth={train.late ? 2.5 : 1.5}
+                className={trainClass(isPassenger, train.late)}
+              />
+              <text
+                x={train.x + train.width / 2}
+                y={y + 4}
+                fontSize={11}
+                textAnchor="middle"
+                className={isPassenger ? "fill-ink" : "fill-neutral-100"}
+              >
+                {train.label}
+              </text>
+            </g>
           </g>
         );
       })}
@@ -82,6 +84,15 @@ export function SchemaTrains({ schema }: Props) {
 
 function trackY(track: number) {
   return TRACKS.find((item) => item.n === track)?.y ?? 0;
+}
+
+// Уходящий поезд уезжает в свою горловину: нечётная — влево, чётная —
+// вправо. Без анимации в системе — просто исчезает.
+function leaveClass(leaving: SchemaTrain["leaving"]) {
+  if (leaving == null) return "";
+  return leaving === "odd"
+    ? "motion-safe:animate-leave-odd motion-reduce:opacity-0"
+    : "motion-safe:animate-leave-even motion-reduce:opacity-0";
 }
 
 // Пассажирский — контур, грузовой — заливка; опоздавший — обводка «Критично».

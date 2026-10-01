@@ -1,7 +1,6 @@
-import type { PlanSource } from "./activePlan";
 import { STEP } from "./mock";
 import { routeDone } from "./routing";
-import { schemaTrainsAt } from "./schemaTrains";
+import { type Source, schemaTrainsAt } from "./schemaTrains";
 import type { ChosenOption, ConsoleState, Neighbors, Status } from "./types";
 
 // Динамика схемы станции на шаге сценария: занятость путей, поезда,
@@ -23,7 +22,7 @@ const INCIDENT_TRAINS = ["101", "2001"];
 export function stationSchema(
   state: ConsoleState,
   neighbors: Neighbors,
-  source: PlanSource,
+  source: Source,
 ) {
   const { step, option } = state;
   const fault = step >= STEP.suspected && step <= STEP.repaired;

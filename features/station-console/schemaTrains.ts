@@ -1,6 +1,7 @@
 import { activeOption, forecastFor, type PlanSource } from "./activePlan";
+import { givenAt } from "./departure";
 import type { Run } from "./forecast";
-import type { ConsoleState } from "./types";
+import type { ConsoleState, Live, Throat } from "./types";
 
 // Поезда на схеме станции и геометрия путей, по которой их расставляем.
 
@@ -12,8 +13,14 @@ export type SchemaTrain = {
   kind: "passenger" | "freight";
   // Затронут инцидентом — обводка цветом «Критично».
   late: boolean;
+  // Уходит со станции в эту горловину — схема анимирует уход; null — стоит
+  // на пути или подходит.
+  leaving: Throat | null;
   dimmed: boolean;
 };
+
+// Откуда схема берёт поезда: прогноз плана и отправления, которые дал ДСП.
+export type Source = PlanSource & Pick<Live, "departures">;
 
 export type TrackNumber = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -31,23 +38,27 @@ export const TRACKS: { n: TrackNumber; y: number; from: number; to: number }[] =
 // Поезд, который прибудет так скоро, уже на подходе к входному светофору.
 const APPROACH_MINUTES = 10;
 
+// Сколько ушедший поезд ещё есть на схеме: время доиграть анимацию ухода.
+// Позже его нет — иначе каждая загрузка пульта играла бы уход заново.
+const LEAVE_MINUTES = 1;
+
 // Маневровый локомотив всегда в тупике: в плане путей поездов его нет.
 const SHUNTER = { label: "ТЭМ2", track: 6, x: 540, width: 46 } as const;
 
 // Поезда на схеме в минуту шага по прогнозу действующего плана: на путях
-// стоят те, кто уже прибыл; у входного — кто ждёт или вот-вот подойдёт.
-export function schemaTrainsAt(state: ConsoleState, source: PlanSource) {
+// стоят те, кто уже прибыл; уходят те, кому ДСП дал отправление или чьё
+// время отправления только что наступило; у входного — кто ждёт или вот-вот
+// подойдёт.
+export function schemaTrainsAt(state: ConsoleState, source: Source) {
   const { now } = source;
   const runs = forecastFor(source, activeOption(state.step, state.option));
-  const standing = runs
-    .filter((run) => run.forecast.from <= now && now < run.forecast.to)
-    .map(standingTrain);
+  const standing = runs.flatMap((run) => stationTrain(run, source));
   const coming = runs
     .filter((run) => isComing(run, now))
     .toSorted((a, b) => a.forecast.from - b.forecast.from);
   // У каждой горловины рисуем один поезд — ближайший.
-  const odd = coming.find((run) => throatOf(run, source) === "odd");
-  const even = coming.find((run) => throatOf(run, source) === "even");
+  const odd = coming.find((run) => entryThroat(run, source) === "odd");
+  const even = coming.find((run) => entryThroat(run, source) === "even");
   const shunter = {
     ...SHUNTER,
     train: SHUNTER.label,
@@ -58,8 +69,22 @@ export function schemaTrainsAt(state: ConsoleState, source: PlanSource) {
     ...standing,
     ...(odd == null ? [] : [comingTrain(odd, "odd")]),
     ...(even == null ? [] : [comingTrain(even, "even")]),
-    { ...shunter, late: false, onTrack: true },
+    { ...shunter, late: false, leaving: null, onTrack: true },
   ];
+}
+
+// Стоит на пути, пока не отправлен; минуту после отправления — уходит,
+// путь уже свободен. Отправлен, когда ДСП дал отправление или по плану.
+function stationTrain(run: Run, source: Source): Train[] {
+  const { now } = source;
+  const { from, to } = run.forecast;
+  if (now < from) return [];
+  const given = givenAt(run.train, from, source.departures);
+  const departed = Math.min(given ?? to, to);
+  if (now < departed) return [standingTrain(run)];
+  if (now >= departed + LEAVE_MINUTES) return [];
+  const leaving = exitThroat(run, source);
+  return [{ ...standingTrain(run), leaving, onTrack: false }];
 }
 
 // Подходит по прогнозу или подошёл по плану и ждёт у входного. Удержанный
@@ -81,6 +106,7 @@ function standingTrain(run: Run): Train {
     width,
     kind: run.kind,
     late: run.waited,
+    leaving: null,
     onTrack: true,
   };
 }
@@ -98,12 +124,19 @@ function comingTrain(run: Run, throat: "odd" | "even"): Train {
     width: 62,
     kind: run.kind,
     late: run.waited,
+    leaving: null,
     onTrack: false,
   };
 }
 
-function throatOf(run: Run, { layout }: PlanSource) {
+function entryThroat(run: Run, { layout }: PlanSource) {
   return layout.routes.find((route) => route.id === run.entryRoute)?.throat;
+}
+
+// Маршрут отправления неизвестен — уводим в чётную, как поезда без соседа.
+function exitThroat(run: Run, { layout }: PlanSource): Throat {
+  const route = layout.routes.find((item) => item.id === run.exitRoute);
+  return route?.throat ?? "even";
 }
 
 type Train = Omit<SchemaTrain, "dimmed"> & { train: string; onTrack: boolean };
