@@ -3,7 +3,6 @@ import type {
   StationFlow,
   StationKind,
   Status,
-  TrainEventType,
   TrainKind,
 } from "./types";
 
@@ -75,25 +74,18 @@ export const FLOW_LABEL: Record<
   keyof StationFlow,
   { icon: string; label: string }
 > = {
-  arriving: { icon: "↓", label: "Прибывают" },
-  departing: { icon: "↑", label: "Отправляются" },
+  arriving: { icon: "↓", label: "К нам" },
+  departing: { icon: "↑", label: "От нас" },
   passing: { icon: "⇢", label: "Проездом" },
 };
 
-// Порог «станция не успевает»: столько прибытий за горизонт — уже нагрузка.
-const BUSY_ARRIVING = 5;
+// Порог «станция не успевает»: столько поездов к ней — уже нагрузка.
+const BUSY_ARRIVING = 8;
 
 export function flowCounterClass(key: keyof StationFlow, value: number) {
   if (key === "arriving" && value >= BUSY_ARRIVING) return "text-amber-300";
   return value === 0 ? "text-zinc-600" : "text-sky-300";
 }
-
-export const TRAIN_EVENT_LABEL: Record<TrainEventType, string> = {
-  arrival: "прибытие",
-  departure: "отправление",
-  stop: "стоянка",
-  passing: "проезд",
-};
 
 export const TRAIN_KIND_LABEL: Record<TrainKind, string> = {
   freight: "Грузовой",

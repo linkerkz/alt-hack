@@ -33,14 +33,14 @@ export function MapLegend() {
         </li>
       </ul>
       <p className="mt-2 border-line border-t pt-2 text-muted">
-        Поезда за {HORIZON_MINUTES / 60} ч:{" "}
+        Поезда в пути и за {HORIZON_MINUTES / 60} ч:{" "}
         {FLOW_ORDER.map(
           (key) =>
             `${FLOW_LABEL[key].icon} ${FLOW_LABEL[key].label.toLowerCase()}`,
         ).join(" · ")}
         <br />
-        На участке: <span className="text-sky-300">➜&nbsp;3</span> — поездов в
-        сторону стрелки: идут по участку или выйдут на него
+        На участке: <span className="text-sky-300">➜&nbsp;3</span> — поездов по
+        стрелке: в пути или выйдут на участок за {HORIZON_MINUTES / 60} ч
       </p>
     </details>
   );

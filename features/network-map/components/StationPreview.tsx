@@ -10,7 +10,6 @@ import { DirectionList } from "./DirectionList";
 import { FlowCounters } from "./FlowCounters";
 import { IncidentList } from "./IncidentList";
 import { IndexRing } from "./IndexRing";
-import { TrainEventList } from "./TrainEventList";
 
 type Props = {
   station: ZoneStation;
@@ -60,7 +59,6 @@ export function StationPreview({
       <div className="space-y-5 overflow-y-auto p-4">
         <FlowCounters flow={station.flow} size="lg" />
         <DirectionList directions={traffic.directions} />
-        <TrainEventList events={traffic.events} />
         <IncidentList incidents={station.incidents} />
       </div>
 

@@ -67,33 +67,32 @@ export type TrainStop = {
   departure: number;
 };
 
-// Счётчики поездов станции на горизонте прогноза.
+// Счётчики поездов станции: в пути или выйдут на участок за горизонт.
 export type StationFlow = {
   arriving: number;
   departing: number;
   passing: number;
 };
 
-// Поезда на участке в каждую сторону: forward — от fromId к toId.
+// Поезда по участку в каждую сторону: forward — из fromId в toId.
 export type SectionFlow = {
   forward: number;
   backward: number;
 };
 
-// Событие поезда на станции — строка списка «ближайшие поезда».
-export type TrainEvent = {
+// Поезд в списке карточки: движение по участку между станцией и соседом.
+// departure ≤ 0 — поезд уже в пути.
+export type TrainMovement = {
   trainId: string;
   number: string;
   kind: TrainKind;
-  type: TrainEventType;
-  minutes: number;
-  // Для стоянки — когда поезд отправится.
-  departureMinutes: number | null;
   originName: string;
   destinationName: string;
+  departure: number;
+  arrival: number;
+  // Поезд проходит выбранную станцию без остановки.
+  passesStation: boolean;
 };
-
-export type TrainEventType = "arrival" | "departure" | "stop" | "passing";
 
 // Зона ответственности, которую показывает карта.
 export type MapScope =
@@ -106,12 +105,12 @@ export type ZoneSection = Section & { flow: SectionFlow };
 
 export type StationTraffic = {
   directions: Direction[];
-  events: TrainEvent[];
 };
 
+// Направление станции: поезда от соседа к нам и от нас к соседу.
 export type Direction = {
   neighborId: string;
   neighborName: string;
-  toUs: number;
-  fromUs: number;
+  toUs: TrainMovement[];
+  fromUs: TrainMovement[];
 };

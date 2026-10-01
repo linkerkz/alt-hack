@@ -3,178 +3,91 @@ import type {
   SectionFlow,
   StationFlow,
   Train,
-  TrainEvent,
   TrainStop,
 } from "./types";
 
-type StopEvent = Pick<TrainEvent, "type" | "minutes" | "departureMinutes">;
-
-// Горизонт прогноза: считаем поезда, которые будут на станции в ближайшие 3 часа.
+// Горизонт прогноза: 3 часа вперёд от текущего момента.
 export const HORIZON_MINUTES = 180;
 
-export function stationFlow(trains: Train[], stationId: string): StationFlow {
-  const flow = { arriving: 0, departing: 0, passing: 0 };
+// Всё считаем в одной единице — движение поезда по участку A → B. Движение
+// активно, если поезд уже идёт по участку или выйдет на него за горизонт.
+// Из одних и тех же движений собраны стрелка на карте, счётчики станции и
+// список поездов в карточке, поэтому числа везде совпадают.
+export type Leg = {
+  train: Train;
+  from: TrainStop;
+  to: TrainStop;
+  // Проходит ли поезд станцию без остановки: from — для движения от неё, to — к ней.
+  passesFrom: boolean;
+  passesTo: boolean;
+};
 
-  for (const train of trains) {
-    for (const [index, stop] of train.route.entries()) {
-      if (stop.stationId !== stationId) continue;
-      const type = eventType(train, index);
-      if (type.isArrival && isAhead(stop.arrival)) flow.arriving += 1;
-      if (type.isDeparture && isAhead(stop.departure)) flow.departing += 1;
-      if (type.isPassing && isAhead(stop.arrival)) flow.passing += 1;
-    }
-  }
-  return flow;
-}
-
-// Поезда на участке в каждую сторону: уже идущие по нему и те, что выйдут
-// на него за горизонт.
 export function sectionFlow(trains: Train[], section: Section): SectionFlow {
-  const isOnSection = (from: TrainStop, to: TrainStop) =>
-    to.arrival > 0 && from.departure <= HORIZON_MINUTES;
   return {
-    forward: countLegs(trains, section.fromId, section.toId, isOnSection),
-    backward: countLegs(trains, section.toId, section.fromId, isOnSection),
+    forward: legsBetween(trains, section.fromId, section.toId).length,
+    backward: legsBetween(trains, section.toId, section.fromId).length,
   };
 }
 
-// Направления станции считаем по её событиям — так «к нам» сходится
-// с ↓ прибывают + ⇢ проездом, а «от нас» — с ↑ отправляются + ⇢ проездом.
-export function arrivalsFrom(
-  trains: Train[],
-  neighborId: string,
-  stationId: string,
-) {
-  return countLegs(trains, neighborId, stationId, (_, to) =>
-    isAhead(to.arrival),
-  );
+// К нам = остановятся у нас, от нас = стояли у нас и уходят,
+// проездом = идут к нам без остановки. Сумма «к нам» по всем соседям
+// в карточке равна «к нам» + «проездом».
+export function stationFlow(trains: Train[], stationId: string): StationFlow {
+  const legs = activeLegs(trains);
+  const incoming = legs.filter((leg) => leg.to.stationId === stationId);
+  const outgoing = legs.filter((leg) => leg.from.stationId === stationId);
+
+  return {
+    arriving: incoming.filter((leg) => !leg.passesTo).length,
+    departing: outgoing.filter((leg) => !leg.passesFrom).length,
+    passing: incoming.filter((leg) => leg.passesTo).length,
+  };
 }
 
-export function departuresTo(
-  trains: Train[],
-  stationId: string,
-  neighborId: string,
-) {
-  return countLegs(trains, stationId, neighborId, (from) =>
-    isAhead(from.departure),
+export function legsBetween(trains: Train[], fromId: string, toId: string) {
+  return activeLegs(trains).filter(
+    (leg) => leg.from.stationId === fromId && leg.to.stationId === toId,
   );
 }
 
 // Поезд сейчас на станции из набора или на участке, касающемся набора.
 export function isTrainWithin(train: Train, stationIds: Set<string>) {
-  const { route } = train;
-  const standing = route.find(
+  const standing = train.route.find(
     (stop) => stop.arrival <= 0 && stop.departure > 0,
   );
   if (standing != null) return stationIds.has(standing.stationId);
 
-  const moving = legs(route).find(
-    ([from, to]) => from.departure <= 0 && to.arrival > 0,
+  const moving = legsOf(train).find(
+    (leg) => leg.from.departure <= 0 && leg.to.arrival > 0,
   );
   if (moving == null) return false;
-  const [from, to] = moving;
+  const { from, to } = moving;
   return stationIds.has(from.stationId) || stationIds.has(to.stationId);
 }
 
-// Ближайшие события станции по времени: одна строка на поезд.
-export function stationEvents(
-  trains: Train[],
-  stationId: string,
-  nameOf: (stationId: string) => string,
-): TrainEvent[] {
-  const events: TrainEvent[] = [];
-
-  for (const train of trains) {
-    for (const [index, stop] of train.route.entries()) {
-      if (stop.stationId !== stationId) continue;
-      const event = eventAt(train, index);
-      if (event == null) continue;
-      events.push({
-        ...event,
-        trainId: train.id,
-        number: train.number,
-        kind: train.kind,
-        originName: nameOf(train.route[0].stationId),
-        destinationName: nameOf(train.route[train.route.length - 1].stationId),
-      });
-    }
-  }
-  return events.toSorted((a, b) => a.minutes - b.minutes);
+function activeLegs(trains: Train[]) {
+  return trains.flatMap(legsOf).filter(isActive);
 }
 
-// Стоянка, у которой в горизонте и прибытие, и отправление, — одно событие «stop».
-function eventAt(train: Train, index: number): StopEvent | null {
-  const stop = train.route[index];
-  const type = eventType(train, index);
-  const arrives = type.isArrival && isAhead(stop.arrival);
-  const departs = type.isDeparture && isAhead(stop.departure);
-
-  if (type.isPassing && isAhead(stop.arrival)) {
-    return {
-      type: "passing",
-      minutes: stop.arrival,
-      departureMinutes: null,
-    };
-  }
-  if (arrives && departs) {
-    return {
-      type: "stop",
-      minutes: stop.arrival,
-      departureMinutes: stop.departure,
-    };
-  }
-  if (arrives) {
-    return {
-      type: "arrival",
-      minutes: stop.arrival,
-      departureMinutes: null,
-    };
-  }
-  if (departs) {
-    return {
-      type: "departure",
-      minutes: stop.departure,
-      departureMinutes: null,
-    };
-  }
-  return null;
+function isActive(leg: Leg) {
+  return leg.to.arrival > 0 && leg.from.departure <= HORIZON_MINUTES;
 }
 
-// Начальная станция — только отправление, конечная — только прибытие,
-// промежуточная — стоянка (прибытие и отправление) или проезд.
-function eventType(train: Train, index: number) {
-  const stop = train.route[index];
-  const isFirst = index === 0;
-  const isLast = index === train.route.length - 1;
-  const isStop = isFirst || isLast || stop.departure > stop.arrival;
-
-  return {
-    isArrival: isStop && !isFirst,
-    isDeparture: isStop && !isLast,
-    isPassing: !isStop,
-  };
+function legsOf(train: Train): Leg[] {
+  const { route } = train;
+  return route.slice(1).map((to, index) => ({
+    train,
+    from: route[index],
+    to,
+    passesFrom: isPassing(route, index),
+    passesTo: isPassing(route, index + 1),
+  }));
 }
 
-function isAhead(minutes: number) {
-  return minutes > 0 && minutes <= HORIZON_MINUTES;
-}
-
-function countLegs(
-  trains: Train[],
-  fromId: string,
-  toId: string,
-  isCounted: (from: TrainStop, to: TrainStop) => boolean,
-) {
-  let count = 0;
-  for (const train of trains) {
-    for (const [from, to] of legs(train.route)) {
-      if (from.stationId !== fromId || to.stationId !== toId) continue;
-      if (isCounted(from, to)) count += 1;
-    }
-  }
-  return count;
-}
-
-function legs(route: TrainStop[]): [TrainStop, TrainStop][] {
-  return route.slice(1).map((stop, index) => [route[index], stop]);
+// Начальная и конечная станции — всегда остановка, промежуточная — проезд,
+// если поезд на ней не стоит.
+function isPassing(route: TrainStop[], index: number) {
+  const isEndpoint = index === 0 || index === route.length - 1;
+  const stop = route[index];
+  return !isEndpoint && stop.departure === stop.arrival;
 }
