@@ -19,8 +19,8 @@ const CHARS_PER_TICK = 2;
 const STORAGE_PREFIX = "generated:";
 
 // Текст, который будто пишет ИИ: сначала пауза, затем печать по буквам.
-// Автообновление может прислать текст с новыми цифрами — печать не
-// начинается заново, а дописывает уже новый текст.
+// Автообновление может прислать текст с новыми цифрами: во время печати
+// дописываем уже новый, а после неё показываем любой текст целиком.
 export function GeneratedText({
   text,
   storageKey,
@@ -46,6 +46,7 @@ export function GeneratedText({
         if (typed >= length.current) {
           clearInterval(timer);
           remember(storageKey);
+          setChars(Number.POSITIVE_INFINITY);
         }
       }, TICK_MS);
     }, THINK_MS);
