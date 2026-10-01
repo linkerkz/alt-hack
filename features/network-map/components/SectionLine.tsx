@@ -2,10 +2,11 @@
 
 import type { PathOptions } from "leaflet";
 import { memo } from "react";
-import { Polyline, Tooltip } from "react-leaflet";
-import { STATUS_COLOR, STATUS_LABEL } from "../status";
+import { Polyline } from "react-leaflet";
+import { STATUS_COLOR } from "../status";
 import type { Station, Status, ZoneSection } from "../types";
 import { SectionFlowLabel } from "./SectionFlowLabel";
+import { SectionTooltip } from "./SectionTooltip";
 
 type Props = {
   section: ZoneSection;
@@ -44,19 +45,11 @@ export const SectionLine = memo(function SectionLine({
           [to.lat, to.lon],
         ]}
         pathOptions={pathOptions(section.status, isHighlighted)}
-      >
-        <Tooltip sticky className="map-tooltip">
-          <div className="font-medium">
-            {from.name} → {to.name}: {section.flow.forward} · {to.name} →{" "}
-            {from.name}: {section.flow.backward}
-          </div>
-          <div className="text-muted">
-            {STATUS_LABEL[section.status]}
-            {section.note == null ? null : ` · ${section.note}`}
-          </div>
-        </Tooltip>
-      </Polyline>
-      <SectionFlowLabel from={from} to={to} flow={section.flow} />
+        interactive={false}
+      />
+      <SectionFlowLabel from={from} to={to} flow={section.flow}>
+        <SectionTooltip section={section} from={from} to={to} />
+      </SectionFlowLabel>
     </>
   );
 });
