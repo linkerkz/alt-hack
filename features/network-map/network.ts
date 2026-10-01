@@ -1,7 +1,6 @@
 import { cache } from "react";
-import { simulateTrains } from "@/lib/simulation/trains";
+import { currentMinute, networkTrains } from "@/lib/simulation/network";
 import { createSupabaseClient } from "@/lib/supabase";
-import { incidentDelays } from "./delays";
 import { HORIZON_MINUTES } from "./flows";
 import { openIncidents } from "./live";
 import type { Section, Station, StationKind, Status } from "./types";
@@ -11,7 +10,8 @@ import type { Section, Station, StationKind, Status } from "./types";
 // запрос: страница читает сеть один раз.
 export const getNetwork = cache(async () => {
   const supabase = await createSupabaseClient();
-  const [stationRows, sections, areas, incidents, delays] = await Promise.all([
+  const now = currentMinute();
+  const [stationRows, sections, areas, incidents, trains] = await Promise.all([
     supabase
       .from("stations")
       .select(
@@ -28,23 +28,15 @@ export const getNetwork = cache(async () => {
       .select("id, name")
       .overrideTypes<{ id: string; name: string }[], { merge: false }>(),
     openIncidents(),
-    incidentDelays(),
+    networkTrains(now, HORIZON_MINUTES),
   ]);
 
-  const stations = (stationRows.data ?? []).map(
-    (row): Station => toStation(row, incidents.get(row.id) ?? []),
-  );
-  const now = Math.floor(Date.now() / 60_000);
-
   return {
-    stations,
+    stations: (stationRows.data ?? []).map(
+      (row): Station => toStation(row, incidents.get(row.id) ?? []),
+    ),
     sections: (sections.data ?? []).map(toSection),
-    trains: simulateTrains({
-      stations,
-      delays,
-      now,
-      horizon: HORIZON_MINUTES,
-    }),
+    trains,
     // Момент, от которого считано время поездов, — минуты эпохи Unix.
     now,
     areaNames: new Map((areas.data ?? []).map((area) => [area.id, area.name])),

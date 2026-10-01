@@ -1,11 +1,14 @@
-import type { IncidentDelay } from "@/lib/simulation/trains";
 import { createSupabaseClient } from "@/lib/supabase";
-import { INCIDENT_DELAY_MINUTES } from "./status";
+import type { IncidentDelay } from "./trains";
 
 // Сбои, которые задерживают поезда в симуляции: открытые и закрытые за
 // последние сутки. Закрытый держит поезда только до закрытия, но
 // опоздание, набранное до того, ещё идёт с поездом по маршруту.
 const CLOSED_WITHIN_MS = 24 * 60 * 60_000;
+
+// Сколько минут сверх графика поезд стоит на станции со сбоем, по
+// критичности сбоя; unrated — сбой ещё не оценён.
+const DELAY_MINUTES = { low: 5, medium: 15, high: 30, unrated: 10 };
 
 export async function incidentDelays(): Promise<IncidentDelay[]> {
   const supabase = await createSupabaseClient();
@@ -18,7 +21,7 @@ export async function incidentDelays(): Promise<IncidentDelay[]> {
 
   return (data ?? []).map((row) => ({
     stationId: row.station_id,
-    minutes: INCIDENT_DELAY_MINUTES[row.severity ?? "unrated"],
+    minutes: DELAY_MINUTES[row.severity ?? "unrated"],
     from: epochMinutes(row.detected_at),
     until: row.closed_at == null ? null : epochMinutes(row.closed_at),
   }));

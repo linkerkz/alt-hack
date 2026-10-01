@@ -55,15 +55,6 @@ export function flowCounterClass(key: TrainFlow, value: number) {
   return value === 0 ? "text-neutral-400" : "text-ink";
 }
 
-// Сколько минут сверх графика поезд стоит на станции со сбоем, по
-// критичности сбоя; unrated — сбой ещё не оценён.
-export const INCIDENT_DELAY_MINUTES = {
-  low: 5,
-  medium: 15,
-  high: 30,
-  unrated: 10,
-};
-
 // Опоздание поезда: с LATE_MINUTES — «Внимание», с LATE_CRITICAL_MINUTES — «Критично».
 const LATE_MINUTES = 10;
 const LATE_CRITICAL_MINUTES = 30;
