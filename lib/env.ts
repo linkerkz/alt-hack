@@ -18,6 +18,9 @@ export const env = {
   // Vision-модель OpenRouter с поддержкой JSON-схемы.
   openRouterModel:
     optional(process.env.OPENROUTER_MODEL) ?? "google/gemini-2.5-flash",
+  // Запасная модель: OpenRouter переключится на неё, если основная не
+  // ответила (лимит, простой). null — без запасной.
+  openRouterFallbackModel: optional(process.env.OPENROUTER_FALLBACK_MODEL),
 };
 
 function optional(value: string | undefined) {

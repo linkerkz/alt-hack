@@ -42,7 +42,7 @@ export async function askVision({
 
 function requestBody(prompt: string, image: string, schema: Params["schema"]) {
   return {
-    model: env.openRouterModel,
+    models: modelsInOrder(),
     messages: [
       {
         role: "user",
@@ -62,6 +62,14 @@ function requestBody(prompt: string, image: string, schema: Params["schema"]) {
       },
     },
   };
+}
+
+// Основная модель, за ней запасная: следующую OpenRouter берёт сам, если
+// предыдущая вернула ошибку.
+function modelsInOrder() {
+  const { openRouterModel, openRouterFallbackModel } = env;
+  if (openRouterFallbackModel == null) return [openRouterModel];
+  return [openRouterModel, openRouterFallbackModel];
 }
 
 // choices[0].message.content — строка с JSON; разбираем без доверия.
