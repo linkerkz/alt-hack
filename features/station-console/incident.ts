@@ -48,6 +48,7 @@ export function incidentCard(
     code: live.incident?.code ?? INCIDENT.id,
     detection,
     snapshot: live.incident?.snapshot ?? null,
+    analysis: live.incident?.analysis ?? null,
     isActive: step >= STEP.suspected && step <= STEP.restored,
     statusName: INCIDENT_STATUS[statusIndex],
     statusSteps: INCIDENT_STATUS.map((label, i) => ({

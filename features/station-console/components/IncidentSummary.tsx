@@ -6,7 +6,7 @@ type Props = { incident: StationConsoleData["incident"] };
 
 // Шапка карточки инцидента: что случилось, где, когда и на каком он этапе.
 export function IncidentSummary({ incident }: Props) {
-  const { detection, snapshot } = incident;
+  const { detection, snapshot, analysis } = incident;
   const facts = [...FACTS, ["Источник", detection.source]];
 
   return (
@@ -45,6 +45,12 @@ export function IncidentSummary({ incident }: Props) {
             <figcaption className="text-[11.5px] text-muted">
               Снимок камеры в момент обнаружения
             </figcaption>
+            {analysis != null && (
+              <p className="border-accent border-l-2 pl-2.5 text-[13px]">
+                <span className="text-accent-700">ИИ по снимку:</span>{" "}
+                {analysis}
+              </p>
+            )}
           </figure>
         )}
       </div>

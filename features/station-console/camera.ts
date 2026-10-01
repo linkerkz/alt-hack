@@ -10,6 +10,8 @@ export type CameraSignal = {
   state: "obstruction" | "clear";
   // Кадр в момент сигнала (data URL JPEG).
   snapshot: string;
+  // Что сказал ИИ по кадру; null — ИИ не подключён или не ответил.
+  ai: { agrees: boolean; summary: string } | null;
 };
 
 // Ответ камере: что сделала система — его показывает экран камеры.
@@ -22,15 +24,31 @@ export async function reportCamera(
   const last = await lastIncident(stationId);
   const isOpen = last != null && last.status !== "closed";
 
+  const { ai } = signal;
+
   if (signal.state === "obstruction") {
+    // ИИ не видит препятствия: рука, тень, блик — тревогу не поднимаем.
+    if (ai?.agrees === false) {
+      return {
+        text: `ИИ: ложное срабатывание. ${ai.summary}`,
+        incidentCode: null,
+      };
+    }
     if (isOpen) {
       return { text: "Инцидент уже открыт", incidentCode: last.code };
     }
     const opened = await openIncident(stationId, {
-      device: { id: signal.deviceId, snapshot: signal.snapshot },
+      device: {
+        id: signal.deviceId,
+        snapshot: signal.snapshot,
+        analysis: ai?.summary ?? null,
+      },
     });
     return {
-      text: "Инцидент открыт, ДСП проверяет снимок",
+      text:
+        ai == null
+          ? "Инцидент открыт, ДСП проверяет снимок"
+          : `ИИ подтвердил: ${ai.summary}`,
       incidentCode: opened.code,
     };
   }
@@ -38,11 +56,21 @@ export async function reportCamera(
   if (!isOpen || last.device_id !== signal.deviceId) {
     return { text: "Стрелка свободна", incidentCode: null };
   }
+  // Детектор считает, что стало чисто, а ИИ ещё видит предмет — ждём.
+  if (ai?.agrees === false) {
+    return {
+      text: `ИИ: предмет ещё в стрелке. ${ai.summary}`,
+      incidentCode: last.code,
+    };
+  }
   await log(stationId, last.id, [
     {
       minute: last.status === "suspected" ? 9 : 26,
       actor: "iot",
-      text: "Камера: стрелка С3 свободна, предмет убран",
+      text:
+        ai == null
+          ? "Камера: стрелка С3 свободна, предмет убран"
+          : "Камера и ИИ: стрелка С3 свободна, предмет убран",
       level: "normal",
     },
   ]);

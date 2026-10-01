@@ -123,13 +123,24 @@ export async function openIncident(stationId: string, found: Sighting) {
       description: detection.description,
       device_id: found.device?.id ?? null,
       snapshot: found.device?.snapshot ?? null,
+      analysis: found.device?.analysis ?? null,
     })
     .select("id, code")
     .single<{ id: string; code: string }>();
   if (error != null) throw error;
 
+  const analysis = found.device?.analysis;
   await log(stationId, data.id, [
     { minute: 8, actor: "iot", text: detection.signal, level: "critical" },
+    ...(analysis == null
+      ? []
+      : [
+          {
+            minute: 8,
+            actor: "system" as const,
+            text: `ИИ по снимку: ${analysis}`,
+          },
+        ]),
     {
       minute: 8,
       actor: "system",
@@ -142,7 +153,12 @@ export async function openIncident(stationId: string, found: Sighting) {
 
 // Что увидело устройство; device: null — сигнал датчика ЭЦ с демо-пульта.
 export type Sighting = {
-  device: { id: string; snapshot: string } | null;
+  device: {
+    id: string;
+    snapshot: string;
+    // Вывод ИИ по снимку; null — без анализа.
+    analysis: string | null;
+  } | null;
 };
 
 // Меняет инцидент и пишет в хронологию, что сделал участник.
