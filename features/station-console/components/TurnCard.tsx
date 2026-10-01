@@ -20,6 +20,7 @@ const ROLE_LABEL: Record<ConsoleViewer, string> = {
   dsp: "ДСП",
   dscs: "ДСЦС",
   dnc: "ДНЦ",
+  ds: "ДС",
 };
 
 // Чей ход: у хозяина хода — карточка с кнопками, единственное место
