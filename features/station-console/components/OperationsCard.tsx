@@ -12,7 +12,8 @@ type Props = {
 };
 
 // Ближайшие операции по плану путей: что бригаде сделать к прибытию или
-// отправлению. ДСП поручает одной кнопкой — поручение уходит на пейджер.
+// отправлению. ДСП поручает одной кнопкой — поручение уходит на пейджер, —
+// а поезду на пути даёт отправление: маршрут задан, машинист уведомлён.
 export function OperationsCard({ stationId, operations, canAssign }: Props) {
   return (
     <section className="flex flex-col gap-1">
@@ -38,6 +39,13 @@ export function OperationsCard({ stationId, operations, canAssign }: Props) {
                   operation={operation}
                   canAssign={canAssign}
                 />
+                {operation.departure != null && (
+                  <DepartureState
+                    stationId={stationId}
+                    departure={operation.departure}
+                    canDepart={canAssign}
+                  />
+                )}
               </div>
             </li>
           ))}
@@ -73,6 +81,40 @@ function OperationState({ stationId, operation, canAssign }: StateProps) {
           {status == null ? "Поручить бригаде" : "Поручить снова"}
         </CommandButton>
       )}
+    </div>
+  );
+}
+
+type DepartureProps = {
+  stationId: string;
+  departure: NonNullable<Props["operations"][number]["departure"]>;
+  // Отправление даёт ДСП — та же роль, что поручает бригаде.
+  canDepart: boolean;
+};
+
+// Отправление дано — статус для всех; поезд на пути и состав готов —
+// кнопка у ДСП. Пока поезд не прибыл, задачи ДСП ещё нет.
+function DepartureState({ stationId, departure, canDepart }: DepartureProps) {
+  if (departure.state === "given") {
+    return (
+      <span className={`text-[12px] ${TONE_TEXT_CLASS.normal}`}>
+        <StatusGlyph tone="normal" /> Отправление дано, маршрут{" "}
+        {departure.route} задан, машинист уведомлён
+      </span>
+    );
+  }
+  if (departure.state === "early" || !canDepart) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <CommandButton
+        stationId={stationId}
+        command={departure.command}
+        size="sm"
+        variant="secondary"
+      >
+        Дать отправление
+      </CommandButton>
+      <span className="text-[12px] text-muted">маршрут {departure.route}</span>
     </div>
   );
 }

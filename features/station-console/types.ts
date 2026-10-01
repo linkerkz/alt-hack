@@ -37,7 +37,11 @@ export type Live = {
   anchor: number | null;
   // Хронология станции, свежие сверху.
   events: JournalEvent[];
+  // Отправления, которые ДСП дал: операция «2114-departure» и минута плана.
+  departures: GivenDeparture[];
 };
+
+export type GivenDeparture = { operation: string; at: number };
 
 export type LiveIncident = {
   id: string;
@@ -152,6 +156,7 @@ export type Command =
   | { kind: "restore" }
   | { kind: "close"; keepPlan: boolean }
   | { kind: "assign"; operation: string }
+  | { kind: "depart"; operation: string }
   | { kind: "note"; text: string }
   | { kind: "advance" }
   | { kind: "reset" };
