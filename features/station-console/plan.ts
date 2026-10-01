@@ -5,13 +5,16 @@ import {
   forecastFor,
   type PlanSource,
 } from "./activePlan";
+import { departedAt } from "./departure";
 import type { Run, Span } from "./forecast";
 import { FAULT, OPTION_MOVES, STEP } from "./mock";
+import type { Source } from "./schemaTrains";
 import type { ConsoleState, OptionId } from "./types";
 
 // План занятости путей (диаграмма Ганта) на окне 45 минут по прогнозу
 // действующего плана: до решения поезда, которым мешает сбой, — конфликты,
-// после — нитки принятого варианта.
+// после — нитки принятого варианта. Полосы стоят там же, где поезда на
+// схеме: по прогнозу и до отправления, которое дал ДСП (schemaTrains.ts).
 
 export type PlanBarKind =
   | "fact"
@@ -42,7 +45,7 @@ const QUIET_TRACKS = [2, 6];
 // Стоянка не короче — подписываем род поезда: на полосе хватает места.
 const LONG_STOP_MINUTES = 8;
 
-export function trackPlan(state: ConsoleState, source: PlanSource) {
+export function trackPlan(state: ConsoleState, source: Source) {
   const { now } = source;
   const window = windowOf(source);
   const percentOf = (minute: number) => percentIn(window, minute);
@@ -73,19 +76,23 @@ export function trackPlan(state: ConsoleState, source: PlanSource) {
   };
 }
 
-function barsAt(state: ConsoleState, source: PlanSource) {
+function barsAt(state: ConsoleState, source: Source) {
   const { step } = state;
   const option = activeOption(step, state.option);
   const isDeciding = step >= STEP.suspected && step < STEP.decided;
   const changed = changedTrains(step >= STEP.decided ? option : null);
-  const bars: Bar[] = forecastFor(source, option).map((run) =>
-    isDeciding && run.waited
-      ? {
-          ...barOf(run, run.planned, "conflict"),
-          label: `${run.train} · конфликт`,
-        }
-      : barOf(run, run.forecast, changed.includes(run.train) ? "new" : "plan"),
-  );
+  // Поезд, которому мешает сбой, на путь встанет позже — по прогнозу, как на
+  // схеме; до этого он ждёт у входного, и полоса выделена конфликтом.
+  const bars: Bar[] = forecastFor(source, option).map((run) => {
+    const at = occupiedSpan(run, source);
+    if (isDeciding && run.waited) {
+      return {
+        ...barOf(run, at, "conflict"),
+        label: `${run.train} · конфликт`,
+      };
+    }
+    return barOf(run, at, changed.includes(run.train) ? "new" : "plan");
+  });
 
   // Пунктиром — нитки варианта, который диспетчер сейчас смотрит.
   if (step === STEP.choosing || step === STEP.approval) {
@@ -106,6 +113,12 @@ function barsAt(state: ConsoleState, source: PlanSource) {
     }
   }
   return bars;
+}
+
+// Поезд на пути по прогнозу — до отправления ДСП, если оно было раньше.
+function occupiedSpan(run: Run, { departures }: Source): Span {
+  const { from } = run.forecast;
+  return { from, to: departedAt(run.train, run.forecast, departures) };
 }
 
 // Окно идёт за часами: начало — четверть часа назад, кратно шагу шкалы.
