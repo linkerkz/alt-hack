@@ -30,8 +30,10 @@ export type Live = {
   workOrder: LiveWorkOrder | null;
   // Сообщения пейджера станции, свежие сверху.
   pager: PagerMessage[];
-  // План путей станции: по нему пульт предлагает поручения бригаде.
+  // План путей станции: по нему пульт предлагает поручения бригаде и
+  // считает индекс эффективности.
   plan: PlannedTrain[];
+  layout: StationLayout;
   // Хронология станции, свежие сверху.
   events: JournalEvent[];
 };
@@ -95,14 +97,27 @@ export type PagerMessageStatus =
   | "escalated"
   | "cancelled";
 
-// Поезд в плане путей станции: путь и время «14:12».
+// Поезд в плане путей станции: путь, маршруты приёма и отправления, время «14:12».
 export type PlannedTrain = {
   train: string;
   kind: "passenger" | "freight";
   track: number;
+  entryRoute: string;
+  exitRoute: string;
   arrival: string;
   departure: string;
 };
+
+// Устройство станции для расчёта индекса: пути, маршруты со стрелками и
+// поезда, за которыми закреплены бригады.
+export type StationLayout = {
+  tracks: { number: number; kind: TrackKind }[];
+  routes: { id: string; switches: string[] }[];
+  crewTrains: string[];
+};
+
+// Совпадает с enum public.track_kind.
+export type TrackKind = "main" | "receiving" | "dead_end";
 
 export type JournalEvent = ScenarioEvent & {
   // Порядок записи: время симуляции у повторных инцидентов совпадает.
@@ -162,15 +177,23 @@ export type ScenarioEvent = {
   level?: Status;
 };
 
+// Вариант перепланирования: какие поезда он меняет. Показатели варианта
+// считаются по изменённому плану — см. forecast.ts и metrics.ts.
 export type ReplanOption = {
   id: OptionId;
   name: string;
-  // Показатели индекса после варианта — в порядке METRICS.
-  values: number[];
-  index: number;
-  maxDelay: number;
-  passengerDelay: number;
   dncApproval: string;
-  changes: { train: string; text: string }[];
+  changes: PlanChange[];
   why: string;
+};
+
+// Изменение плана одного поезда: новый путь, маршруты и прибытие; стоянка
+// та же. text — то же изменение словами для диспетчера.
+export type PlanChange = {
+  train: string;
+  track: number;
+  entryRoute: string;
+  exitRoute: string;
+  arrival: string;
+  text: string;
 };

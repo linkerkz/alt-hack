@@ -1,7 +1,10 @@
 import { createSupabaseClient } from "@/lib/supabase";
-import { stationEfficiency } from "./efficiency";
+import { type PlanSource, scoreBaseline } from "./efficiency";
+import { stationLayout } from "./layout";
 import { INCIDENT_COLUMNS, type IncidentRow, toIncident } from "./live";
-import { APPROVAL, approvalTrains, replanOptions, STEP } from "./mock";
+import { APPROVAL, approvalTrains } from "./mock";
+import { stationPlan } from "./operations";
+import { scoredOptions } from "./options";
 import { indexStatus } from "./status";
 import type { LiveIncident, Neighbors, Status } from "./types";
 
@@ -41,14 +44,24 @@ const VERDICT: Record<ApprovalState, ApprovalRequest["verdict"]> = {
 };
 
 // Запросы станций круга по их последним инцидентам; без запроса — пропускаем.
+// План путей читаем только у станций с запросом: по нему считаем индексы.
 export async function getApprovalRequests(stations: ApprovalStation[]) {
   const incidents = await lastIncidents(stations.map((station) => station.id));
-  return stations.flatMap((station) => {
+  const pending = stations.flatMap((station) => {
     const incident = incidents.get(station.id);
     const state = incident == null ? null : approvalStateOf(incident);
     if (incident == null || state == null) return [];
-    return [toRequest(station, incident, state)];
+    return [{ station, incident, state }];
   });
+  return Promise.all(
+    pending.map(async ({ station, incident, state }) => {
+      const [plan, layout] = await Promise.all([
+        stationPlan(station.id),
+        stationLayout(station.id),
+      ]);
+      return toRequest(station, incident, state, { plan, layout });
+    }),
+  );
 }
 
 // Последний инцидент каждой станции одним запросом: свежие идут первыми.
@@ -71,7 +84,11 @@ async function lastIncidents(stationIds: string[]) {
 }
 
 // Согласованный запрос держим на карте, пока идут работы: 2001 ещё удержан.
-function approvalStateOf({ status, option, dncRejected }: LiveIncident) {
+function approvalStateOf({
+  status,
+  option,
+  dncRejected,
+}: LiveIncident): ApprovalState | null {
   if (status === "confirmed" && option === "B") return "pending";
   if (status === "confirmed" && dncRejected) return "rejected";
   const isWorking = status === "decided" || status === "repairing";
@@ -83,10 +100,11 @@ function toRequest(
   { id, name, neighbors }: ApprovalStation,
   incident: LiveIncident,
   state: ApprovalState,
+  source: PlanSource,
 ): ApprovalRequest {
   const { odd } = neighbors;
-  const options = replanOptions(neighbors);
-  const now = stationEfficiency(STEP.approval).index;
+  const options = scoredOptions(source, neighbors);
+  const before = scoreBaseline(source).index;
 
   return {
     stationId: id,
@@ -99,7 +117,7 @@ function toRequest(
     trains: approvalTrains(neighbors),
     unchanged: APPROVAL.unchanged,
     index: [
-      indexItem("Индекс сейчас", now),
+      indexItem("До сбоя", before),
       indexItem("Не менять", options.none.index),
       indexItem("С удержанием", options.B.index),
     ],

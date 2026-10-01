@@ -8,6 +8,18 @@ const INDEX_THRESHOLDS = { normal: 80, warning: 60 };
 // Пороги оценки одного показателя из 20 баллов.
 const SCORE_THRESHOLDS = { normal: 17, warning: 12 };
 
+// Показатели индекса: каждый даёт до MAX_SCORE баллов из 100. Оценка линейна
+// между good (полный балл) и bad (ноль), значения за ними — в пределе.
+export const MAX_SCORE = 20;
+
+export const METRICS = [
+  { label: "Пропускная способность", unit: "%", good: 100, bad: 70 },
+  { label: "Отклонение от графика", unit: " мин", good: 0, bad: 15 },
+  { label: "Загрузка путей", unit: "%", good: 75, bad: 95 },
+  { label: "Конфликты маршрутов", unit: "", good: 0, bad: 3 },
+  { label: "Простой ресурсов", unit: " мин", good: 0, bad: 30 },
+];
+
 export function indexStatus(index: number) {
   return statusOf(index, INDEX_THRESHOLDS);
 }

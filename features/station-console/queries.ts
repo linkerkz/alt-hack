@@ -23,11 +23,11 @@ export async function getStationConsole(
   return {
     stationId,
     clock,
-    efficiency: stationEfficiency(state.step),
+    efficiency: stationEfficiency(state, live, neighbors),
     schema: stationSchema(state, neighbors),
     plan: trackPlan(state),
     incident: incidentCard(state, neighbors, live),
-    comparison: optionComparison(state, neighbors),
+    comparison: optionComparison(state, live, neighbors),
     objects: dspObjects(state),
     pager: pagerCard(live, clock),
     workOrder: live.workOrder,

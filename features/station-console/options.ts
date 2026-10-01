@@ -1,7 +1,10 @@
+import { type PlanSource, scorePlan } from "./efficiency";
+import type { PlanScore } from "./metrics";
 import { replanOptions, STEP } from "./mock";
 import { formatNumber, indexStatus } from "./status";
 import type {
   ConsoleState,
+  Live,
   Neighbors,
   OptionId,
   ReplanOption,
@@ -20,9 +23,15 @@ export type ComparisonCell = {
 const ORDER: OptionId[] = ["none", "A", "B"];
 const RECOMMENDED: OptionId = "B";
 
-export function optionComparison(state: ConsoleState, neighbors: Neighbors) {
+type ScoredOption = ReplanOption & PlanScore;
+
+export function optionComparison(
+  state: ConsoleState,
+  live: Live,
+  neighbors: Neighbors,
+) {
   const { step, option } = state;
-  const options = replanOptions(neighbors);
+  const options = scoredOptions(live, neighbors);
   const decided = step >= STEP.decided;
   const selectable = step === STEP.escalated || step === STEP.choosing;
   const selected = options[option];
@@ -47,6 +56,16 @@ export function optionComparison(state: ConsoleState, neighbors: Neighbors) {
   };
 }
 
+// Варианты вместе с показателями их планов.
+export function scoredOptions(live: PlanSource, neighbors: Neighbors) {
+  const options = replanOptions(neighbors);
+  const score = (id: OptionId): ScoredOption => ({
+    ...options[id],
+    ...scorePlan({ live, neighbors, option: id }),
+  });
+  return { none: score("none"), A: score("A"), B: score("B") };
+}
+
 function noteAt(step: number, name: string) {
   if (step === STEP.escalated) {
     return "Предварительно: ждёт отправки ремонтной бригады";
@@ -61,7 +80,7 @@ function captionOf(id: OptionId, accepted: boolean) {
   return accepted ? `${base} · принят` : base;
 }
 
-function comparisonRows(options: ReplanOption[]) {
+function comparisonRows(options: ScoredOption[]) {
   return [
     numberRow(options, {
       label: "Индекс",
@@ -114,7 +133,7 @@ function comparisonRows(options: ReplanOption[]) {
 
 type RowParams = {
   label: string;
-  read: (option: ReplanOption) => number;
+  read: (option: ScoredOption) => number;
   unit?: string;
   // Какое значение лучше; по умолчанию — меньшее.
   better?: "max" | "min";
@@ -123,7 +142,7 @@ type RowParams = {
 };
 
 function numberRow(
-  options: ReplanOption[],
+  options: ScoredOption[],
   { label, read, unit = "", better = "min", withStatus = false }: RowParams,
 ) {
   const values = options.map(read);
