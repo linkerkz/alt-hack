@@ -1,30 +1,27 @@
 import { supabaseAdmin } from "@/lib/supabase";
-import { DETECTION, detectionOf } from "./detection";
+import { OBSTRUCTION, REPAIR } from "./fault";
 import { type JournalEntry, simAt } from "./journal";
 import type { LiveIncident } from "./types";
+import type { WorkPlan } from "./workPlan";
 
 // Записи сценария в базу: инцидент, наряд, хронология. Пишет сервер
 // секретным ключом — политик записи у таблиц нет. Можно ли писать, решают
 // вызывающие: команды пульта и сигнал камеры.
 
-// Что увидело устройство; device: null — сигнал датчика ЭЦ с демо-пульта.
+// Что увидела камера.
 export type Sighting = {
-  device: {
-    id: string;
-    snapshot: string;
-    // Вывод ИИ по снимку; null — без анализа.
-    analysis: string | null;
-  } | null;
+  deviceId: string;
+  snapshot: string;
+  // Вывод ИИ по снимку; null — без анализа.
+  analysis: string | null;
 };
 
-// Кто выдаёт наряд: станция и диспетчер, нажавший «Подтвердить».
+// Кто выдаёт наряд: станция и диспетчер, отправивший ремонтную бригаду.
 type Issuer = { stationId: string; operatorId: string };
 
-// Стрелка С3 под подозрением: система открывает инцидент и закрывает
-// маршруты. Без устройства — сработал датчик ЭЦ, с камерой — её снимок.
-export async function openIncident(stationId: string, found: Sighting) {
-  const { device } = found;
-  const detection = DETECTION[device == null ? "sensor" : "camera"];
+// Камера увидела предмет в стрелке С3: система открывает инцидент со
+// снимком и закрывает маршруты.
+export async function openIncident(stationId: string, sighting: Sighting) {
   const { data, error } = await supabaseAdmin()
     .from("incidents")
     .insert({
@@ -33,24 +30,24 @@ export async function openIncident(stationId: string, found: Sighting) {
       object_id: "С3",
       source: "iot",
       severity: "high",
-      title: detection.title,
-      description: detection.description,
-      device_id: device?.id ?? null,
-      snapshot: device?.snapshot ?? null,
-      analysis: device?.analysis ?? null,
+      title: OBSTRUCTION.title,
+      description: OBSTRUCTION.description,
+      device_id: sighting.deviceId,
+      snapshot: sighting.snapshot,
+      analysis: sighting.analysis,
     })
     .select("id, code")
     .single<{ id: string; code: string }>();
   if (error != null) throw error;
 
   const entries: JournalEntry[] = [
-    { minute: 8, actor: "iot", text: detection.signal, level: "critical" },
+    { minute: 8, actor: "iot", text: OBSTRUCTION.signal, level: "warning" },
   ];
-  if (device?.analysis != null) {
+  if (sighting.analysis != null) {
     entries.push({
       minute: 8,
       actor: "system",
-      text: `ИИ: ${device.analysis}`,
+      text: `ИИ: ${sighting.analysis}`,
     });
   }
   entries.push({
@@ -63,28 +60,30 @@ export async function openIncident(stationId: string, found: Sighting) {
   return data;
 }
 
-// Наряд службе, которая чинит то, что обнаружено: датчик — СЦБ, камера — путейцы.
+// Наряд ремонтной бригаде по плану работ: печатный лист с QR на чеклист.
 export async function issueWorkOrder(
   { stationId, operatorId }: Issuer,
   incident: LiveIncident,
+  plan: WorkPlan,
 ) {
-  const { workOrder } = detectionOf(incident);
   const { data, error } = await supabaseAdmin()
     .from("work_orders")
     .insert({
       station_id: stationId,
       incident_id: incident.id,
       object_id: "С3",
-      service: workOrder.service,
-      title: workOrder.title,
-      description: workOrder.description,
+      service: REPAIR.service,
+      title: plan.title,
+      description: plan.description,
+      work_window: plan.window,
+      safety: plan.safety,
       created_by: operatorId,
     })
     .select("id")
     .single<{ id: string }>();
   if (error != null) throw error;
 
-  const items = workOrder.items.map((text, i) => ({
+  const items = plan.items.map((text, i) => ({
     work_order_id: data.id,
     position: i + 1,
     text,
@@ -113,10 +112,10 @@ export async function updateWorkOrder(id: string, patch: object) {
   if (error != null) throw error;
 }
 
-// Демо с чистого листа: хронология и инциденты станции, наряды уходят
-// каскадом вслед за инцидентом.
+// Демо с чистого листа: пейджер, хронология и инциденты станции, наряды
+// уходят каскадом вслед за инцидентом.
 export async function resetStation(stationId: string) {
-  for (const table of ["timeline_events", "incidents"]) {
+  for (const table of ["pager_messages", "timeline_events", "incidents"]) {
     const { error } = await supabaseAdmin()
       .from(table)
       .delete()

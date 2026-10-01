@@ -1,14 +1,17 @@
 import Link from "next/link";
+import { Tag } from "@/components/ui/Tag";
 
 type Props = {
   stationName: string;
   // Время сценария: часы симуляции, а не реальные.
   clock: string;
   mapHref: string | null;
+  // Пульт открыт только для просмотра: ДНЦ смотрит станцию своего круга.
+  viewOnly: boolean;
 };
 
 // Строка над пультом: где мы (участок › станция) и время симуляции.
-export function ConsoleBar({ stationName, clock, mapHref }: Props) {
+export function ConsoleBar({ stationName, clock, mapHref, viewOnly }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-line border-b px-5 py-2">
       <span className="flex gap-1 text-[12px] text-muted">
@@ -25,6 +28,7 @@ export function ConsoleBar({ stationName, clock, mapHref }: Props) {
           {mapHref != null && "› "}ст. {stationName} · 6 путей
         </span>
       </span>
+      {viewOnly && <Tag variant="outline">Только просмотр</Tag>}
       <span className="ml-auto flex items-baseline gap-2">
         <span className="font-heading text-[24px] leading-none">{clock}</span>
         <span className="text-[11px] text-muted">

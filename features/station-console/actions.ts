@@ -11,14 +11,16 @@ import type {
   ConsoleRole,
 } from "./types";
 
-// Кто может отдать команду. Датчик и служба — симуляция с демо-пульта, её
-// запускают оба диспетчера станции. За ДНЦ на пульте только «Далее»
-// согласует; сам ДНЦ отвечает с карты — answerApproval.
+// Кто может отдать команду. Ответ путейцев и работы бригады — симуляция с
+// демо-пульта, её запускают оба диспетчера станции. За ДНЦ на пульте только
+// «Далее» согласует; сам ДНЦ отвечает с карты — answerApproval.
 const BOTH: ConsoleRole[] = ["dscs", "dsp"];
 const ROLES: Record<Command["kind"], ConsoleRole[]> = {
-  detect: BOTH,
-  confirm: ["dsp"],
+  callCrew: ["dsp"],
   dismiss: ["dsp"],
+  escalate: BOTH,
+  callRepair: ["dsp"],
+  planWork: ["dsp"],
   accept: ["dscs"],
   approve: BOTH,
   reject: [],
@@ -28,6 +30,7 @@ const ROLES: Record<Command["kind"], ConsoleRole[]> = {
   finishWork: BOTH,
   restore: ["dsp"],
   close: ["dscs"],
+  page: ["dsp"],
   advance: BOTH,
   reset: BOTH,
 };

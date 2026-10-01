@@ -1,16 +1,9 @@
-import { DETECTION } from "./detection";
-import type {
-  ChosenOption,
-  Command,
-  DetectionKind,
-  RouteTask,
-  Status,
-} from "./types";
+import type { ChosenOption, Command, RouteTask, Status } from "./types";
 
 // Что команда пишет в хронологию станции. Время — минута симуляции после
 // 14:00, как у плана путей: демо-час идёт быстрее реального. Обнаружение
-// пишет openIncident, этапы наряда — сама база (триггер work_order_stage):
-// рабочий работает не с пульта.
+// пишет openIncident, ответы путейцев и этапы наряда — сама база (триггеры
+// pager_message_answer и work_order_stage): бригады работают не с пульта.
 
 export type JournalEntry = {
   minute: number;
@@ -31,7 +24,6 @@ type Actor =
 
 type Context = {
   code: string;
-  detection: DetectionKind;
   option: ChosenOption | null;
   // Поезда, которые ДСП принял по новому плану, включая этот.
   routed: RouteTask[];
@@ -39,14 +31,30 @@ type Context = {
 
 export function journalOf(command: Command, context: Context): JournalEntry[] {
   switch (command.kind) {
-    case "confirm":
-      return confirmEntries(context.detection);
+    case "callCrew":
+      return [
+        {
+          minute: 8,
+          actor: "dsp",
+          text: "ДСП подтвердил предмет по снимку и вызвал путейцев на пейджер",
+          level: "warning",
+        },
+      ];
+    case "callRepair":
+      return [
+        {
+          minute: 9,
+          actor: "dsp",
+          text: "ДСП вызвал ремонтную бригаду. Рассчитано 2 варианта, план работ — после решения",
+          level: "warning",
+        },
+      ];
     case "dismiss":
       return [
         {
           minute: 9,
           actor: "dsp",
-          text: `ДСП: контроль С3 есть, ложная тревога. Инцидент ${context.code} закрыт`,
+          text: `ДСП: на снимке нет предмета, ложная тревога. Инцидент ${context.code} закрыт`,
           level: "normal",
         },
       ];
@@ -117,23 +125,6 @@ export function simAt(minute: number) {
 // Комментарий ДНЦ в хронологии: « «текст»», пустой — не пишем.
 function quoted(comment: string | null) {
   return comment == null ? "" : ` «${comment}»`;
-}
-
-function confirmEntries(kind: DetectionKind): JournalEntry[] {
-  const { confirmed, workOrder } = DETECTION[kind];
-  return [
-    {
-      minute: 9,
-      actor: "dsp",
-      text: `${confirmed}. Рассчитано 2 варианта`,
-      level: "warning",
-    },
-    {
-      minute: 9,
-      actor: "system",
-      text: `Наряд ${workOrder.serviceLabel}: ${workOrder.title.toLowerCase()}`,
-    },
-  ];
 }
 
 function acceptEntry(option: ChosenOption): JournalEntry {

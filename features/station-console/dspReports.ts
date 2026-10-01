@@ -8,8 +8,17 @@ export function dspReports(state: ConsoleState, { odd }: Neighbors) {
   const routed = routeDone(state);
   const reports: { time: string; text: string }[] = [];
 
+  if (step >= STEP.dispatched) {
+    reports.push({
+      time: "14:08",
+      text: "Пейджер бригады: предмет в стрелке С3",
+    });
+  }
   if (step >= STEP.choosing) {
-    reports.push({ time: "14:09", text: "Ремонтной службе: отказ стрелки С3" });
+    reports.push({
+      time: "14:09",
+      text: "Ремонтной бригаде: вызов на стрелку С3",
+    });
   }
   if (step >= STEP.decided && routed.r101) {
     reports.push(

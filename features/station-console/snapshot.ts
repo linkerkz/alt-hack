@@ -4,11 +4,11 @@ import type { LiveIncident } from "./types";
 
 const JPEG_PREFIX = "data:image/jpeg;base64,";
 
-// Адрес снимка камеры; null — инцидент без снимка. Снимок — отдельная
-// картинка: браузер кэширует её, а не получает заново в каждом автообновлении
-// пульта. Инцидент с камеры открывается всегда со снимком.
+// Адрес снимка камеры; null — инцидента нет. Снимок — отдельная картинка:
+// браузер кэширует её, а не получает заново в каждом автообновлении пульта.
+// Инцидент открывает только камера, всегда со снимком.
 export function snapshotOf(incident: LiveIncident | null) {
-  if (incident?.detection !== "camera") return null;
+  if (incident == null) return null;
   return `/incidents/${incident.id}/snapshot`;
 }
 

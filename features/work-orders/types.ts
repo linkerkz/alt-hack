@@ -6,6 +6,10 @@ export type WorkOrder = {
   service: Service;
   title: string;
   description: string;
+  // Окно работ из плана; null — наряд без плана.
+  window: string | null;
+  // Меры безопасности перед началом работ.
+  safety: string[];
   status: WorkOrderStatus;
   createdAt: string;
   doneAt: string | null;

@@ -18,7 +18,7 @@ import { devicePath } from "@/features/devices/paths";
 import { getStationDevices } from "@/features/devices/queries";
 import type { Device } from "@/features/devices/types";
 import { getStation } from "@/features/network-map/queries";
-import { formatTime, SERVICE_LABEL } from "@/features/work-orders/status";
+import { formatTime } from "@/features/work-orders/status";
 import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Полевые устройства" };
@@ -86,5 +86,5 @@ export default async function StationDevicesPage({
 
 function purposeOf(device: Device) {
   if (device.kind === "camera") return `Камера · стрелка ${device.objectId}`;
-  return `Пейджер · ${SERVICE_LABEL[device.service]}`;
+  return "Пейджер · станционная бригада";
 }

@@ -134,47 +134,24 @@ on conflict (station_id, id) do update set
   name = excluded.name,
   train_number = excluded.train_number;
 
--- Демо-наряд электромеханику СЦБ на стрелку С3 (сценарий «отказ стрелки»).
--- Фиксированный id — его QR печатаем на демо. Повторный запуск сбрасывает
--- наряд: статус «выдан», галочки пустые.
+-- Демо-наряд с фиксированным id остался от сценария «датчик ЭЦ»: наряды
+-- теперь выдаёт ДСП по инциденту.
 delete from public.work_orders
 where id = 'b0000000-0000-4000-8000-000000000001';
 
-insert into public.work_orders (
-  id, station_id, incident_id, object_id, service, title, description, created_by
-) values (
-  'b0000000-0000-4000-8000-000000000001',
-  'almaty-1',
-  null,
-  'С3',
-  'signalling',
-  'Восстановить контроль стрелки С3',
-  'Стрелка С3 в нечётной горловине потеряла контроль положения. Маршруты через неё закрыты, поезда принимаются по варианту перепланирования.',
-  'a0000000-0000-4000-8000-000000000001'
-);
+-- Полевые устройства станции: камера над стрелкой С3 и пейджер бригады.
+-- Фиксированные id — их QR открываем на телефонах перед демо. Пейджер СЦБ
+-- остался от прошлой версии: ремонтникам наряд приходит листом с QR.
+delete from public.devices
+where id = 'c0000000-0000-4000-8000-000000000003';
 
-insert into public.work_order_items (work_order_id, position, text)
-select 'b0000000-0000-4000-8000-000000000001', position, text
-from (values
-  (1, 'Получить разрешение ДСП, записать в журнал ДУ-46'),
-  (2, 'Осмотреть стрелку С3: остряки, тяги, замыкатель'),
-  (3, 'Проверить электропривод и автопереключатель'),
-  (4, 'Измерить напряжение в цепи контроля'),
-  (5, 'Перевести стрелку с пульта, проверить контроль в плюсе и минусе')
-) as items (position, text);
-
--- Полевые устройства станции: камера над стрелкой С3 и пейджеры бригад.
--- Фиксированные id — их QR открываем на телефонах перед демо.
-insert into public.devices (id, station_id, kind, name, object_id, service) values
+insert into public.devices (id, station_id, kind, name, object_id) values
   ('c0000000-0000-4000-8000-000000000001', 'almaty-1', 'camera',
-    'Камера нечётной горловины', 'С3', null),
+    'Камера нечётной горловины', 'С3'),
   ('c0000000-0000-4000-8000-000000000002', 'almaty-1', 'pager',
-    'Пейджер путейцев', null, 'track'),
-  ('c0000000-0000-4000-8000-000000000003', 'almaty-1', 'pager',
-    'Пейджер СЦБ', null, 'signalling')
+    'Пейджер станционной бригады', null)
 on conflict (id) do update set
   station_id = excluded.station_id,
   kind = excluded.kind,
   name = excluded.name,
-  object_id = excluded.object_id,
-  service = excluded.service;
+  object_id = excluded.object_id;

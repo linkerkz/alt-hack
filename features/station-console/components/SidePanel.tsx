@@ -1,5 +1,6 @@
+import { TONE_GLYPH, TONE_TEXT_CLASS } from "@/components/ui/tone";
 import type { StationConsoleData } from "../queries";
-import type { ConsoleRole, ConsoleState } from "../types";
+import type { ConsoleState, ConsoleViewer } from "../types";
 import { CollapsedPanel } from "./CollapsedPanel";
 import { ConsoleTabs } from "./ConsoleTabs";
 import { DspPanel } from "./DspPanel";
@@ -7,14 +8,14 @@ import { IncidentPanel } from "./IncidentPanel";
 import { OverviewPanel } from "./OverviewPanel";
 
 type Props = {
-  role: ConsoleRole;
+  role: ConsoleViewer;
   operatorName: string;
   data: StationConsoleData;
   state: ConsoleState;
   mapHref: string | null;
 };
 
-// Правая панель пульта: у ДСЦС обзор и инцидент, у ДСП — панель исполнения.
+// Правая панель пульта: у ДСЦС и ДНЦ обзор и инцидент, у ДСП — панель исполнения.
 // Свёрнутая превращается в узкую полосу.
 export function SidePanel({ role, operatorName, data, state, mapHref }: Props) {
   if (!state.panel) return <Collapsed role={role} data={data} state={state} />;
@@ -31,7 +32,12 @@ export function SidePanel({ role, operatorName, data, state, mapHref }: Props) {
           />
           <div className="flex flex-1 flex-col gap-[18px] overflow-auto px-5 pt-4 pb-[120px]">
             {state.tab === "incident" ? (
-              <IncidentPanel data={data} state={state} mapHref={mapHref} />
+              <IncidentPanel
+                data={data}
+                state={state}
+                mapHref={mapHref}
+                viewOnly={role === "dnc"}
+              />
             ) : (
               <OverviewPanel incident={data.incident} state={state} />
             )}
@@ -72,8 +78,11 @@ function Collapsed({ role, data, state }: CollapsedProps) {
       }
       marker={
         data.incident.isActive && (
-          <span className="text-[12px] text-critical" title="Активный инцидент">
-            ■
+          <span
+            className={`text-[12px] ${TONE_TEXT_CLASS[data.incident.tone]}`}
+            title="Активный инцидент"
+          >
+            {TONE_GLYPH[data.incident.tone]}
           </span>
         )
       }

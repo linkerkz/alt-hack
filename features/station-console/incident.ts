@@ -1,5 +1,5 @@
 import type { ChainState } from "./chain";
-import { type Detection, detectionOf } from "./detection";
+import { DAMAGE, OBSTRUCTION, REPAIR } from "./fault";
 import {
   baselineEvents,
   INCIDENT,
@@ -17,6 +17,7 @@ import type {
   LiveIncident,
   LiveWorkOrder,
   Neighbors,
+  PagerMessage,
   ScenarioEvent,
   Status,
 } from "./types";
@@ -44,11 +45,16 @@ export function incidentCard(
   const statusIndex = STEP_INCIDENT_STATUS[step];
   const incidentId = live.incident?.id;
   const feed: ScenarioEvent[] = [...live.events, ...baselineEvents(neighbors)];
-  const detection = detectionOf(live.incident);
+  // Путейцы нашли повреждение: инцидент уже не про предмет, а про ремонт.
+  const damaged = step >= STEP.escalated;
+  const tone: Status = damaged ? "critical" : "warning";
 
   return {
     code: live.incident?.code ?? INCIDENT.id,
-    detection,
+    fault: damaged ? { ...OBSTRUCTION, ...DAMAGE } : OBSTRUCTION,
+    tone,
+    // Варианты перепланирования нужны, только когда стрелку будут чинить.
+    showOptions: damaged,
     snapshot: snapshotOf(live.incident),
     analysis: live.incident?.analysis ?? null,
     isActive: step >= STEP.suspected && step <= STEP.restored,
@@ -60,7 +66,7 @@ export function incidentCard(
     dncBadge: dncBadgeAt(state, isRejected(state, live.incident)),
     suggestion: suggestionAt(step, neighbors),
     action: actionAt(state, neighbors, live.incident),
-    tasks: tasksAt(state, neighbors, live, detection),
+    tasks: tasksAt(state, neighbors, live),
     events: live.events.filter((event) => event.incidentId === incidentId),
     feed,
   };
@@ -78,6 +84,9 @@ function dncBadgeAt({ step, option }: ConsoleState, rejected: boolean) {
 }
 
 function suggestionAt(step: number, { odd }: Neighbors) {
+  if (step <= STEP.dispatched) {
+    return "Путейцы уберут предмет — перепланирование пока не нужно.";
+  }
   if (step <= STEP.choosing) {
     return `Система предлагает вариант Б: 101 на путь 1, 2001 удержать на ст. ${odd}.`;
   }
@@ -104,8 +113,18 @@ function actionAt(
   switch (step) {
     case STEP.suspected:
       return {
-        text: "Система обнаружила проблему автоматически. Проверка ушла ДСП: после подтверждения неисправности варианты станут активными.",
-        waiting: "Ждёт подтверждения ДСП",
+        text: "Камера заметила предмет в стрелке С3. ДСП проверяет снимок и вызывает путейцев.",
+        waiting: "Ждёт ДСП",
+      };
+    case STEP.dispatched:
+      return {
+        text: "Путейцы вызваны к С3. Если они уберут предмет, инцидент закроется без перепланирования.",
+        waiting: "Ждёт путейцев",
+      };
+    case STEP.escalated:
+      return {
+        text: "Путейцы сообщили, что стрелка повреждена. ДСП отправляет ремонтную бригаду, после этого варианты станут активными.",
+        waiting: "Ждёт ДСП",
       };
     case STEP.choosing:
       return {
@@ -125,11 +144,11 @@ function actionAt(
       const routed = routeDone(state);
       if (routed.r101 && routed.r2001) {
         return {
-          text: "ДСП задал маршруты по новому плану. ДНЦ получил «маршрут готов», машинисты уведомлены.",
+          text: "ДСП задал маршруты по новому плану. ДНЦ получил «маршрут готов», машинисты уведомлены. Ремонтной бригаде — план работ от ДСП.",
         };
       }
       return {
-        text: "План обновлён. Задачи переданы ДСП: приём поездов по новому плану.",
+        text: "План обновлён. Задачи переданы ДСП: приём поездов по новому плану и план работ ремонтной бригаде.",
         waiting: "Ждёт подтверждения ДСП",
       };
     }
@@ -174,8 +193,7 @@ function rejectedAction({ dncComment }: LiveIncident): ConsoleAction {
 function tasksAt(
   state: ConsoleState,
   { odd }: Neighbors,
-  { incident, workOrder }: Live,
-  detection: Detection,
+  { incident, workOrder, pager }: Live,
 ) {
   const { step, option } = state;
   const tasks: { who: string; what: string; status: string; tone: Status }[] =
@@ -186,6 +204,14 @@ function tasksAt(
   const acknowledged = routed.r101 && routed.r2001;
   const pending = { status: "Ожидает…", tone: "warning" as const };
 
+  const call = pager.find((message) => message.incidentId === incident?.id);
+  if (step >= STEP.dispatched && call != null) {
+    tasks.push({
+      who: "Путейцы",
+      what: "Убрать предмет из С3",
+      ...crewOf(call),
+    });
+  }
   if (isRejected(state, incident)) {
     tasks.push({
       who: "ДНЦ",
@@ -234,8 +260,8 @@ function tasksAt(
         : { status: "Уведомлён", tone: "warning" }),
     },
     {
-      who: detection.crew,
-      what: detection.workOrder.title,
+      who: REPAIR.crew,
+      what: workOrder?.title ?? REPAIR.objective,
       status: repairStatusOf(workOrder),
       tone: step >= STEP.restored ? "normal" : "warning",
     },
@@ -243,10 +269,21 @@ function tasksAt(
   return tasks;
 }
 
-// Этап наряда: служба взяла его в работу сама, по QR.
+// Ответ путейцев на вызов с пейджера.
+function crewOf({ status }: PagerMessage): { status: string; tone: Status } {
+  if (status === "sent") return { status: "Вызов отправлен", tone: "warning" };
+  if (status === "accepted") return { status: "Идут к С3", tone: "warning" };
+  if (status === "escalated") {
+    return { status: "Нужен ремонт", tone: "critical" };
+  }
+  return { status: "Предмет убран", tone: "normal" };
+}
+
+// Этап наряда: бригада взяла его в работу сама, по QR.
 function repairStatusOf(workOrder: LiveWorkOrder | null) {
   const status = workOrder?.status;
-  if (workOrder == null || status === "issued") return "Наряд выдан, не взят";
+  if (workOrder == null) return "План работ не сформирован";
+  if (status === "issued") return "Наряд выдан, не взят";
   if (status === "in_progress") {
     return `В работе · ${workOrder.checked} из ${workOrder.total}`;
   }

@@ -3,19 +3,20 @@
 import { useEffect, useRef, useState } from "react";
 
 type Props = {
-  // Наряд на экране; null — нарядов нет.
-  orderId: string | null;
+  // Свежее сообщение без ответа; null — бригаде нечего делать.
+  message: { id: string; isCall: boolean } | null;
 };
 
-// Сколько держится вспышка «Новый наряд».
+// Сколько держится вспышка нового сообщения.
 const FLASH_MS = 5000;
 const VIBRATION = [300, 150, 300, 150, 600];
 
-// Сигнал пейджера: пришёл новый наряд — вибрация, три гудка и вспышка на
-// весь экран. Наряд, который был на экране при открытии, не сигналит.
+// Сигнал пейджера: пришёл вызов или задача — вибрация, три гудка и вспышка
+// на весь экран. Сообщение, которое было на экране при открытии, не сигналит.
 // Звук браузер разрешает только после касания — включаем его на первом.
-export function PagerAlert({ orderId }: Props) {
-  const shown = useRef(orderId);
+export function PagerAlert({ message }: Props) {
+  const id = message?.id ?? null;
+  const shown = useRef(id);
   const audio = useRef<AudioContext | null>(null);
   const [flash, setFlash] = useState(false);
 
@@ -28,8 +29,8 @@ export function PagerAlert({ orderId }: Props) {
   }, []);
 
   useEffect(() => {
-    const isNew = orderId != null && orderId !== shown.current;
-    shown.current = orderId;
+    const isNew = id != null && id !== shown.current;
+    shown.current = id;
     if (!isNew) return;
 
     navigator.vibrate?.(VIBRATION);
@@ -37,9 +38,9 @@ export function PagerAlert({ orderId }: Props) {
     setFlash(true);
     const timer = setTimeout(() => setFlash(false), FLASH_MS);
     return () => clearTimeout(timer);
-  }, [orderId]);
+  }, [id]);
 
-  if (!flash) return null;
+  if (!flash || message == null) return null;
   return (
     <button
       type="button"
@@ -47,10 +48,10 @@ export function PagerAlert({ orderId }: Props) {
       className="fixed inset-0 z-50 flex animate-pulse flex-col items-center justify-center gap-3 border-8 border-device-alert bg-device/95 p-8 text-center"
     >
       <span className="text-[13px] text-device-alert uppercase tracking-[0.16em]">
-        ■ Новый наряд
+        {message.isCall ? "■ Вызов" : "▲ Новая задача"}
       </span>
       <span className="font-bold text-[28px] uppercase leading-tight">
-        Примите наряд в работу
+        {message.isCall ? "Срочно к стрелке С3" : "Задача от ДСП"}
       </span>
       <span className="text-[12px] text-device-dim">Коснитесь экрана</span>
     </button>

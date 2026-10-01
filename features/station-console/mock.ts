@@ -1,6 +1,12 @@
-import type { Neighbors, OptionId, ReplanOption, ScenarioEvent } from "./types";
+import type {
+  Neighbors,
+  OptionId,
+  PagerTask,
+  ReplanOption,
+  ScenarioEvent,
+} from "./types";
 
-// Демо-сценарий «отказ стрелки С3», пока нет симулятора. Ход инцидента —
+// Демо-сценарий «предмет в стрелке С3», пока нет симулятора. Ход инцидента —
 // в базе, а здесь — что показывать на каждом шаге. Время — минуты после
 // 14:00; имена соседних станций подставляются по реальной станции.
 
@@ -8,19 +14,21 @@ import type { Neighbors, OptionId, ReplanOption, ScenarioEvent } from "./types";
 export const STEP = {
   normal: 0,
   suspected: 1,
-  choosing: 2,
-  approval: 3,
-  decided: 4,
-  repairing: 5,
-  repaired: 6,
-  restored: 7,
-  closed: 8,
+  dispatched: 2,
+  escalated: 3,
+  choosing: 4,
+  approval: 5,
+  decided: 6,
+  repairing: 7,
+  repaired: 8,
+  restored: 9,
+  closed: 10,
 } as const;
 
 // Минута сценария на каждом шаге.
-export const STEP_MINUTE = [5, 8, 9, 10, 11, 16, 27, 29, 32];
+export const STEP_MINUTE = [5, 8, 8, 9, 9, 10, 11, 16, 27, 29, 32];
 
-// Тексты инцидента зависят от того, чем он обнаружен, — см. detection.ts.
+// Тексты инцидента: что увидела камера и что нашли путейцы — см. fault.ts.
 export const INCIDENT = {
   id: "И-0417",
   detectedAt: "14:08",
@@ -28,6 +36,7 @@ export const INCIDENT = {
 
 export const INCIDENT_STATUS = [
   "Подозрение",
+  "Путейцы",
   "Подтверждён",
   "Решение принято",
   "Работы идут",
@@ -36,7 +45,7 @@ export const INCIDENT_STATUS = [
 ];
 
 // Статус инцидента на каждом шаге — номер в INCIDENT_STATUS.
-export const STEP_INCIDENT_STATUS = [0, 0, 1, 1, 2, 3, 3, 4, 5];
+export const STEP_INCIDENT_STATUS = [0, 0, 1, 2, 2, 2, 3, 4, 4, 5, 6];
 
 // Показатели индекса: каждый даёт до MAX_SCORE баллов из 100.
 export const MAX_SCORE = 20;
@@ -54,12 +63,24 @@ export const METRIC_VALUES = [
   { values: [100, 0.5, 58, 0, 2], scores: [20, 19, 18, 20, 15] },
   { values: [96, 4.2, 74, 2, 6], scores: [19, 14, 14, 16, 15] },
   { values: [96, 4.2, 74, 2, 6], scores: [19, 14, 14, 16, 15] },
+  { values: [96, 4.2, 74, 2, 6], scores: [19, 14, 14, 16, 15] },
+  { values: [96, 4.2, 74, 2, 6], scores: [19, 14, 14, 16, 15] },
   { values: [95, 4.8, 72, 2, 8], scores: [19, 13, 14, 16, 15] },
   { values: [97, 3.1, 68, 0, 7], scores: [19, 15, 15, 20, 11] },
   { values: [97, 3.1, 68, 0, 7], scores: [19, 15, 15, 20, 11] },
   { values: [97, 2.8, 66, 0, 6], scores: [19, 16, 15, 20, 11] },
   { values: [98, 2.1, 60, 0, 4], scores: [19, 17, 17, 20, 13] },
   { values: [99, 1.2, 58, 0, 3], scores: [20, 18, 18, 20, 14] },
+];
+
+// Готовые задачи бригаде на пейджер: ДСП отправляет их с пульта.
+export const PAGER_TASKS: { id: PagerTask; text: string }[] = [
+  {
+    id: "train",
+    text: "Сформировать состав 2114 на пути 4 к отправлению 14:45",
+  },
+  { id: "unload", text: "Разгрузить три вагона на пути 6 (тупик)" },
+  { id: "couple", text: "Собрать вагоны с пути 5 и подать на путь 6" },
 ];
 
 // Индекс до инцидента — с ним сравниваем текущий.

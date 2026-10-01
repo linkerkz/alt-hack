@@ -1,6 +1,7 @@
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Card } from "@/components/ui/Card";
 import { Kicker } from "@/components/ui/Kicker";
+import { TONE_GLYPH, TONE_TEXT_CLASS } from "@/components/ui/tone";
 import type { StationConsoleData } from "../queries";
 import { consoleHref } from "../state";
 import type { ConsoleState } from "../types";
@@ -18,15 +19,20 @@ export function OverviewPanel({ incident, state }: Props) {
       <section className="flex flex-col gap-2.5">
         <Kicker>Активные инциденты</Kicker>
         {incident.isActive ? (
-          <Card emphasis="critical" className="flex flex-col gap-1.5 p-3.5">
+          <Card
+            emphasis={incident.tone === "critical" ? "critical" : "accent"}
+            className="flex flex-col gap-1.5 p-3.5"
+          >
             <div className="flex justify-between gap-2.5 text-[11px]">
-              <span className="text-critical uppercase tracking-[0.08em]">
-                ■ Высокая · {incident.code}
+              <span
+                className={`uppercase tracking-[0.08em] ${TONE_TEXT_CLASS[incident.tone]}`}
+              >
+                {TONE_GLYPH[incident.tone]} {incident.code}
               </span>
               <span className="text-muted">{incident.statusName}</span>
             </div>
             <p className="font-heading font-semibold text-[17px] leading-tight">
-              {incident.detection.title}
+              {incident.fault.title}
             </p>
             <p className="text-[13px] text-neutral-800">
               {incident.suggestion}
