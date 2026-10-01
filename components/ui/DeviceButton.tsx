@@ -16,11 +16,16 @@ export function DeviceButton({
   return (
     <button
       type={type}
+      {...FIREFOX_NO_RESTORE}
       className={`min-h-12 cursor-pointer border px-3 py-2 font-bold font-mono text-[13px] uppercase tracking-[0.08em] transition-colors active:bg-device-ink/15 disabled:cursor-not-allowed disabled:opacity-40 ${TONE_CLASS[tone]} ${className}`}
       {...props}
     />
   );
 }
+
+// Firefox помнит disabled у кнопки между перезагрузками и ломает гидратацию;
+// autocomplete="off" это отключает. В типах React атрибута у кнопки нет.
+export const FIREFOX_NO_RESTORE = { autocomplete: "off" };
 
 const TONE_CLASS = {
   default: "border-device-line text-device-ink",

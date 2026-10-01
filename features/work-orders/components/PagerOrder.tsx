@@ -1,7 +1,7 @@
 "use client";
 
 import { useOptimistic, useState, useTransition } from "react";
-import { DeviceButton } from "@/components/ui/DeviceButton";
+import { DeviceButton, FIREFOX_NO_RESTORE } from "@/components/ui/DeviceButton";
 import { completeWork, takeWork, toggleItem } from "../actions";
 import { isTaken, SERVICE_LABEL } from "../status";
 import type { ActionResult, ChecklistItem, WorkOrder } from "../types";
@@ -63,6 +63,7 @@ export function PagerOrder({ order }: Props) {
             <li key={item.id} className="border-device-line border-b">
               <button
                 type="button"
+                {...FIREFOX_NO_RESTORE}
                 disabled={!taken}
                 onClick={() => toggle(item)}
                 className="flex min-h-12 w-full cursor-pointer items-start gap-3 py-2.5 text-left text-[14px] disabled:cursor-not-allowed disabled:opacity-40"
