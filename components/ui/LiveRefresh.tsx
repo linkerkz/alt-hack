@@ -9,15 +9,20 @@ const INTERVAL_MS = 3000;
 
 // Автообновление экрана: серверные компоненты перерисовываются по свежим
 // данным, состояние на клиенте (раскрытые списки, прокрутка) сохраняется.
-// Скрытая вкладка базу не опрашивает.
+// Скрытая вкладка базу не опрашивает, а вернувшись — обновляется сразу.
 export function LiveRefresh() {
   const router = useRouter();
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    function refresh() {
       if (document.visibilityState === "visible") router.refresh();
-    }, INTERVAL_MS);
-    return () => clearInterval(timer);
+    }
+    const timer = setInterval(refresh, INTERVAL_MS);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
   }, [router]);
 
   return null;
