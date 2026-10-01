@@ -3,7 +3,7 @@ import { AppHeader } from "@/components/ui/AppHeader";
 import { canOpenStation, homePath } from "@/features/auth/access";
 import { AccountMenu } from "@/features/auth/components/AccountMenu";
 import { requireUser } from "@/features/auth/queries";
-import { getStation } from "@/features/network-map/queries";
+import { getStation, getStationTrains } from "@/features/network-map/queries";
 import { getLiveIndexes } from "@/features/station-console/queries";
 import { AttentionList } from "@/features/station-dashboard/components/AttentionList";
 import { EfficiencyHistoryChart } from "@/features/station-dashboard/components/EfficiencyHistoryChart";
@@ -13,6 +13,7 @@ import { PlanProgressCard } from "@/features/station-dashboard/components/PlanPr
 import { ReportHeader } from "@/features/station-dashboard/components/ReportHeader";
 import { Statistics } from "@/features/station-dashboard/components/Statistics";
 import { SummaryCards } from "@/features/station-dashboard/components/SummaryCards";
+import { TrainRadar } from "@/features/station-dashboard/components/TrainRadar";
 import { getStationDashboard } from "@/features/station-dashboard/queries";
 
 export default async function StationDashboardPage({
@@ -30,7 +31,10 @@ export default async function StationDashboardPage({
   // Индекс станции с планом путей считает пульт — отчёт показывает его же.
   const efficiencyIndex = liveIndexes.get(found.id) ?? found.efficiencyIndex;
   const station = { ...found, efficiencyIndex };
-  const dashboard = await getStationDashboard(station);
+  const [dashboard, trains] = await Promise.all([
+    getStationDashboard(station),
+    getStationTrains(station.id),
+  ]);
   const {
     planProgress,
     operations,
@@ -76,6 +80,8 @@ export default async function StationDashboardPage({
         </div>
 
         <EfficiencyHistoryChart points={efficiencyHistory} />
+
+        <TrainRadar trains={trains} />
       </main>
     </>
   );
