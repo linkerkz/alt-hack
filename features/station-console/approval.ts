@@ -1,12 +1,11 @@
-import { createSupabaseClient } from "@/lib/supabase";
+import { indexStatus } from "@/lib/efficiencyIndex";
 import type { PlanSource } from "./activePlan";
 import { scoreBaseline } from "./efficiency";
 import { stationLayout } from "./layout";
-import { INCIDENT_COLUMNS, type IncidentRow, toIncident } from "./live";
+import { lastIncidents } from "./live";
 import { APPROVAL, approvalTrains } from "./mock";
 import { stationPlan } from "./operations";
 import { scoredOptions } from "./options";
-import { indexStatus } from "./status";
 import type { LiveIncident, Neighbors, Status } from "./types";
 
 // Запрос на согласование варианта Б: карточка ДНЦ на карте сети.
@@ -63,25 +62,6 @@ export async function getApprovalRequests(stations: ApprovalStation[]) {
       return toRequest(station, incident, state, { plan, layout });
     }),
   );
-}
-
-// Последний инцидент каждой станции одним запросом: свежие идут первыми.
-async function lastIncidents(stationIds: string[]) {
-  const supabase = await createSupabaseClient();
-  const { data } = await supabase
-    .from("incidents")
-    .select(INCIDENT_COLUMNS)
-    .in("station_id", stationIds)
-    .order("detected_at", { ascending: false })
-    .overrideTypes<IncidentRow[], { merge: false }>();
-
-  const byStation = new Map<string, LiveIncident>();
-  for (const row of data ?? []) {
-    if (!byStation.has(row.station_id)) {
-      byStation.set(row.station_id, toIncident(row));
-    }
-  }
-  return byStation;
 }
 
 // Согласованный запрос держим на карте, пока идут работы: 2001 ещё удержан.

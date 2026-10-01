@@ -17,16 +17,14 @@ import type {
   ZoneSummary,
 } from "./types";
 
-// Индекс станции, которую ведёт пульт; null — пульта у станции нет, берём из сети.
-type LiveIndexOf = (stationId: string) => Promise<number | null>;
-
-export async function getZoneMap(scope: MapScope, liveIndexOf: LiveIndexOf) {
-  const source = await getNetwork();
-  const scopeIds = stationIdsOf(source, scope);
-  const network = {
-    ...source,
-    stations: await withLiveIndex(source.stations, scopeIds, liveIndexOf),
-  };
+// liveIndexes — индексы, посчитанные по плану путей (сейчас — пульт станции);
+// они заменяют записанные в базе, чтобы карта и пульт показывали одно число.
+export async function getZoneMap(
+  scope: MapScope,
+  liveIndexes: Map<string, number>,
+) {
+  const network = withIndexes(await getNetwork(), liveIndexes);
+  const scopeIds = stationIdsOf(network, scope);
   const sections = network.sections.filter(
     (section) => scopeIds.has(section.fromId) || scopeIds.has(section.toId),
   );
@@ -69,6 +67,14 @@ export async function getStationNeighbors(stationId: string) {
     odd: incoming == null ? null : nameOf(network, incoming.fromId),
     even: outgoing == null ? null : nameOf(network, outgoing.toId),
   };
+}
+
+function withIndexes(network: Network, indexes: Map<string, number>) {
+  const stations = network.stations.map((station) => ({
+    ...station,
+    efficiencyIndex: indexes.get(station.id) ?? station.efficiencyIndex,
+  }));
+  return { ...network, stations };
 }
 
 // Ближайшие события станции сверху: прибытие или отправление.
@@ -115,22 +121,6 @@ function movingTrainsOn({ trains }: Network, sections: Section[]) {
         arrival: to.arrival,
       }),
     );
-}
-
-// Станции зоны с пультом показывают его индекс, а не снимок из сети: карта
-// и пульт не расходятся.
-function withLiveIndex(
-  stations: Station[],
-  scopeIds: Set<string>,
-  liveIndexOf: LiveIndexOf,
-) {
-  return Promise.all(
-    stations.map(async (station) => {
-      if (!scopeIds.has(station.id)) return station;
-      const index = await liveIndexOf(station.id);
-      return index == null ? station : { ...station, efficiencyIndex: index };
-    }),
-  );
 }
 
 function eventTime(train: StationTrain) {

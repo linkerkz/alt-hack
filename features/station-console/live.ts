@@ -52,6 +52,25 @@ async function lastIncident(stationId: string) {
   return data == null ? null : toIncident(data);
 }
 
+// Последний инцидент каждой станции одним запросом: свежие идут первыми.
+export async function lastIncidents(stationIds: string[]) {
+  const supabase = await createSupabaseClient();
+  const { data } = await supabase
+    .from("incidents")
+    .select(INCIDENT_COLUMNS)
+    .in("station_id", stationIds)
+    .order("detected_at", { ascending: false })
+    .overrideTypes<IncidentRow[], { merge: false }>();
+
+  const byStation = new Map<string, LiveIncident>();
+  for (const row of data ?? []) {
+    if (!byStation.has(row.station_id)) {
+      byStation.set(row.station_id, toIncident(row));
+    }
+  }
+  return byStation;
+}
+
 // Наряды закрыты RLS: их читает сервер секретным ключом, как и чеклист по QR.
 async function incidentWorkOrder({ id }: LiveIncident) {
   const supabase = supabaseAdmin();

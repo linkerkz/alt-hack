@@ -1,8 +1,9 @@
+import { indexStatus } from "@/lib/efficiencyIndex";
 import { forecastUntil, type PlanSource } from "./activePlan";
 import { scoreBaseline, scorePlan } from "./efficiency";
 import type { PlanScore } from "./metrics";
 import { replanOptions, STEP } from "./mock";
-import { formatNumber, indexStatus } from "./status";
+import { formatNumber } from "./status";
 import type {
   ConsoleState,
   Live,

@@ -1,3 +1,4 @@
+import { indexStatus } from "@/lib/efficiencyIndex";
 import type {
   IncidentKind,
   StationKind,
@@ -6,13 +7,9 @@ import type {
   TrainKind,
 } from "./types";
 
-// Пороги индекса эффективности: ниже warning — «Внимание», ниже critical — «Критично».
-const STATUS_THRESHOLDS = { warning: 75, critical: 55 };
-
+// Пороги индекса — общие для всего приложения, см. lib/efficiencyIndex.ts.
 export function toStatus(efficiencyIndex: number): Status {
-  if (efficiencyIndex < STATUS_THRESHOLDS.critical) return "critical";
-  if (efficiencyIndex < STATUS_THRESHOLDS.warning) return "warning";
-  return "normal";
+  return indexStatus(efficiencyIndex);
 }
 
 export const STATUS_ORDER: Status[] = ["critical", "warning", "normal"];
@@ -61,4 +58,10 @@ export function flowCounterClass(key: TrainFlow, value: number) {
 export const TRAIN_KIND_LABEL: Record<TrainKind, string> = {
   freight: "Грузовой",
   passenger: "Пассажирский",
+};
+
+// Заливка значка поезда на карте и в легенде.
+export const TRAIN_KIND_FILL: Record<TrainKind, string> = {
+  passenger: "bg-accent-700",
+  freight: "bg-ink",
 };

@@ -9,6 +9,7 @@ import {
 import { AccountMenu } from "@/features/auth/components/AccountMenu";
 import { requireUser } from "@/features/auth/queries";
 import { getStation } from "@/features/network-map/queries";
+import { getLiveIndexes } from "@/features/station-console/queries";
 import { AttentionList } from "@/features/station-dashboard/components/AttentionList";
 import { EfficiencyHistoryChart } from "@/features/station-dashboard/components/EfficiencyHistoryChart";
 import { EfficiencyPanel } from "@/features/station-dashboard/components/EfficiencyPanel";
@@ -24,10 +25,16 @@ export default async function StationDashboardPage({
 }: PageProps<"/dashboard/[stationId]">) {
   const user = await requireUser();
   const { stationId } = await params;
-  const station = await getStation(stationId);
-  if (station == null) notFound();
-  if (!canOpenStation(user, station)) redirect(homePath(user) ?? "/login");
+  const [found, liveIndexes] = await Promise.all([
+    getStation(stationId),
+    getLiveIndexes(),
+  ]);
+  if (found == null) notFound();
+  if (!canOpenStation(user, found)) redirect(homePath(user) ?? "/login");
 
+  // Индекс станции с планом путей считает пульт — отчёт показывает его же.
+  const efficiencyIndex = liveIndexes.get(found.id) ?? found.efficiencyIndex;
+  const station = { ...found, efficiencyIndex };
   const dashboard = await getStationDashboard(station);
   const {
     planProgress,

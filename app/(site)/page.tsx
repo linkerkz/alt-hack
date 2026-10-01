@@ -21,7 +21,7 @@ import type { ZoneStation } from "@/features/network-map/types";
 import { ApprovalRequests } from "@/features/station-console/components/ApprovalRequests";
 import {
   getApprovalRequests,
-  getLiveIndex,
+  getLiveIndexes,
 } from "@/features/station-console/queries";
 
 // Соседа без участка в сети подписываем нейтрально.
@@ -34,7 +34,8 @@ export default async function ZoneMapPage() {
     redirect(homePath(user) ?? "/login");
   }
 
-  const zone = await getZoneMap(scope, getLiveIndex);
+  // Индекс станций с планом путей считает пульт — карта показывает его же.
+  const zone = await getZoneMap(scope, await getLiveIndexes());
   const consoleStations = zone.stations.filter((station) =>
     canOpenStation(user, station),
   );
