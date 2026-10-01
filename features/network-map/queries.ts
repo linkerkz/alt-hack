@@ -93,6 +93,7 @@ function trainsOf(network: Network, stationId: string): StationTrain[] {
       arrival: stop.arrival,
       departure: stop.departure,
       nextArrival: outgoing?.to.arrival ?? null,
+      delay: stop.delay,
       isTerminal: train.route[train.route.length - 1] === stop,
     }))
     .toSorted((a, b) => eventTime(a) - eventTime(b));
@@ -119,6 +120,7 @@ function movingTrainsOn({ trains, now }: Network, sections: Section[]) {
         toId: to.stationId,
         departsAt: epochMs(now + from.departure),
         arrivesAt: epochMs(now + to.arrival),
+        delay: to.delay,
       }),
     );
 }

@@ -1,4 +1,4 @@
-import type { Train, TrainKind, TrainStop } from "@/lib/trainSimulation";
+import type { Train, TrainKind, TrainStop } from "@/lib/simulation/trains";
 
 export type Station = {
   id: string;
@@ -84,6 +84,8 @@ export type StationTrain = {
   departure: number;
   // Прибытие к соседу toName.
   nextArrival: number | null;
+  // Опоздание к нашей станции против графика, минуты.
+  delay: number;
   isTerminal: boolean;
 };
 
@@ -98,6 +100,8 @@ export type MovingTrain = {
   toId: string;
   departsAt: number;
   arrivesAt: number;
+  // Опоздание к станции toId против графика, минуты.
+  delay: number;
 };
 
 // Зона ответственности, которую показывает карта.

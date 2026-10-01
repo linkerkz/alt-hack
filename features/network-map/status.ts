@@ -55,6 +55,32 @@ export function flowCounterClass(key: TrainFlow, value: number) {
   return value === 0 ? "text-neutral-400" : "text-ink";
 }
 
+// Сколько минут сверх графика поезд стоит на станции со сбоем, по
+// критичности сбоя; unrated — сбой ещё не оценён.
+export const INCIDENT_DELAY_MINUTES = {
+  low: 5,
+  medium: 15,
+  high: 30,
+  unrated: 10,
+};
+
+// Опоздание поезда: с LATE_MINUTES — «Внимание», с LATE_CRITICAL_MINUTES — «Критично».
+const LATE_MINUTES = 10;
+const LATE_CRITICAL_MINUTES = 30;
+
+export function delayStatus(delay: number): Status {
+  if (delay >= LATE_CRITICAL_MINUTES) return "critical";
+  if (delay >= LATE_MINUTES) return "warning";
+  return "normal";
+}
+
+// Ореол значка поезда на карте: по графику — акцентом, опаздывает — цветом состояния.
+export const TRAIN_HALO: Record<Status, string> = {
+  normal: "bg-accent/40",
+  warning: "bg-warning/50",
+  critical: "bg-critical/50",
+};
+
 export const TRAIN_KIND_LABEL: Record<TrainKind, string> = {
   freight: "Грузовой",
   passenger: "Пассажирский",

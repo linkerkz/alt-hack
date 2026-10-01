@@ -1,4 +1,6 @@
-import { TRAIN_KIND_LABEL } from "../status";
+import { StatusGlyph } from "@/components/ui/StatusGlyph";
+import { TONE_TEXT_CLASS } from "@/components/ui/tone";
+import { delayStatus, TRAIN_KIND_LABEL } from "../status";
 import type { StationTrain } from "../types";
 
 // Строка поезда: слева номер и путь через станцию, справа — когда он у нас.
@@ -12,7 +14,8 @@ export function TrainRow({ train }: { train: StationTrain }) {
           <b className="font-semibold">№ {train.number}</b>{" "}
           <span className="text-[11px] text-muted">
             {TRAIN_KIND_LABEL[train.kind]}
-          </span>
+          </span>{" "}
+          <Lateness delay={train.delay} />
         </span>
         <span className="block truncate text-[12px] text-accent-700 italic">
           {pathOf(train)}
@@ -26,6 +29,17 @@ export function TrainRow({ train }: { train: StationTrain }) {
         <span className="block text-muted">{secondary}</span>
       </span>
     </div>
+  );
+}
+
+// Опоздание к нашей станции; в пределах нормы не показываем.
+function Lateness({ delay }: { delay: number }) {
+  const status = delayStatus(delay);
+  if (status === "normal") return null;
+  return (
+    <span className={`text-[11px] ${TONE_TEXT_CLASS[status]}`}>
+      <StatusGlyph tone={status} /> +{formatDuration(delay)}
+    </span>
   );
 }
 
