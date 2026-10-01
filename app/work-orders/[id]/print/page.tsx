@@ -6,12 +6,9 @@ import { getStation } from "@/features/network-map/queries";
 import { PrintButton } from "@/features/work-orders/components/PrintButton";
 import { WorkOrderSheet } from "@/features/work-orders/components/WorkOrderSheet";
 import { getWorkOrder } from "@/features/work-orders/queries";
+import { SITE_URL } from "@/lib/site";
 
 // Печатный наряд для сотрудников станции. Заголовок вкладки станет именем PDF.
-
-// QR всегда ведёт на деплой: телефон рабочего откроет его откуда угодно,
-// даже если наряд напечатали с локальной машины.
-const SITE_URL = "https://alt-hack.vercel.app";
 
 export async function generateMetadata({
   params,
