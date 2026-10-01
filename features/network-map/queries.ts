@@ -17,9 +17,16 @@ import type {
   ZoneSummary,
 } from "./types";
 
-export async function getZoneMap(scope: MapScope) {
-  const network = await getNetwork();
-  const scopeIds = stationIdsOf(network, scope);
+// Индекс станции, которую ведёт пульт; null — пульта у станции нет, берём из сети.
+type LiveIndexOf = (stationId: string) => Promise<number | null>;
+
+export async function getZoneMap(scope: MapScope, liveIndexOf: LiveIndexOf) {
+  const source = await getNetwork();
+  const scopeIds = stationIdsOf(source, scope);
+  const network = {
+    ...source,
+    stations: await withLiveIndex(source.stations, scopeIds, liveIndexOf),
+  };
   const sections = network.sections.filter(
     (section) => scopeIds.has(section.fromId) || scopeIds.has(section.toId),
   );
@@ -108,6 +115,22 @@ function movingTrainsOn({ trains }: Network, sections: Section[]) {
         arrival: to.arrival,
       }),
     );
+}
+
+// Станции зоны с пультом показывают его индекс, а не снимок из сети: карта
+// и пульт не расходятся.
+function withLiveIndex(
+  stations: Station[],
+  scopeIds: Set<string>,
+  liveIndexOf: LiveIndexOf,
+) {
+  return Promise.all(
+    stations.map(async (station) => {
+      if (!scopeIds.has(station.id)) return station;
+      const index = await liveIndexOf(station.id);
+      return index == null ? station : { ...station, efficiencyIndex: index };
+    }),
+  );
 }
 
 function eventTime(train: StationTrain) {

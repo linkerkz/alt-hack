@@ -19,7 +19,10 @@ import {
 } from "@/features/network-map/queries";
 import type { ZoneStation } from "@/features/network-map/types";
 import { ApprovalRequests } from "@/features/station-console/components/ApprovalRequests";
-import { getApprovalRequests } from "@/features/station-console/queries";
+import {
+  getApprovalRequests,
+  getLiveIndex,
+} from "@/features/station-console/queries";
 
 // Соседа без участка в сети подписываем нейтрально.
 const UNKNOWN_NEIGHBOR = "соседняя";
@@ -31,7 +34,7 @@ export default async function ZoneMapPage() {
     redirect(homePath(user) ?? "/login");
   }
 
-  const zone = await getZoneMap(scope);
+  const zone = await getZoneMap(scope, getLiveIndex);
   const consoleStations = zone.stations.filter((station) =>
     canOpenStation(user, station),
   );
@@ -53,6 +56,7 @@ export default async function ZoneMapPage() {
         defaultStationId={scope.kind === "station" ? scope.stationId : null}
         consoleStationIds={consoleStations.map((station) => station.id)}
         requestStationIds={requestStationIds}
+        showRequests={user.role === "dnc"}
         overlay={
           requests.length > 0 && <ApprovalRequests requests={requests} />
         }

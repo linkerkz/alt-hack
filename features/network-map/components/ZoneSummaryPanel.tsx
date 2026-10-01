@@ -11,8 +11,8 @@ import type { ZoneSummary } from "../types";
 type Props = {
   title: string;
   summary: ZoneSummary;
-  // Запросы на согласование, которые ждут ответа ДНЦ.
-  requestCount: number;
+  // Запросы на согласование, которые ждут ответа ДНЦ; null — роль их не получает.
+  requestCount: number | null;
 };
 
 export function ZoneSummaryPanel({ title, summary, requestCount }: Props) {
@@ -42,11 +42,13 @@ export function ZoneSummaryPanel({ title, summary, requestCount }: Props) {
           value={summary.incidentCount}
           valueClass={summary.incidentCount > 0 ? "text-critical" : "text-ink"}
         />
-        <Metric
-          label="Запросы ДНЦ"
-          value={requestCount}
-          valueClass={requestCount > 0 ? "text-accent-700" : "text-ink"}
-        />
+        {requestCount != null && (
+          <Metric
+            label="Запросы ДНЦ"
+            value={requestCount}
+            valueClass={requestCount > 0 ? "text-accent-700" : "text-ink"}
+          />
+        )}
       </dl>
     </section>
   );
