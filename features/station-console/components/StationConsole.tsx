@@ -1,6 +1,6 @@
 import { LiveRefresh } from "@/components/ui/LiveRefresh";
 import type { StationConsoleData } from "../queries";
-import type { ConsoleRole, ConsoleState, Neighbors } from "../types";
+import type { ConsoleState, ConsoleViewer, Neighbors } from "../types";
 import { ConsoleBar } from "./ConsoleBar";
 import { EfficiencySummary } from "./EfficiencySummary";
 import { IncidentBanner } from "./IncidentBanner";
@@ -10,7 +10,7 @@ import { StationSchema } from "./StationSchema";
 import { TrackPlan } from "./TrackPlan";
 
 type Props = {
-  role: ConsoleRole;
+  role: ConsoleViewer;
   operatorName: string;
   stationName: string;
   data: StationConsoleData;
@@ -24,9 +24,9 @@ type Props = {
 export function StationConsole(props: Props) {
   const { role, stationName, data, state, neighbors, mapHref } = props;
   const { incident, dsp } = data;
-  // Баннер напоминает ДСЦС об инциденте, пока его карточка не видна.
+  // Баннер напоминает об инциденте, пока его карточка не видна.
   const showBanner =
-    role === "dscs" &&
+    role !== "dsp" &&
     incident.isActive &&
     (state.tab === "overview" || !state.panel);
 
@@ -36,6 +36,7 @@ export function StationConsole(props: Props) {
         stationName={stationName}
         clock={data.clock}
         mapHref={mapHref}
+        viewOnly={role === "dnc"}
       />
       {showBanner && (
         <IncidentBanner

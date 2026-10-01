@@ -13,10 +13,12 @@ type Props = {
   data: StationConsoleData;
   state: ConsoleState;
   mapHref: string | null;
+  // ДНЦ смотрит без команд.
+  viewOnly: boolean;
 };
 
 // Карточка инцидента: суть, текущий шаг, влияние, варианты и ход решения.
-export function IncidentPanel({ data, state, mapHref }: Props) {
+export function IncidentPanel({ data, state, mapHref, viewOnly }: Props) {
   const { incident, comparison, chain } = data;
 
   return (
@@ -27,6 +29,7 @@ export function IncidentPanel({ data, state, mapHref }: Props) {
         action={incident.action}
         statusName={incident.statusName}
         mapHref={mapHref}
+        viewOnly={viewOnly}
       />
       {incident.showOptions && (
         <>

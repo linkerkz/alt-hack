@@ -42,8 +42,10 @@ export default async function StationPage({
     />
   );
 
-  // Готовы пульты ДСЦС и ДСП; остальные роли видят заглушку.
-  if (user.role !== "dscs" && user.role !== "dsp") {
+  // Готовы пульты ДСЦС и ДСП, ДНЦ смотрит пульт ДСЦС без команд;
+  // остальные роли видят заглушку.
+  const { role } = user;
+  if (role !== "dscs" && role !== "dsp" && role !== "dnc") {
     return (
       <>
         {header}
@@ -68,7 +70,7 @@ export default async function StationPage({
     <>
       {header}
       <StationConsole
-        role={user.role}
+        role={role}
         operatorName={shortName(user.fullName)}
         stationName={station.name}
         data={data}
@@ -100,8 +102,8 @@ function ConsoleStub({ station, mapHref }: StubProps) {
         {station.name}
       </h1>
       <p className="max-w-md text-[14px] text-muted">
-        Пульт для вашей роли ещё в работе. Сейчас готов экран станционного
-        диспетчера (ДСЦС).
+        Пульт для вашей роли ещё в работе. Сейчас готовы экраны ДСЦС и ДСП, ДНЦ
+        смотрит пульт станции своего круга.
       </p>
       {mapHref != null && (
         <ButtonLink href={mapHref}>← К карте сети</ButtonLink>

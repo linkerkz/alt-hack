@@ -8,12 +8,17 @@ type Props = {
   statusName: string;
   // Карта участка; null — роли карта недоступна.
   mapHref: string | null;
+  // Без кнопок команд: ДНЦ видит, чего ждёт станция, но решает ДСЦС.
+  viewOnly: boolean;
 };
 
 // «Сейчас»: что ДСЦС делает на этом этапе или чьего решения ждёт.
 // Закреплена сверху панели, пока карточку прокручивают.
-export function ActionCard({ stationId, action, statusName, mapHref }: Props) {
-  const { text, primary, secondary, waiting, showMap } = action;
+export function ActionCard(props: Props) {
+  const { stationId, action, statusName, mapHref, viewOnly } = props;
+  const { text, waiting, showMap } = action;
+  const primary = viewOnly ? undefined : action.primary;
+  const secondary = viewOnly ? undefined : action.secondary;
 
   return (
     <div className="sticky -top-4 z-10 flex flex-col gap-2 rounded border border-accent bg-paper p-3.5 shadow-sm">
