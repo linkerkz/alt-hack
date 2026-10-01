@@ -33,9 +33,17 @@ export async function askVision({
       body: JSON.stringify(requestBody(prompt, image, schema)),
       signal: AbortSignal.timeout(timeoutMs),
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.error(
+        `OpenRouter: HTTP ${response.status}`,
+        await response.text(),
+      );
+      return null;
+    }
     return contentOf(await response.json());
-  } catch {
+  } catch (error) {
+    // Таймаут или сеть: в лог, чтобы было видно, почему ИИ молчит.
+    console.error("OpenRouter: запрос не выполнен", error);
     return null;
   }
 }
