@@ -17,7 +17,7 @@ export function dspReports(state: ConsoleState, { odd }: Neighbors) {
   if (step >= STEP.choosing) {
     reports.push({
       time: "14:09",
-      text: "Ремонтной бригаде: наряд на стрелку С3",
+      text: "Ремонтной бригаде: вызов на стрелку С3",
     });
   }
   if (step >= STEP.decided && routed.r101) {

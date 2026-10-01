@@ -1,4 +1,3 @@
-import { REPAIR } from "./fault";
 import type { ChosenOption, Command, RouteTask, Status } from "./types";
 
 // Что команда пишет в хронологию станции. Время — минута симуляции после
@@ -41,18 +40,13 @@ export function journalOf(command: Command, context: Context): JournalEntry[] {
           level: "warning",
         },
       ];
-    case "sendRepair":
+    case "callRepair":
       return [
         {
           minute: 9,
           actor: "dsp",
-          text: "ДСП отправил ремонтную бригаду. Рассчитано 2 варианта",
+          text: "ДСП вызвал ремонтную бригаду. Рассчитано 2 варианта, план работ — после решения",
           level: "warning",
-        },
-        {
-          minute: 9,
-          actor: "system",
-          text: `Наряд ремонтной бригаде: ${REPAIR.title.toLowerCase()}`,
         },
       ];
     case "dismiss":

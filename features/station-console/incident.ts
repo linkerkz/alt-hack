@@ -144,11 +144,11 @@ function actionAt(
       const routed = routeDone(state);
       if (routed.r101 && routed.r2001) {
         return {
-          text: "ДСП задал маршруты по новому плану. ДНЦ получил «маршрут готов», машинисты уведомлены.",
+          text: "ДСП задал маршруты по новому плану. ДНЦ получил «маршрут готов», машинисты уведомлены. Ремонтной бригаде — план работ от ДСП.",
         };
       }
       return {
-        text: "План обновлён. Задачи переданы ДСП: приём поездов по новому плану.",
+        text: "План обновлён. Задачи переданы ДСП: приём поездов по новому плану и план работ ремонтной бригаде.",
         waiting: "Ждёт подтверждения ДСП",
       };
     }
@@ -261,7 +261,7 @@ function tasksAt(
     },
     {
       who: REPAIR.crew,
-      what: REPAIR.title,
+      what: workOrder?.title ?? REPAIR.objective,
       status: repairStatusOf(workOrder),
       tone: step >= STEP.restored ? "normal" : "warning",
     },
@@ -282,7 +282,8 @@ function crewOf({ status }: PagerMessage): { status: string; tone: Status } {
 // Этап наряда: бригада взяла его в работу сама, по QR.
 function repairStatusOf(workOrder: LiveWorkOrder | null) {
   const status = workOrder?.status;
-  if (workOrder == null || status === "issued") return "Наряд выдан, не взят";
+  if (workOrder == null) return "План работ не сформирован";
+  if (status === "issued") return "Наряд выдан, не взят";
   if (status === "in_progress") {
     return `В работе · ${workOrder.checked} из ${workOrder.total}`;
   }

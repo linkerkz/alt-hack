@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Kicker } from "@/components/ui/Kicker";
 import { Meter } from "@/components/ui/Meter";
 import { TONE_GLYPH, TONE_TEXT_CLASS, type Tone } from "@/components/ui/tone";
-import { REPAIR } from "../fault";
 import type { LiveWorkOrder, WorkOrderStatus } from "../types";
 
 type Props = { workOrder: LiveWorkOrder };
@@ -29,7 +28,7 @@ export function WorkOrderCard({ workOrder }: Props) {
         </span>
       </div>
       <p className="text-[13px]">
-        {REPAIR.title} · чеклист {checked} из {total}
+        {workOrder.title} · чеклист {checked} из {total}
       </p>
       <Meter
         label={`Чеклист: ${checked} из ${total}`}

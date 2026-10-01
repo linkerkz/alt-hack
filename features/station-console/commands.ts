@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase";
-import { CREW_CALL } from "./fault";
+import { CREW_CALL, REPAIR } from "./fault";
 import { journalOf } from "./journal";
 import { PAGER_TASKS, STEP } from "./mock";
 import { closeCall, sendToPager } from "./pager";
@@ -21,6 +21,7 @@ import type {
   LiveIncident,
   RouteTask,
 } from "./types";
+import { generateWorkPlan } from "./workPlan";
 
 // Команды пульта: роль уже проверена в actions.ts; здесь каждая команда
 // проверяет, что её очередь, — шаг мог смениться на другом экране. Сами
@@ -96,10 +97,12 @@ async function dispatch(context: Context, command: Command) {
       if (step !== STEP.dispatched) return NOT_NOW;
       await closeCall(incident.id, "escalated");
       return DONE;
-    case "sendRepair":
+    case "callRepair":
       if (step !== STEP.escalated) return NOT_NOW;
-      await issueWorkOrder(context, incident);
       return update({ status: "confirmed" });
+    case "planWork":
+      if (step !== STEP.decided || workOrder != null) return NOT_NOW;
+      return planWork(context, incident);
     case "dismiss":
       if (step !== STEP.suspected) return NOT_NOW;
       return update({ status: "closed", closed_at: now() });
@@ -152,6 +155,25 @@ async function dispatch(context: Context, command: Command) {
       if (step !== STEP.restored) return NOT_NOW;
       return update({ status: "closed", closed_at: now() });
   }
+}
+
+// Вариант принят — ИИ составляет план работ и чеклист, по ним выдаётся
+// наряд с QR. Без ответа ИИ наряд не выдаём: ДСП повторит.
+async function planWork(context: Context, incident: LiveIncident) {
+  if (incident.option == null) return NOT_NOW;
+  const plan = await generateWorkPlan({ incident, option: incident.option });
+  if (plan == null) {
+    return { error: "ИИ не составил план работ — попробуйте ещё раз" };
+  }
+  await issueWorkOrder(context, incident, plan);
+  await log(context.stationId, incident.id, [
+    {
+      minute: 11,
+      actor: "system",
+      text: `ИИ составил план работ «${plan.title}»: ${plan.items.length} пунктов. Наряд ${REPAIR.crew.toLowerCase()} выдан`,
+    },
+  ]);
+  return DONE;
 }
 
 // Меняет инцидент и пишет в хронологию, что сделал участник.

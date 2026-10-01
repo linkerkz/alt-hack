@@ -54,7 +54,7 @@ async function incidentWorkOrder({ id }: LiveIncident) {
   const { data } = await supabase
     .from("work_orders")
     .select(
-      "id, status, started_at, done_at, result_note, work_order_items(done_at)",
+      "id, title, status, started_at, done_at, result_note, work_order_items(done_at)",
     )
     .eq("incident_id", id)
     .order("created_at", { ascending: false })
@@ -94,6 +94,7 @@ function toWorkOrder(row: WorkOrderRow): LiveWorkOrder {
   const items = row.work_order_items;
   return {
     id: row.id,
+    title: row.title,
     status: row.status,
     checked: items.filter((item) => item.done_at != null).length,
     total: items.length,
@@ -131,6 +132,7 @@ export type IncidentRow = {
 
 type WorkOrderRow = {
   id: string;
+  title: string;
   status: WorkOrderStatus;
   started_at: string | null;
   done_at: string | null;

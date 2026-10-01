@@ -97,6 +97,7 @@ function tasksAt(state: ConsoleState, { incident, workOrder }: Live) {
       },
     );
   }
+  if (step >= STEP.decided) tasks.push(planTask(workOrder));
   if (step === STEP.repaired) {
     tasks.push({
       from: REPAIR.crew,
@@ -119,6 +120,30 @@ function tasksAt(state: ConsoleState, { incident, workOrder }: Live) {
     });
   }
   return tasks;
+}
+
+// Вариант принят: ИИ составляет план работ и чеклист, по ним — наряд с QR.
+function planTask(workOrder: LiveWorkOrder | null): DspTask {
+  const base = { from: DSCS, time: "14:11", title: "Сформировать план работ" };
+  if (workOrder != null) {
+    return {
+      ...base,
+      detail: "",
+      result: `14:11 · «${workOrder.title}», ${workOrder.total} пунктов, наряд с QR выдан`,
+      done: true,
+    };
+  }
+  return {
+    ...base,
+    detail:
+      "Вариант принят. ИИ составит план работ по снимку камеры, докладу путейцев и новому плану станции: окно работ, меры безопасности и чеклист. Наряд с QR — на печать бригаде.",
+    result: "",
+    done: false,
+    primary: {
+      label: "Сформировать план работ",
+      command: { kind: "planWork" },
+    },
+  };
 }
 
 // Задачи по самой стрелке: проверить снимок и вызвать путейцев, а если
@@ -159,12 +184,12 @@ function faultTasks(step: number, incident: LiveIncident | null) {
       time: "14:09",
       title: "Стрелка С3 повреждена",
       detail:
-        "Путейцы убрали предмет, но остряк повреждён. Отправьте ремонтную бригаду: наряд с QR на чеклист. ДСЦС получит варианты перепланирования.",
+        "Путейцы убрали предмет, но остряк повреждён. Вызовите ремонтную бригаду: ДСЦС получит варианты перепланирования, план работ сформируете после решения.",
       result: "",
       done: false,
       primary: {
-        label: "Отправить ремонтную бригаду",
-        command: { kind: "sendRepair" },
+        label: "Вызвать ремонтную бригаду",
+        command: { kind: "callRepair" },
       },
     });
   }
@@ -172,9 +197,9 @@ function faultTasks(step: number, incident: LiveIncident | null) {
     tasks.push({
       from: CREW,
       time: "14:09",
-      title: "Отправить ремонтную бригаду",
+      title: "Вызвать ремонтную бригаду",
       detail: "",
-      result: "14:09 · наряд выдан, ДСЦС выбирает вариант",
+      result: "14:09 · бригада вызвана, ДСЦС выбирает вариант",
       done: true,
     });
   }

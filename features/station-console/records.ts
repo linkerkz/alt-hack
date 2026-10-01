@@ -2,6 +2,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { OBSTRUCTION, REPAIR } from "./fault";
 import { type JournalEntry, simAt } from "./journal";
 import type { LiveIncident } from "./types";
+import type { WorkPlan } from "./workPlan";
 
 // Записи сценария в базу: инцидент, наряд, хронология. Пишет сервер
 // секретным ключом — политик записи у таблиц нет. Можно ли писать, решают
@@ -59,10 +60,11 @@ export async function openIncident(stationId: string, sighting: Sighting) {
   return data;
 }
 
-// Наряд ремонтной бригаде: печатный лист с QR на чеклист.
+// Наряд ремонтной бригаде по плану работ: печатный лист с QR на чеклист.
 export async function issueWorkOrder(
   { stationId, operatorId }: Issuer,
   incident: LiveIncident,
+  plan: WorkPlan,
 ) {
   const { data, error } = await supabaseAdmin()
     .from("work_orders")
@@ -71,15 +73,17 @@ export async function issueWorkOrder(
       incident_id: incident.id,
       object_id: "С3",
       service: REPAIR.service,
-      title: REPAIR.title,
-      description: REPAIR.description,
+      title: plan.title,
+      description: plan.description,
+      work_window: plan.window,
+      safety: plan.safety,
       created_by: operatorId,
     })
     .select("id")
     .single<{ id: string }>();
   if (error != null) throw error;
 
-  const items = REPAIR.items.map((text, i) => ({
+  const items = plan.items.map((text, i) => ({
     work_order_id: data.id,
     position: i + 1,
     text,

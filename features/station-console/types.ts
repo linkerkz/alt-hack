@@ -59,6 +59,7 @@ export type IncidentStatus =
 
 export type LiveWorkOrder = {
   id: string;
+  title: string;
   status: WorkOrderStatus;
   // Отмечено пунктов чеклиста из общего числа.
   checked: number;
@@ -106,7 +107,8 @@ export type Command =
   | { kind: "callCrew" }
   | { kind: "dismiss" }
   | { kind: "escalate" }
-  | { kind: "sendRepair" }
+  | { kind: "callRepair" }
+  | { kind: "planWork" }
   | { kind: "accept"; option: ChosenOption }
   | ApprovalAnswer
   | { kind: "route"; task: RouteTask }
