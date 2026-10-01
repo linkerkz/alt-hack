@@ -105,12 +105,13 @@ function textOf(answer: object, key: string) {
   return value.trim();
 }
 
-// Номера пунктам ставит чеклист сам: «1. » от модели срезаем.
+// Номера пунктам ставит чеклист сам: «1. » от модели срезаем, а дробь
+// в начале пункта («2.5 мм …») оставляем.
 function listOf(answer: object, key: string) {
   const value: unknown = Reflect.get(answer, key);
   if (!Array.isArray(value)) return null;
   return value
     .filter((item): item is string => typeof item === "string")
-    .map((item) => item.replace(/^\s*\d+[.)]\s*/, "").trim())
+    .map((item) => item.replace(/^\s*\d+[.)](?!\d)\s*/, "").trim())
     .filter((item) => item !== "");
 }
