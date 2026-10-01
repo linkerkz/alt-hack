@@ -34,7 +34,9 @@ alter table public.incidents
   -- Устройство, которое заметило проблему; null — датчик ЭЦ или человек.
   add column device_id uuid references public.devices (id) on delete set null,
   -- Снимок с камеры в момент обнаружения (data URL JPEG).
-  add column snapshot text;
+  add column snapshot text,
+  -- Вывод ИИ по снимку; null — ИИ не подключён или не ответил.
+  add column analysis text;
 
 -- Этапы наряда пишем от имени его службы: наряд от камеры получают путейцы.
 create or replace function public.work_order_stage() returns trigger
