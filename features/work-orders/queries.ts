@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { createSupabaseAdminClient } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 import { isUuid } from "@/lib/uuid";
 import type { Service, WorkOrder, WorkOrderStatus } from "./types";
 
@@ -16,7 +16,7 @@ export const getWorkOrder = cache(
   async (id: string): Promise<WorkOrder | null> => {
     if (!isUuid(id)) return null;
 
-    const supabase = createSupabaseAdminClient();
+    const supabase = supabaseAdmin();
     const { data } = await supabase
       .from("work_orders")
       .select(COLUMNS)
@@ -29,7 +29,7 @@ export const getWorkOrder = cache(
 
 // Свежий активный наряд службы на станции; null — бригаде нечего делать.
 export async function getActiveWorkOrder(stationId: string, service: Service) {
-  const supabase = createSupabaseAdminClient();
+  const supabase = supabaseAdmin();
   const { data } = await supabase
     .from("work_orders")
     .select(COLUMNS)

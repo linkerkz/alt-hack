@@ -1,7 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { createSupabaseAdminClient } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 import { getWorkOrder } from "./queries";
 import { isTaken } from "./status";
 import type { ActionResult } from "./types";
@@ -19,7 +19,7 @@ export async function takeWork(orderId: string): Promise<ActionResult> {
   if (order == null) return { error: "Наряд не найден" };
   if (order.status !== "issued") return { error: "Наряд уже в работе" };
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = supabaseAdmin();
   const { error } = await supabase
     .from("work_orders")
     .update({ status: "in_progress", started_at: new Date().toISOString() })
@@ -44,7 +44,7 @@ export async function toggleItem(
     return { error: "Сначала возьмите наряд в работу" };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = supabaseAdmin();
   const { error } = await supabase
     .from("work_order_items")
     .update({ done_at: done ? new Date().toISOString() : null })
@@ -69,7 +69,7 @@ export async function completeWork(
     return { error: "Отметьте все пункты чеклиста" };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = supabaseAdmin();
   const { error } = await supabase
     .from("work_orders")
     .update({

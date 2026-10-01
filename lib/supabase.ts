@@ -1,5 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import { env } from "@/lib/env";
@@ -23,11 +23,15 @@ export async function createSupabaseClient() {
 }
 
 // Секретный ключ: обходит RLS. Только для серверного кода, который сам решает,
-// что можно, — например, наряды, открытые по ссылке без входа.
-export function createSupabaseAdminClient() {
-  return createClient(env.supabaseUrl, env.supabaseSecretKey, {
+// что можно, — например, наряды, открытые по ссылке без входа. Клиент без
+// сессии и cookie, поэтому один на весь сервер, а не новый на каждый запрос.
+let admin: SupabaseClient | null = null;
+
+export function supabaseAdmin() {
+  admin ??= createClient(env.supabaseUrl, env.supabaseSecretKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+  return admin;
 }
 
 // Для proxy: продлевает сессию и кладёт обновлённые cookie и в запрос (их

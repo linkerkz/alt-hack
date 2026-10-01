@@ -1,8 +1,5 @@
 import { cache } from "react";
-import {
-  createSupabaseAdminClient,
-  createSupabaseClient,
-} from "@/lib/supabase";
+import { createSupabaseClient, supabaseAdmin } from "@/lib/supabase";
 import { simClock } from "./journal";
 import type {
   ChosenOption,
@@ -47,7 +44,7 @@ async function lastIncident(stationId: string) {
 
 // Наряды закрыты RLS: их читает сервер секретным ключом, как и чеклист по QR.
 async function incidentWorkOrder({ id }: LiveIncident) {
-  const supabase = createSupabaseAdminClient();
+  const supabase = supabaseAdmin();
   const { data } = await supabase
     .from("work_orders")
     .select(

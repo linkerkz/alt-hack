@@ -1,4 +1,4 @@
-import { createSupabaseAdminClient } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 import { DETECTION, detectionOf } from "./detection";
 import { type JournalEntry, journalOf, simAt } from "./journal";
 import { STEP } from "./mock";
@@ -268,7 +268,7 @@ export async function log(
 
 // Пишет сервер секретным ключом: политик записи у таблиц нет.
 function db() {
-  return createSupabaseAdminClient();
+  return supabaseAdmin();
 }
 
 function now() {

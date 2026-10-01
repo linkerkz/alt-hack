@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { createSupabaseAdminClient } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 import { isUuid } from "@/lib/uuid";
 import type { Device, Service } from "./types";
 
@@ -9,7 +9,7 @@ import type { Device, Service } from "./types";
 export const getDevice = cache(async (id: string): Promise<Device | null> => {
   if (!isUuid(id)) return null;
 
-  const { data } = await createSupabaseAdminClient()
+  const { data } = await supabaseAdmin()
     .from("devices")
     .select("id, station_id, kind, name, object_id, service")
     .eq("id", id)
@@ -21,7 +21,7 @@ export const getDevice = cache(async (id: string): Promise<Device | null> => {
 // Устройства станции для страницы с QR: сначала камеры, потом пейджеры,
 // с временем последнего сигнала (null — ещё не выходило на связь).
 export async function getStationDevices(stationId: string) {
-  const { data } = await createSupabaseAdminClient()
+  const { data } = await supabaseAdmin()
     .from("devices")
     .select("id, station_id, kind, name, object_id, service, last_seen_at")
     .eq("station_id", stationId)

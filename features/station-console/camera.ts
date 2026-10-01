@@ -1,4 +1,4 @@
-import { createSupabaseAdminClient } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 import { log, openIncident } from "./commands";
 import type { IncidentStatus } from "./types";
 
@@ -89,7 +89,7 @@ function analysisOf({ label, ai }: CameraSignal) {
 }
 
 async function lastIncident(stationId: string) {
-  const { data, error } = await createSupabaseAdminClient()
+  const { data, error } = await supabaseAdmin()
     .from("incidents")
     .select("id, code, status, device_id")
     .eq("station_id", stationId)
