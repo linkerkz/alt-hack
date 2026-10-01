@@ -74,6 +74,8 @@
 
     ```
     app/                  роуты App Router — только композиция
+      (site)/             страницы приложения: свои шрифты (serif) в layout
+      (device)/           экраны полевых устройств: свой вид прошивки
     features/{name}/      пользовательский сценарий целиком (вертикальный срез)
       components/         UI этой фичи
       actions.ts          Server Actions — мутации ("use server")
