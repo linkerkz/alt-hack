@@ -47,8 +47,7 @@ export function IncidentSummary({ incident }: Props) {
             </figcaption>
             {analysis != null && (
               <p className="border-accent border-l-2 pl-2.5 text-[13px]">
-                <span className="text-accent-700">ИИ по снимку:</span>{" "}
-                {analysis}
+                <span className="text-accent-700">ИИ:</span> {analysis}
               </p>
             )}
           </figure>

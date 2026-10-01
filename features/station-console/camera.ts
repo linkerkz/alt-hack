@@ -10,7 +10,9 @@ export type CameraSignal = {
   state: "obstruction" | "clear";
   // Кадр в момент сигнала (data URL JPEG).
   snapshot: string;
-  // Что сказал ИИ по кадру; null — ИИ не подключён или не ответил.
+  // Что распознал ИИ на самой камере: «бутылка 92%»; null — не назвал.
+  label: string | null;
+  // Что сказал облачный ИИ по кадру; null — не подключён или не ответил.
   ai: { agrees: boolean; summary: string } | null;
 };
 
@@ -41,7 +43,7 @@ export async function reportCamera(
       device: {
         id: signal.deviceId,
         snapshot: signal.snapshot,
-        analysis: ai?.summary ?? null,
+        analysis: analysisOf(signal),
       },
     });
     return {
@@ -75,6 +77,15 @@ export async function reportCamera(
     },
   ]);
   return { text: "Стрелка свободна — ДСП видит это", incidentCode: last.code };
+}
+
+// Вывод ИИ для ДСП: что распознала камера и что добавил облачный ИИ.
+function analysisOf({ label, ai }: CameraSignal) {
+  const parts = [
+    label == null ? null : `камера распознала: ${label}`,
+    ai?.summary ?? null,
+  ].filter((part) => part != null);
+  return parts.length === 0 ? null : parts.join(". ");
 }
 
 async function lastIncident(stationId: string) {

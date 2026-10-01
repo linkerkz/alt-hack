@@ -138,7 +138,7 @@ export async function openIncident(stationId: string, found: Sighting) {
           {
             minute: 8,
             actor: "system" as const,
-            text: `ИИ по снимку: ${analysis}`,
+            text: `ИИ: ${analysis}`,
           },
         ]),
     {
