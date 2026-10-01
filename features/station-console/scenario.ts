@@ -31,9 +31,10 @@ export function nextCommand(live: Live): Command | null {
     case STEP.suspected:
       return { kind: "confirm" };
     case STEP.choosing:
-      return { kind: "accept", option: "B" };
+      // ДНЦ уже отклонил Б — станция берёт вариант А.
+      return { kind: "accept", option: incident?.dncRejected ? "A" : "B" };
     case STEP.approval:
-      return { kind: "approve" };
+      return { kind: "approve", comment: null };
     case STEP.decided:
     case STEP.repairing:
     case STEP.repaired:

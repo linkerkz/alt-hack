@@ -30,10 +30,19 @@ type Context = { stationId: string; operatorId: string; live: Live };
 // Поля инцидента, которые меняют команды.
 type IncidentPatch = {
   status?: IncidentStatus;
-  option?: ChosenOption;
+  option?: ChosenOption | null;
   route_tasks?: RouteTask[];
   dnc_approved_at?: string;
+  dnc_rejected_at?: string | null;
+  dnc_comment?: string | null;
   closed_at?: string;
+};
+
+// Запрос на согласование снова чистый: ДСЦС отправил вариант Б заново.
+const FRESH_REQUEST: IncidentPatch = {
+  option: "B",
+  dnc_rejected_at: null,
+  dnc_comment: null,
 };
 
 const DONE: CommandResult = { error: null };
@@ -86,10 +95,24 @@ async function dispatch(context: Context, command: Command) {
       if (step !== STEP.choosing) return NOT_NOW;
       return command.option === "A"
         ? update({ status: "decided", option: "A" })
-        : update({ option: "B" });
+        : update(FRESH_REQUEST);
     case "approve":
       if (step !== STEP.approval) return NOT_NOW;
-      return update({ status: "decided", dnc_approved_at: now() });
+      return update({
+        status: "decided",
+        dnc_approved_at: now(),
+        dnc_comment: command.comment,
+      });
+    case "reject":
+      if (step !== STEP.approval) return NOT_NOW;
+      return update({
+        option: null,
+        dnc_rejected_at: now(),
+        dnc_comment: command.comment,
+      });
+    case "reconsider":
+      if (step !== STEP.choosing || !incident.dncRejected) return NOT_NOW;
+      return update(FRESH_REQUEST);
     case "route": {
       const routeTasks = [...incident.routeTasks, command.task];
       const decided = step >= STEP.decided && step <= STEP.repaired;
@@ -135,7 +158,7 @@ async function updateIncident(
   const entries = journalOf(command, {
     code: incident.code,
     detection: incident.detection,
-    option: patch.option ?? incident.option,
+    option: patch.option === undefined ? incident.option : patch.option,
     routed: patch.route_tasks ?? incident.routeTasks,
   });
   await log(stationId, incident.id, entries);

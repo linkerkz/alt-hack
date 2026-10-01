@@ -35,6 +35,10 @@ export type LiveIncident = {
   status: IncidentStatus;
   option: ChosenOption | null;
   routeTasks: RouteTask[];
+  // ДНЦ отклонил вариант Б: ДСЦС снова выбирает вариант.
+  dncRejected: boolean;
+  // Комментарий ДНЦ для станции к согласованию или отказу.
+  dncComment: string | null;
   detection: DetectionKind;
   // Вывод ИИ по снимку; null — без анализа.
   analysis: string | null;
@@ -74,13 +78,14 @@ export type JournalEvent = ScenarioEvent & {
 };
 
 // Команда пульта: действие участника, которое меняет ход инцидента в базе.
-// Команды датчика, ДНЦ и службы — симуляция участников без своего экрана.
+// Команды датчика и службы — симуляция участников без своего экрана; ДНЦ
+// отвечает с карты сети, а «Далее» на демо-пульте согласует за него.
 export type Command =
   | { kind: "detect" }
   | { kind: "confirm" }
   | { kind: "dismiss" }
   | { kind: "accept"; option: ChosenOption }
-  | { kind: "approve" }
+  | ApprovalAnswer
   | { kind: "route"; task: RouteTask }
   | { kind: "startWork" }
   | { kind: "finishWork" }
@@ -88,6 +93,13 @@ export type Command =
   | { kind: "close"; keepPlan: boolean }
   | { kind: "advance" }
   | { kind: "reset" };
+
+// Ответ ДНЦ на запрос на согласование; reconsider — вернуть отклонённый
+// запрос на рассмотрение, пока ДСЦС не выбрал другой вариант.
+export type ApprovalAnswer =
+  | { kind: "approve"; comment: string | null }
+  | { kind: "reject"; comment: string | null }
+  | { kind: "reconsider" };
 
 export type CommandResult = { error: string | null };
 

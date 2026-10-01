@@ -135,3 +135,30 @@ export function baselineEvents({ odd }: Neighbors): ScenarioEvent[] {
   ];
   return events.map((event, index) => ({ ...event, id: `baseline-${index}` }));
 }
+
+// Запрос на согласование варианта Б для ДНЦ: время запроса и ответа,
+// поезда, которых касается удержание, — задержка с удержанием и без.
+export const APPROVAL = {
+  requestedAt: "14:10",
+  approvedAt: "14:11",
+  unchanged: "3412 и 2236 без изменений",
+};
+
+export function approvalTrains({ odd }: Neighbors) {
+  return [
+    {
+      train: "2001",
+      kind: "груз.",
+      what: `стоянка на ст. ${odd} до 14:20`,
+      withHold: 9,
+      without: 14,
+    },
+    {
+      train: "2402",
+      kind: "груз.",
+      what: `ждёт у входного ст. ${odd}`,
+      withHold: 7,
+      without: 13,
+    },
+  ];
+}

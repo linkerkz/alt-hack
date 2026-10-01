@@ -1,6 +1,6 @@
 import { cache } from "react";
+import { simClock } from "@/lib/clock";
 import { createSupabaseClient, supabaseAdmin } from "@/lib/supabase";
-import { simClock } from "./journal";
 import type {
   ChosenOption,
   IncidentStatus,
@@ -15,6 +15,10 @@ import type {
 
 // Сколько событий хронологии держим в ленте.
 const FEED_LIMIT = 40;
+
+// Поля инцидента, из которых складывается ход сценария.
+export const INCIDENT_COLUMNS =
+  "id, code, station_id, status, option, route_tasks, dnc_rejected_at, dnc_comment, device_id, analysis";
 
 // Ход сценария станции из базы: последний инцидент, его наряд и хронология.
 // Кэш на запрос: страница и действие читают по разу. Хронология читается
@@ -33,7 +37,7 @@ async function lastIncident(stationId: string) {
   const supabase = await createSupabaseClient();
   const { data } = await supabase
     .from("incidents")
-    .select("id, code, status, option, route_tasks, device_id, analysis")
+    .select(INCIDENT_COLUMNS)
     .eq("station_id", stationId)
     .order("detected_at", { ascending: false })
     .limit(1)
@@ -71,13 +75,15 @@ async function stationEvents(stationId: string) {
 }
 
 // Строки из базы без сгенерированных типов — форму задаём руками.
-function toIncident(row: IncidentRow): LiveIncident {
+export function toIncident(row: IncidentRow): LiveIncident {
   return {
     id: row.id,
     code: row.code,
     status: row.status,
     option: row.option,
     routeTasks: row.route_tasks.filter(isRouteTask),
+    dncRejected: row.dnc_rejected_at != null,
+    dncComment: row.dnc_comment,
     detection: row.device_id == null ? "sensor" : "camera",
     analysis: row.analysis,
   };
@@ -110,12 +116,15 @@ function isRouteTask(value: string): value is RouteTask {
   return value === "r101" || value === "r2001";
 }
 
-type IncidentRow = {
+export type IncidentRow = {
   id: string;
   code: string;
+  station_id: string;
   status: IncidentStatus;
   option: ChosenOption | null;
   route_tasks: string[];
+  dnc_rejected_at: string | null;
+  dnc_comment: string | null;
   device_id: string | null;
   analysis: string | null;
 };

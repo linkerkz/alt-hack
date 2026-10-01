@@ -14,6 +14,7 @@ import type {
   Command,
   ConsoleState,
   Live,
+  LiveIncident,
   LiveWorkOrder,
   Neighbors,
   ScenarioEvent,
@@ -56,16 +57,22 @@ export function incidentCard(
       label,
       state: progressOf(i, statusIndex),
     })),
-    dncBadge: dncBadgeAt(state),
+    dncBadge: dncBadgeAt(state, isRejected(state, live.incident)),
     suggestion: suggestionAt(step, neighbors),
-    action: actionAt(state, neighbors),
-    tasks: tasksAt(state, neighbors, live.workOrder, detection),
+    action: actionAt(state, neighbors, live.incident),
+    tasks: tasksAt(state, neighbors, live, detection),
     events: live.events.filter((event) => event.incidentId === incidentId),
     feed,
   };
 }
 
-function dncBadgeAt({ step, option }: ConsoleState) {
+// ДНЦ отклонил вариант Б, и ДСЦС ещё не выбрал другой.
+function isRejected({ step }: ConsoleState, incident: LiveIncident | null) {
+  return step === STEP.choosing && incident?.dncRejected === true;
+}
+
+function dncBadgeAt({ step, option }: ConsoleState, rejected: boolean) {
+  if (rejected) return "■ ДНЦ отклонил";
   if (option !== "B" || step < STEP.approval) return "";
   return step === STEP.approval ? "▲ Ждёт ДНЦ" : "● ДНЦ согласовал 14:11";
 }
@@ -82,10 +89,17 @@ function suggestionAt(step: number, { odd }: Neighbors) {
   return "Предложено вернуться к исходному плану.";
 }
 
-function actionAt(state: ConsoleState, neighbors: Neighbors): ConsoleAction {
+function actionAt(
+  state: ConsoleState,
+  neighbors: Neighbors,
+  incident: LiveIncident | null,
+): ConsoleAction {
   const { step, option } = state;
   const name = replanOptions(neighbors)[option].name.toLowerCase();
   const needsDnc = option === "B";
+  if (incident != null && isRejected(state, incident)) {
+    return rejectedAction(incident);
+  }
 
   switch (step) {
     case STEP.suspected:
@@ -145,10 +159,22 @@ function actionAt(state: ConsoleState, neighbors: Neighbors): ConsoleAction {
   }
 }
 
+// ДНЦ отклонил Б: станция принимает вариант А, согласование ему не нужно.
+function rejectedAction({ dncComment }: LiveIncident): ConsoleAction {
+  const comment = dncComment == null ? "" : `: «${dncComment}»`;
+  return {
+    text: `ДНЦ отклонил вариант Б${comment}. Выберите другой вариант.`,
+    primary: {
+      label: "Принять вариант А",
+      command: { kind: "accept", option: "A" },
+    },
+  };
+}
+
 function tasksAt(
   state: ConsoleState,
   { odd }: Neighbors,
-  workOrder: LiveWorkOrder | null,
+  { incident, workOrder }: Live,
   detection: Detection,
 ) {
   const { step, option } = state;
@@ -160,6 +186,14 @@ function tasksAt(
   const acknowledged = routed.r101 && routed.r2001;
   const pending = { status: "Ожидает…", tone: "warning" as const };
 
+  if (isRejected(state, incident)) {
+    tasks.push({
+      who: "ДНЦ",
+      what: "Согласование варианта Б",
+      status: "Отклонено",
+      tone: "critical",
+    });
+  }
   if (isB && step >= STEP.approval) {
     tasks.push({
       who: "ДНЦ",
