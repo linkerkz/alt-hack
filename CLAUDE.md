@@ -30,6 +30,6 @@ CLAUDE.md — только оглавление. Здесь живут `@`-им�
 
 <!-- Branch naming, commit format, MR flow. Read when committing or branching. -->
 
-@docs/about_the_project.md
+@docs/hackathon_case.md
 
-<!-- Product vision, MVP scope, target audience. Read when business context is needed. -->
+<!-- Product vision, target audience. Read when business context is needed. -->

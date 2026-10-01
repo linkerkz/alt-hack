@@ -1,9 +1,16 @@
 import type { ComponentProps } from "react";
 
 type Props = ComponentProps<"div"> & {
-  // accent — главная карточка экрана («наша станция»), обводка акцентом.
-  emphasis?: "default" | "accent";
+  // accent — главная карточка экрана («наша станция»), обводка акцентом;
+  // critical — карточка сбоя, обводка цветом «Критично».
+  emphasis?: "default" | "accent" | "critical";
   elevation?: "none" | "sm" | "md" | "lg";
+};
+
+const EMPHASIS_CLASS = {
+  default: "border-line",
+  accent: "border-accent",
+  critical: "border-critical",
 };
 
 const ELEVATION_CLASS = {
@@ -20,10 +27,9 @@ export function Card({
   className = "",
   ...props
 }: Props) {
-  const border = emphasis === "accent" ? "border-accent" : "border-line";
   return (
     <div
-      className={`rounded border bg-paper ${border} ${ELEVATION_CLASS[elevation]} ${className}`}
+      className={`rounded border bg-paper ${EMPHASIS_CLASS[emphasis]} ${ELEVATION_CLASS[elevation]} ${className}`}
       {...props}
     />
   );
