@@ -74,7 +74,7 @@ export type StationFlow = {
   passing: number;
 };
 
-// Поезда на участке в каждую сторону: forward — от fromId к toId.
+// Поезда, которые прибудут по участку за горизонт: forward — из fromId в toId.
 export type SectionFlow = {
   forward: number;
   backward: number;

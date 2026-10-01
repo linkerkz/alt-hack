@@ -39,8 +39,8 @@ export function MapLegend() {
             `${FLOW_LABEL[key].icon} ${FLOW_LABEL[key].label.toLowerCase()}`,
         ).join(" · ")}
         <br />
-        На участке: <span className="text-sky-300">➜&nbsp;3</span> — поездов в
-        сторону стрелки: идут по участку или выйдут на него
+        На участке: <span className="text-sky-300">➜&nbsp;3</span> — прибудут по
+        стрелке за {HORIZON_MINUTES / 60} ч
       </p>
     </details>
   );

@@ -1,11 +1,13 @@
+import { HORIZON_MINUTES } from "../flows";
 import type { Direction } from "../types";
 
-// Направления станции: сколько поездов идёт к ней от каждого соседа и обратно.
+// Направления станции: сколько поездов прибудет к ней от каждого соседа
+// и от неё к соседу — те же числа, что на стрелках участков.
 export function DirectionList({ directions }: { directions: Direction[] }) {
   return (
     <div className="space-y-2">
       <h3 className="font-semibold text-[11px] text-muted uppercase tracking-widest">
-        Направления
+        Направления · прибудут за {HORIZON_MINUTES / 60} ч
       </h3>
       <table className="w-full text-sm">
         <thead>

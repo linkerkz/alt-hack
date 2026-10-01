@@ -1,6 +1,5 @@
 import {
   arrivalsFrom,
-  departuresTo,
   isTrainWithin,
   sectionFlow,
   stationEvents,
@@ -98,7 +97,7 @@ function directionsOf(stationId: string): Direction[] {
       neighborId,
       neighborName: nameOf(neighborId),
       toUs: arrivalsFrom(TRAINS, neighborId, stationId),
-      fromUs: departuresTo(TRAINS, stationId, neighborId),
+      fromUs: arrivalsFrom(TRAINS, stationId, neighborId),
     };
   });
 }

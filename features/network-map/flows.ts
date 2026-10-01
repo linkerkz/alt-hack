@@ -27,37 +27,26 @@ export function stationFlow(trains: Train[], stationId: string): StationFlow {
   return flow;
 }
 
-// Поезда на участке в каждую сторону: уже идущие по нему и те, что выйдут
-// на него за горизонт.
+// Единое правило для участка и направлений станции: по стрелке A → B
+// считаем поезда, которые прибудут в B из A за горизонт. Поэтому стрелка
+// к станции на карте и «к нам» в карточке — одно и то же число, а сумма
+// «к нам» по всем соседям = ↓ прибывают + ⇢ проездом.
 export function sectionFlow(trains: Train[], section: Section): SectionFlow {
-  const isOnSection = (from: TrainStop, to: TrainStop) =>
-    to.arrival > 0 && from.departure <= HORIZON_MINUTES;
   return {
-    forward: countLegs(trains, section.fromId, section.toId, isOnSection),
-    backward: countLegs(trains, section.toId, section.fromId, isOnSection),
+    forward: arrivalsFrom(trains, section.fromId, section.toId),
+    backward: arrivalsFrom(trains, section.toId, section.fromId),
   };
 }
 
-// Направления станции считаем по её событиям — так «к нам» сходится
-// с ↓ прибывают + ⇢ проездом, а «от нас» — с ↑ отправляются + ⇢ проездом.
-export function arrivalsFrom(
-  trains: Train[],
-  neighborId: string,
-  stationId: string,
-) {
-  return countLegs(trains, neighborId, stationId, (_, to) =>
-    isAhead(to.arrival),
-  );
-}
-
-export function departuresTo(
-  trains: Train[],
-  stationId: string,
-  neighborId: string,
-) {
-  return countLegs(trains, stationId, neighborId, (from) =>
-    isAhead(from.departure),
-  );
+export function arrivalsFrom(trains: Train[], fromId: string, toId: string) {
+  let count = 0;
+  for (const train of trains) {
+    for (const [from, to] of legs(train.route)) {
+      const isLeg = from.stationId === fromId && to.stationId === toId;
+      if (isLeg && isAhead(to.arrival)) count += 1;
+    }
+  }
+  return count;
 }
 
 // Поезд сейчас на станции из набора или на участке, касающемся набора.
@@ -157,22 +146,6 @@ function eventType(train: Train, index: number) {
 
 function isAhead(minutes: number) {
   return minutes > 0 && minutes <= HORIZON_MINUTES;
-}
-
-function countLegs(
-  trains: Train[],
-  fromId: string,
-  toId: string,
-  isCounted: (from: TrainStop, to: TrainStop) => boolean,
-) {
-  let count = 0;
-  for (const train of trains) {
-    for (const [from, to] of legs(train.route)) {
-      if (from.stationId !== fromId || to.stationId !== toId) continue;
-      if (isCounted(from, to)) count += 1;
-    }
-  }
-  return count;
 }
 
 function legs(route: TrainStop[]): [TrainStop, TrainStop][] {
