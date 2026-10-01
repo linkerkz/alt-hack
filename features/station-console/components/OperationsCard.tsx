@@ -64,7 +64,12 @@ function OperationState({ stationId, operation, canAssign }: StateProps) {
         </span>
       )}
       {canAssign && !waiting && (
-        <CommandButton stationId={stationId} command={operation.command}>
+        <CommandButton
+          stationId={stationId}
+          command={operation.command}
+          size="sm"
+          variant={status == null ? "secondary" : "ghost"}
+        >
           {status == null ? "Поручить бригаде" : "Поручить снова"}
         </CommandButton>
       )}

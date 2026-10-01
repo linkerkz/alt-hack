@@ -26,7 +26,7 @@ export function OptionComparison({ comparison, state }: Props) {
         <span className="text-[11px] text-accent-700">{note}</span>
       </div>
       <div className={decided ? "opacity-75" : ""}>
-        <div className="grid grid-cols-[118px_repeat(3,minmax(0,1fr))] text-[12.5px]">
+        <div className="grid grid-cols-[100px_repeat(3,minmax(0,1fr))] text-[12.5px]">
           <span />
           {heads.map((head) => (
             <OptionHead key={head.id} head={head} state={state} />
@@ -60,7 +60,7 @@ function OptionHead({ head, state }: { head: Head; state: ConsoleState }) {
   }`;
   const content = (
     <>
-      <span className="font-heading font-semibold text-[16px] leading-tight">
+      <span className="font-heading font-semibold text-[15px] leading-tight">
         {head.name}
       </span>
       <span

@@ -6,8 +6,6 @@ import {
   canOpenNetwork,
   canOpenStation,
   homePath,
-  ownConsolePath,
-  ownDashboardPath,
 } from "@/features/auth/access";
 import { AccountMenu } from "@/features/auth/components/AccountMenu";
 import { requireUser } from "@/features/auth/queries";
@@ -36,8 +34,8 @@ export default async function StationPage({
   const header = (
     <AppHeader
       current="station"
-      stationHref={ownConsolePath(user)}
-      dashboardHref={ownDashboardPath(user)}
+      stationHref={`/stations/${station.id}`}
+      dashboardHref={`/dashboard/${station.id}`}
       account={<AccountMenu user={user} />}
     />
   );
@@ -75,7 +73,6 @@ export default async function StationPage({
         data={data}
         state={state}
         neighbors={neighbors}
-        mapHref={mapHref}
       />
     </>
   );

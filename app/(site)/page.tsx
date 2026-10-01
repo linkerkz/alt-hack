@@ -57,6 +57,7 @@ export default async function ZoneMapPage() {
         defaultStationId={scope.kind === "station" ? scope.stationId : null}
         consoleStationIds={consoleStations.map((station) => station.id)}
         requestStationIds={requestStationIds}
+        showRequests={user.role === "dnc"}
         overlay={
           requests.length > 0 && <ApprovalRequests requests={requests} />
         }

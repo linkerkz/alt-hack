@@ -10,16 +10,17 @@ const SEVERITY = {
   critical: "Критично",
 };
 
-// Шапка инцидента: код, что случилось и где.
+// Шапка инцидента: код, что случилось и где. Закрытый — уже не тревога.
 export function IncidentHeader({ incident }: Props) {
-  const { tone, fault } = incident;
+  const { fault, isActive } = incident;
+  const tone = isActive ? incident.tone : "normal";
   return (
     <header className="flex flex-col gap-1">
       <p
         className={`text-[11px] uppercase tracking-[0.08em] ${TONE_TEXT_CLASS[tone]}`}
       >
-        {TONE_GLYPH[tone]} {SEVERITY[tone]} · {incident.code} ·{" "}
-        {incident.detectedAt}
+        {TONE_GLYPH[tone]} {isActive ? SEVERITY[tone] : "Закрыт"} ·{" "}
+        {incident.code} · {incident.detectedAt}
       </p>
       <h2 className="font-heading font-semibold text-[25px] leading-[1.12]">
         {fault.title}

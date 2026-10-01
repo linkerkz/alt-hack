@@ -2,15 +2,26 @@ import { Heading } from "@/components/ui/Heading";
 import type { StationConsoleData } from "../queries";
 import { PLAN_BAR_CLASS } from "../status";
 
-type Props = { plan: StationConsoleData["plan"] };
+type Props = {
+  plan: StationConsoleData["plan"];
+  // Время сценария: по нему стоит линия «сейчас».
+  clock: string;
+};
+
+// Ближе этого (в % ширины) к линии «сейчас» метку времени не подписываем.
+const NOW_GAP = 4;
 
 // План занятости путей: строка на путь, полосы операций, линия текущего времени.
-export function TrackPlan({ plan }: Props) {
-  const { ticks, rows, nowPercent } = plan;
+export function TrackPlan({ plan, clock }: Props) {
+  const { rows, nowPercent } = plan;
+  // Метку рядом с «сейчас» прячем: подписи налезают друг на друга.
+  const ticks = plan.ticks.filter(
+    (tick) => Math.abs(tick.left - nowPercent) > NOW_GAP,
+  );
 
   return (
     <div className="flex flex-col gap-2 border-line border-t px-5 pt-2.5 pb-24">
-      <Heading note="14:00–14:45 · линия — текущее время">
+      <Heading note={`14:00–14:45 · сейчас ${clock}`}>
         План занятости путей
       </Heading>
       <div className="grid grid-cols-[72px_minmax(0,1fr)]">
@@ -25,6 +36,12 @@ export function TrackPlan({ plan }: Props) {
               {tick.label}
             </span>
           ))}
+          <span
+            className="absolute -translate-x-1/2 bg-paper px-1 font-semibold text-[10px] text-ink"
+            style={{ left: `${nowPercent}%` }}
+          >
+            {clock}
+          </span>
         </div>
       </div>
       {rows.map((row) => (

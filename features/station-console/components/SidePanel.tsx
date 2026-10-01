@@ -21,7 +21,7 @@ export function SidePanel({ role, data, state }: Props) {
   }
 
   return (
-    <aside className="sticky top-0 flex max-h-screen min-w-0 max-w-full flex-[1_1_380px] flex-col">
+    <aside className="sticky top-0 flex max-h-screen min-w-0 max-w-full flex-[1_1_440px] flex-col">
       <ConsoleTabs
         state={state}
         incidentCode={state.step > 0 ? data.incident.code : null}
