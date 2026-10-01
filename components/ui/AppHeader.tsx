@@ -39,12 +39,13 @@ function navItems(stationHref: string | null): NavItem[] {
 
 export function AppHeader({ current, stationHref, account }: Props) {
   return (
-    <header className="flex h-12 shrink-0 items-center gap-6 border-line border-b bg-surface-1 px-4">
-      <Link href="/" className="flex items-center gap-2.5">
+    <header className="flex h-14 shrink-0 items-center gap-6 border-line border-b bg-paper px-5">
+      <Link
+        href="/"
+        className="flex items-center gap-2.5 font-heading font-semibold text-[21px]"
+      >
         <Logo />
-        <span className="font-semibold text-sm text-white tracking-tight">
-          Цифровая станция
-        </span>
+        Цифровая станция
       </Link>
 
       <nav className="flex h-full items-stretch gap-1">
@@ -54,10 +55,10 @@ export function AppHeader({ current, stationHref, account }: Props) {
       </nav>
 
       <div className="ml-auto flex items-center gap-5">
-        <span className="flex items-center gap-2 text-muted text-xs">
+        <span className="flex items-center gap-2 text-[11px] text-muted">
           <span className="relative flex size-2">
-            <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-60" />
-            <span className="relative size-2 rounded-full bg-emerald-400" />
+            <span className="absolute inset-0 animate-ping rounded-full bg-normal opacity-50" />
+            <span className="relative size-2 rounded-full bg-normal" />
           </span>
           Симулятор · онлайн
         </span>
@@ -75,7 +76,7 @@ function NavLink({ item, isCurrent }: { item: NavItem; isCurrent: boolean }) {
     return (
       <span
         aria-current="page"
-        className={`${base} border-sky-400 font-medium text-white`}
+        className={`${base} border-accent text-accent-700`}
       >
         {item.label}
       </span>
@@ -85,7 +86,7 @@ function NavLink({ item, isCurrent }: { item: NavItem; isCurrent: boolean }) {
     return (
       <span
         title={item.hint ?? "В разработке"}
-        className={`${base} cursor-not-allowed border-transparent text-zinc-600`}
+        className={`${base} cursor-not-allowed border-transparent text-neutral-400`}
       >
         {item.label}
       </span>
@@ -94,7 +95,7 @@ function NavLink({ item, isCurrent }: { item: NavItem; isCurrent: boolean }) {
   return (
     <Link
       href={item.href}
-      className={`${base} border-transparent text-zinc-400 hover:text-white`}
+      className={`${base} border-transparent text-ink hover:text-accent`}
     >
       {item.label}
     </Link>
@@ -105,10 +106,10 @@ function Logo() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="size-6 text-sky-400"
+      className="size-6 text-accent"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       aria-hidden
     >

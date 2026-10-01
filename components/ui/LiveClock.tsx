@@ -19,9 +19,11 @@ export function LiveClock() {
   }, []);
 
   return (
-    <span className="font-mono text-sm text-white tabular-nums">
-      {now == null ? "--:--:--" : FORMAT.format(now)}
-      <span className="ml-1.5 text-[10px] text-muted">МСК</span>
+    <span className="flex items-baseline gap-1.5 border-line border-l pl-5">
+      <span className="font-heading text-[24px] leading-none">
+        {now == null ? "--:--:--" : FORMAT.format(now)}
+      </span>
+      <span className="text-[11px] text-muted">МСК</span>
     </span>
   );
 }
