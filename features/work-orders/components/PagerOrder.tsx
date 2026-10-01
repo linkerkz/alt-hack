@@ -89,9 +89,7 @@ export function PagerOrder({ order }: Props) {
         <DeviceButton
           tone="alert"
           disabled={isPending || doneCount < items.length}
-          onClick={() =>
-            run(() => completeWork(order.id, { error: null }, new FormData()))
-          }
+          onClick={() => run(() => completeWork(order.id, null))}
         >
           Работы выполнены
         </DeviceButton>
