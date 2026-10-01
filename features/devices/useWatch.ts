@@ -1,3 +1,4 @@
+import type { ObjectDetector } from "@mediapipe/tasks-vision";
 import {
   type RefObject,
   useCallback,
@@ -5,123 +6,121 @@ import {
   useRef,
   useState,
 } from "react";
-import type { CameraState } from "./types";
 import {
-  changedShare,
-  INITIAL_WATCH,
-  nextWatch,
-  sampleRegion,
-  snapshotOf,
-  TICK_MS,
-} from "./watch";
+  type Finding,
+  findingsIn,
+  labelOf,
+  leansByFindings,
+  loadDetector,
+} from "./detector";
+import { changedShare, leansAway, sampleRegion } from "./frameDiff";
+import { type Reply, sendSignal } from "./signal";
+import type { CameraState } from "./types";
+import { INITIAL_WATCH, nextWatch, snapshotOf, TICK_MS } from "./watch";
 
 type Params = {
   deviceId: string;
   video: RefObject<HTMLVideoElement | null>;
   canvas: RefObject<HTMLCanvasElement | null>;
-  // Видео пошло — можно снимать эталон и сравнивать.
+  // Видео пошло — можно грузить модель и смотреть кадры.
   isLive: boolean;
 };
 
-// Ответ сервера на сигнал: что сделала система и когда.
-export type Reply = { text: string; incidentCode: string | null; at: string };
+// Чем камера смотрит: модель ещё грузится, ИИ на устройстве или резервное
+// сравнение с эталоном (модель не загрузилась).
+export type Sensor = "loading" | "ai" | "diff";
 
-// Через сколько после старта видео снимаем эталон: камера успевает
-// навести резкость и выставить экспозицию.
-const CALIBRATE_DELAY_MS = 1200;
-
-// Наблюдение за объектом: эталон «свободно», сравнение кадров и сигнал на
-// сервер при смене состояния. Запасной путь для сцены — simulate.
+// Наблюдение за зоной объекта: каждый тик — кадр в детектор, смена состояния
+// после отсчёта — сигнал на сервер со снимком. Тест — запасной путь для сцены.
 export function useWatch({ deviceId, video, canvas, isLive }: Params) {
+  const detector = useRef<ObjectDetector | null>(null);
   const reference = useRef<Float32Array | null>(null);
   // Состояние для тика — в ref: сигнал уходит ровно один раз на смену.
   const watched = useRef(INITIAL_WATCH);
+  const [sensor, setSensor] = useState<Sensor>("loading");
   const [watch, setWatch] = useState(INITIAL_WATCH);
+  const [findings, setFindings] = useState<Finding[]>([]);
   const [share, setShare] = useState(0);
   const [reply, setReply] = useState<Reply | null>(null);
   const [sent, setSent] = useState<CameraState>("clear");
-  // Сигнал ушёл, ждём ответа: сервер и ИИ смотрят кадр.
   const [sending, setSending] = useState(false);
 
-  const frame = useCallback(() => {
-    if (video.current == null || canvas.current == null) return null;
-    return { video: video.current, canvas: canvas.current };
-  }, [video, canvas]);
-
   const send = useCallback(
-    async (state: CameraState) => {
-      const parts = frame();
-      if (parts == null) return;
+    async (state: CameraState, seen: Finding[]) => {
+      if (video.current == null || canvas.current == null) return;
       setSent(state);
       setSending(true);
-      const snapshot = snapshotOf(parts.video, parts.canvas);
-      setReply(await postSignal(deviceId, state, snapshot));
+      const snapshot = snapshotOf(video.current, canvas.current, seen);
+      setReply(
+        await sendSignal(deviceId, { state, snapshot, label: labelOf(seen) }),
+      );
       setSending(false);
     },
-    [deviceId, frame],
+    [deviceId, video, canvas],
   );
 
+  // Эталон «свободно» — только для резервного режима.
   const calibrate = useCallback(() => {
-    const parts = frame();
-    if (parts == null) return;
-    reference.current = sampleRegion(parts.video, parts.canvas);
+    if (video.current == null || canvas.current == null) return;
+    reference.current = sampleRegion(video.current, canvas.current);
     watched.current = INITIAL_WATCH;
     setWatch(INITIAL_WATCH);
-    setShare(0);
-  }, [frame]);
+  }, [video, canvas]);
 
   useEffect(() => {
     if (!isLive) return;
-    const timer = setTimeout(calibrate, CALIBRATE_DELAY_MS);
-    return () => clearTimeout(timer);
+    loadDetector()
+      .then((loaded) => {
+        detector.current = loaded;
+        setSensor("ai");
+      })
+      .catch(() => {
+        calibrate();
+        setSensor("diff");
+      });
+    return () => detector.current?.close();
   }, [isLive, calibrate]);
 
   useEffect(() => {
-    if (!isLive) return;
+    if (sensor === "loading") return;
     const timer = setInterval(() => {
-      const parts = frame();
-      if (parts == null || reference.current == null) return;
-      const current = changedShare(
-        reference.current,
-        sampleRegion(parts.video, parts.canvas),
-      );
-      const next = nextWatch(watched.current, current);
-      if (next.state !== watched.current.state) send(next.state);
+      const frame = video.current;
+      if (frame == null || canvas.current == null) return;
+      let seen: Finding[] = [];
+      let leaning = false;
+      if (detector.current != null) {
+        seen = findingsIn(detector.current, frame);
+        leaning = leansByFindings(watched.current.state, seen);
+      } else if (reference.current != null) {
+        const current = changedShare(
+          reference.current,
+          sampleRegion(frame, canvas.current),
+        );
+        leaning = leansAway(watched.current.state, current);
+        setShare(current);
+      }
+      const next = nextWatch(watched.current, leaning);
+      if (next.state !== watched.current.state) send(next.state, seen);
       watched.current = next;
       setWatch(next);
-      setShare(current);
+      setFindings(seen);
     }, TICK_MS);
     return () => clearInterval(timer);
-  }, [isLive, frame, send]);
+  }, [sensor, video, canvas, send]);
 
   // Без предмета в кадре: шлём противоположное тому, что ушло последним.
-  const simulate = () => send(sent === "clear" ? "obstruction" : "clear");
+  const simulate = () =>
+    send(sent === "clear" ? "obstruction" : "clear", findings);
 
-  return { watch, share, reply, sent, sending, calibrate, simulate };
-}
-
-async function postSignal(
-  deviceId: string,
-  state: CameraState,
-  snapshot: string,
-): Promise<Reply> {
-  const at = new Date().toLocaleTimeString("ru-RU", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-  try {
-    const response = await fetch(`/api/devices/${deviceId}/observations`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ state, snapshot }),
-    });
-    if (!response.ok)
-      return { text: "Сервер не принял сигнал", incidentCode: null, at };
-    const body: { text: string; incidentCode: string | null } =
-      await response.json();
-    return { ...body, at };
-  } catch {
-    return { text: "Нет связи с сервером", incidentCode: null, at };
-  }
+  return {
+    sensor,
+    watch,
+    findings,
+    share,
+    reply,
+    sent,
+    sending,
+    calibrate,
+    simulate,
+  };
 }

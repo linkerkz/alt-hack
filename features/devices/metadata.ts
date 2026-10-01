@@ -10,6 +10,7 @@ export function deviceMetadata(device: Device | null): Metadata {
   const code = deviceCode(device);
   return {
     title: `${code} · ${device.name}`,
+    description: device.name,
     manifest: `/devices/${device.id}/manifest.webmanifest`,
     appleWebApp: { capable: true, title: code, statusBarStyle: "black" },
     icons: { apple: "/devices/icon/180" },
