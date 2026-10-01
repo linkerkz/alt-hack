@@ -60,9 +60,11 @@ drop table demo_users;
 -- 3–5 приёмо-отправочные, 6 — тупик маневрового локомотива; платформа у 1 и 3.
 -- План — час 14:00–15:00 в штатном режиме, инцидентов нет.
 
-insert into public.stations (id, name) values
-  ('almaty-1', 'Алматы-1')
-on conflict (id) do update set name = excluded.name;
+insert into public.stations (id, name, dispatch_area_id) values
+  ('almaty-1', 'Алматы-1', 'almaty')
+on conflict (id) do update set
+  name = excluded.name,
+  dispatch_area_id = excluded.dispatch_area_id;
 
 insert into public.tracks (station_id, number, kind, has_platform) values
   ('almaty-1', 1, 'main',      true),
