@@ -1,7 +1,7 @@
 "use client";
 
 import { divIcon } from "leaflet";
-import { useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 import { Marker, useMap } from "react-leaflet";
 import type { SectionFlow, Station } from "../types";
 
@@ -9,10 +9,12 @@ type Props = {
   from: Station;
   to: Station;
   flow: SectionFlow;
+  // Подсказка при наведении на плашку.
+  children?: ReactNode;
 };
 
 // Метка посередине участка: стрелки вдоль линии и число поездов в каждую сторону.
-export function SectionFlowLabel({ from, to, flow }: Props) {
+export function SectionFlowLabel({ from, to, flow, children }: Props) {
   const map = useMap();
   const icon = useMemo(() => {
     // Меркатор сохраняет углы, поэтому направление считаем на нулевом зуме.
@@ -29,8 +31,9 @@ export function SectionFlowLabel({ from, to, flow }: Props) {
     <Marker
       position={[(from.lat + to.lat) / 2, (from.lon + to.lon) / 2]}
       icon={icon}
-      interactive={false}
-    />
+    >
+      {children}
+    </Marker>
   );
 }
 
@@ -44,7 +47,7 @@ function labelIcon(flow: SectionFlow, angle: number) {
     className: "",
     iconSize: [0, 0],
     html: `
-      <div class="absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-2.5 whitespace-nowrap rounded-full border border-line bg-surface-1/90 px-2 py-0.5 font-semibold text-[12px] text-ink shadow-sm tabular-nums">
+      <div class="absolute flex -translate-x-1/2 -translate-y-1/2 cursor-help items-center gap-2.5 whitespace-nowrap rounded-full border border-line bg-paper/95 px-2 py-0.5 text-[12px] text-ink shadow-sm">
         ${parts.join("")}
       </div>`,
   });

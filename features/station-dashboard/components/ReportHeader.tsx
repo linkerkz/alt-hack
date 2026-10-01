@@ -1,6 +1,9 @@
-import Link from "next/link";
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { Heading } from "@/components/ui/Heading";
+import { Kicker } from "@/components/ui/Kicker";
 import { LiveClock } from "@/components/ui/LiveClock";
-import { STATUS_BADGE_CLASS, STATUS_LABEL, toStatus } from "@/lib/status";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { STATUS_LABEL, toStatus } from "../status";
 
 type Props = {
   stationId: string;
@@ -26,28 +29,19 @@ export function ReportHeader({
   return (
     <header className="flex flex-wrap items-end justify-between gap-4 border-line border-b pb-5">
       <div className="space-y-1">
-        <p className="text-[11px] text-accent-700 uppercase tracking-widest">
-          Оперативный отчёт · ЕСР {stationCode}
-        </p>
-        <h1 className="font-normal text-4xl text-ink">{stationName}</h1>
-        <p className="text-muted text-sm">
+        <Kicker tone="accent">Оперативный отчёт · ЕСР {stationCode}</Kicker>
+        <Heading level={1}>{stationName}</Heading>
+        <p className="text-[13px] text-muted">
           {REPORT_DATE_FORMAT.format(new Date())}
         </p>
       </div>
 
       <div className="flex items-center gap-4">
-        <span
-          className={`inline-flex rounded border px-2.5 py-1 font-medium text-xs uppercase tracking-wider ${STATUS_BADGE_CLASS[status]}`}
-        >
-          {STATUS_LABEL[status]}
-        </span>
+        <StatusBadge tone={status} label={STATUS_LABEL[status]} />
         <LiveClock />
-        <Link
-          href={`/?station=${stationId}`}
-          className="rounded border border-line px-3 py-1.5 text-muted text-sm hover:bg-surface-2 hover:text-ink"
-        >
+        <ButtonLink href={`/?station=${stationId}`} size="sm">
           ← К карте сети
-        </Link>
+        </ButtonLink>
       </div>
     </header>
   );

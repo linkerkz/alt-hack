@@ -2,11 +2,11 @@
 
 import type { PathOptions } from "leaflet";
 import { memo } from "react";
-import { Polyline, Tooltip } from "react-leaflet";
-import type { Status } from "@/lib/status";
-import { STATUS_COLOR, STATUS_LABEL } from "@/lib/status";
-import type { Station, ZoneSection } from "../types";
+import { Polyline } from "react-leaflet";
+import { TONE_COLOR } from "@/components/ui/tone";
+import type { Station, Status, ZoneSection } from "../types";
 import { SectionFlowLabel } from "./SectionFlowLabel";
+import { SectionTooltip } from "./SectionTooltip";
 
 type Props = {
   section: ZoneSection;
@@ -16,17 +16,17 @@ type Props = {
 };
 
 const PATH_OPTIONS: Record<Status, PathOptions> = {
-  normal: { color: "#9b9797", weight: 2, opacity: 0.6 },
-  warning: { color: STATUS_COLOR.warning, weight: 3, opacity: 0.85 },
+  normal: { color: "#605d5d", weight: 1.5, opacity: 0.85 },
+  warning: { color: TONE_COLOR.warning, weight: 3, opacity: 0.9 },
   critical: {
-    color: STATUS_COLOR.critical,
+    color: TONE_COLOR.critical,
     weight: 4,
     opacity: 0.95,
     dashArray: "8 6",
   },
 };
 
-// Участки выбранной станции: нормальные — акцентным золотым, проблемные — своим цветом, но толще.
+// Участки выбранной станции: нормальные — акцентом, проблемные — своим цветом, но толще.
 const HIGHLIGHT_COLOR = "#b68235";
 
 export const SectionLine = memo(function SectionLine({
@@ -45,19 +45,11 @@ export const SectionLine = memo(function SectionLine({
           [to.lat, to.lon],
         ]}
         pathOptions={pathOptions(section.status, isHighlighted)}
-      >
-        <Tooltip sticky className="map-tooltip">
-          <div className="font-medium">
-            {from.name} → {to.name}: {section.flow.forward} · {to.name} →{" "}
-            {from.name}: {section.flow.backward}
-          </div>
-          <div className="text-muted">
-            {STATUS_LABEL[section.status]}
-            {section.note == null ? null : ` · ${section.note}`}
-          </div>
-        </Tooltip>
-      </Polyline>
-      <SectionFlowLabel from={from} to={to} flow={section.flow} />
+        interactive={false}
+      />
+      <SectionFlowLabel from={from} to={to} flow={section.flow}>
+        <SectionTooltip section={section} from={from} to={to} />
+      </SectionFlowLabel>
     </>
   );
 });
@@ -67,5 +59,5 @@ function pathOptions(status: Status, isHighlighted: boolean): PathOptions {
   if (!isHighlighted) return base;
 
   const color = status === "normal" ? HIGHLIGHT_COLOR : base.color;
-  return { ...base, color, opacity: 1, weight: (base.weight ?? 2) + 2 };
+  return { ...base, color, opacity: 1, weight: (base.weight ?? 2) + 1.5 };
 }

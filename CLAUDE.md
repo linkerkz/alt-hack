@@ -14,6 +14,10 @@ CLAUDE.md — только оглавление. Здесь живут `@`-им�
 
 <!-- Code style, architecture, API contract, terminology, workflow. Read ALWAYS when writing or planning code. -->
 
+@docs/ui.md
+
+<!-- Тема «Classical»: токены, значки состояний, каталог components/ui. Читай перед любой вёрсткой. -->
+
 @AGENTS.md
 
 <!-- Base context: Expo v56 docs rule, project language (Russian-only). Read ALWAYS. -->
@@ -26,6 +30,6 @@ CLAUDE.md — только оглавление. Здесь живут `@`-им�
 
 <!-- Branch naming, commit format, MR flow. Read when committing or branching. -->
 
-@docs/about_the_project.md
+@docs/hackathon_case.md
 
-<!-- Product vision, MVP scope, target audience. Read when business context is needed. -->
+<!-- Product vision, target audience. Read when business context is needed. -->

@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import type {
-  StationTraffic,
+  StationTrain,
   ZoneSection,
   ZoneStation,
   ZoneSummary,
@@ -18,7 +18,7 @@ type Props = {
   summary: ZoneSummary;
   stations: ZoneStation[];
   sections: ZoneSection[];
-  trafficByStation: Record<string, StationTraffic>;
+  trainsByStation: Record<string, StationTrain[]>;
   // Станция, выбранная по умолчанию: у ДСП/ДСЦС/ДС — своя.
   defaultStationId: string | null;
   consoleStationIds: string[];
@@ -27,20 +27,20 @@ type Props = {
 // Выбранная станция живёт в URL (?station=), но меняется через History API:
 // Next синхронизирует useSearchParams без запроса к серверу.
 export function ZoneMapView(props: Props) {
-  const { stations, trafficByStation, defaultStationId } = props;
+  const { stations, trainsByStation, defaultStationId } = props;
   const searchParams = useSearchParams();
   const selectedId = searchParams.get("station") ?? defaultStationId;
 
   const scopeStations = stations.filter((station) => station.isInScope);
   const selectedStation =
     scopeStations.find((station) => station.id === selectedId) ?? null;
-  const traffic =
-    selectedStation == null ? null : trafficByStation[selectedStation.id];
+  const trains =
+    selectedStation == null ? null : trainsByStation[selectedStation.id];
   const selectedStationId = selectedStation?.id ?? null;
 
   return (
     <div className="flex min-h-0 flex-1">
-      <aside className="flex w-80 shrink-0 flex-col border-line border-r bg-surface-1">
+      <aside className="flex w-80 shrink-0 flex-col border-line border-r bg-paper">
         <ZoneSummaryPanel title={props.title} summary={props.summary} />
         <StationList
           stations={scopeStations}
@@ -56,11 +56,11 @@ export function ZoneMapView(props: Props) {
           selectedStationId={selectedStationId}
           onSelect={selectStation}
         />
-        {selectedStation != null && traffic != null && (
+        {selectedStation != null && trains != null && (
           <div className="absolute top-4 right-4 bottom-4 z-[1000] flex items-start">
             <StationPreview
               station={selectedStation}
-              traffic={traffic}
+              trains={trains}
               canOpenConsole={props.consoleStationIds.includes(
                 selectedStation.id,
               )}

@@ -1,10 +1,12 @@
+import { Card } from "@/components/ui/Card";
+import { Kicker } from "@/components/ui/Kicker";
 import type { Operation, OperationStatus } from "../types";
 
 const STATUS_BAR_CLASS: Record<OperationStatus, string> = {
-  completed: "bg-status-normal/70",
+  completed: "bg-normal/70",
   "in-progress": "bg-accent",
-  planned: "bg-muted/30",
-  delayed: "bg-status-critical/80",
+  planned: "bg-neutral-300",
+  delayed: "bg-critical/80",
 };
 
 type Bounds = { min: number; max: number };
@@ -14,10 +16,8 @@ export function OperationsGantt({ operations }: { operations: Operation[] }) {
   const hours = getHourTicks(bounds);
 
   return (
-    <section className="space-y-3 rounded-md border border-line p-5">
-      <p className="text-[10px] text-muted uppercase tracking-widest">
-        Операции · временная шкала
-      </p>
+    <Card className="space-y-3 p-5">
+      <Kicker>Операции · временная шкала</Kicker>
 
       <div className="relative mb-1 ml-[calc(10rem+0.75rem)] h-4 text-[11px] text-muted">
         {hours.map((hour) => (
@@ -34,10 +34,10 @@ export function OperationsGantt({ operations }: { operations: Operation[] }) {
       <ul className="space-y-2">
         {operations.map((operation) => (
           <li key={operation.id} className="flex items-center gap-3">
-            <span className="w-40 shrink-0 truncate text-ink text-sm">
+            <span className="w-40 shrink-0 truncate text-[13px] text-ink">
               {operation.title}
             </span>
-            <div className="relative h-5 flex-1 rounded bg-surface-2">
+            <div className="relative h-5 flex-1 rounded bg-surface">
               <div
                 className={`absolute inset-y-0 rounded ${STATUS_BAR_CLASS[operation.status]}`}
                 style={barStyle(operation, bounds)}
@@ -45,14 +45,14 @@ export function OperationsGantt({ operations }: { operations: Operation[] }) {
               />
             </div>
             {operation.delayMinutes != null && (
-              <span className="w-16 shrink-0 text-right text-status-critical text-xs tabular-nums">
+              <span className="w-16 shrink-0 text-right text-[12px] text-critical">
                 +{operation.delayMinutes} мин
               </span>
             )}
           </li>
         ))}
       </ul>
-    </section>
+    </Card>
   );
 }
 

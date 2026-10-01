@@ -1,3 +1,6 @@
+import { Card } from "@/components/ui/Card";
+import { Kicker } from "@/components/ui/Kicker";
+import { Table } from "@/components/ui/Table";
 import type { StationStatistics } from "../types";
 
 export function Statistics({ stats }: { stats: StationStatistics }) {
@@ -13,22 +16,18 @@ export function Statistics({ stats }: { stats: StationStatistics }) {
   ];
 
   return (
-    <section className="space-y-3 rounded-md border border-line p-5">
-      <p className="text-[10px] text-muted uppercase tracking-widest">
-        Статистика смены
-      </p>
-      <table className="w-full text-sm">
+    <Card className="space-y-3 p-5">
+      <Kicker>Статистика смены</Kicker>
+      <Table>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.label} className="border-line border-t">
-              <td className="py-2 text-muted">{row.label}</td>
-              <td className="py-2 text-right font-heading text-ink tabular-nums">
-                {row.value}
-              </td>
+            <tr key={row.label}>
+              <td>{row.label}</td>
+              <td className="text-right font-heading">{row.value}</td>
             </tr>
           ))}
         </tbody>
-      </table>
-    </section>
+      </Table>
+    </Card>
   );
 }

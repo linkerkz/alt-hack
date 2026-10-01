@@ -1,5 +1,3 @@
-import type { Status } from "@/lib/status";
-
 export type Station = {
   id: string;
   name: string;
@@ -41,6 +39,8 @@ export type Section = {
   note?: string;
 };
 
+export type Status = "normal" | "warning" | "critical";
+
 export type ZoneSummary = {
   avgEfficiencyIndex: number;
   stationCount: number;
@@ -67,12 +67,12 @@ export type TrainStop = {
   departure: number;
 };
 
-// Счётчики поездов станции: в пути или выйдут на участок за горизонт.
-export type StationFlow = {
-  arriving: number;
-  departing: number;
-  passing: number;
-};
+// Куда поезд движется относительно станции: к нам — остановится у нас и ещё
+// не прибыл, от нас — стоит у нас или ушёл, проездом — идёт без остановки.
+export type TrainFlow = "arriving" | "departing" | "passing";
+
+// Счётчики поездов станции по категориям: в пути или выйдут на участок за горизонт.
+export type StationFlow = Record<TrainFlow, number>;
 
 // Поезда по участку в каждую сторону: forward — из fromId в toId.
 export type SectionFlow = {
@@ -80,18 +80,23 @@ export type SectionFlow = {
   backward: number;
 };
 
-// Поезд в списке карточки: движение по участку между станцией и соседом.
-// departure ≤ 0 — поезд уже в пути.
-export type TrainMovement = {
+// Поезд в карточке станции. fromName / toName — соседи, с участков которых
+// поезд идёт к нам и от нас; null — такого движения нет за горизонт.
+// Время — минуты от текущего момента; ≤ 0 — уже произошло.
+export type StationTrain = {
   trainId: string;
   number: string;
   kind: TrainKind;
+  flow: TrainFlow;
   originName: string;
   destinationName: string;
-  departure: number;
+  fromName: string | null;
+  toName: string | null;
   arrival: number;
-  // Поезд проходит выбранную станцию без остановки.
-  passesStation: boolean;
+  departure: number;
+  // Прибытие к соседу toName.
+  nextArrival: number | null;
+  isTerminal: boolean;
 };
 
 // Зона ответственности, которую показывает карта.
@@ -102,15 +107,3 @@ export type MapScope =
 // Станция на карте зоны: соседи за границей зоны показываются бледными.
 export type ZoneStation = Station & { flow: StationFlow; isInScope: boolean };
 export type ZoneSection = Section & { flow: SectionFlow };
-
-export type StationTraffic = {
-  directions: Direction[];
-};
-
-// Направление станции: поезда от соседа к нам и от нас к соседу.
-export type Direction = {
-  neighborId: string;
-  neighborName: string;
-  toUs: TrainMovement[];
-  fromUs: TrainMovement[];
-};

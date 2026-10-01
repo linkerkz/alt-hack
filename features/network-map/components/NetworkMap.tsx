@@ -22,8 +22,8 @@ export function NetworkMap(props: Props) {
 
 function MapPlaceholder() {
   return (
-    <div className="flex h-full w-full items-center justify-center bg-surface-0">
-      <span className="text-muted text-xs uppercase tracking-widest">
+    <div className="flex h-full w-full items-center justify-center bg-surface">
+      <span className="font-heading text-lg text-muted italic">
         Загрузка карты…
       </span>
     </div>

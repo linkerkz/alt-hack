@@ -2,16 +2,17 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Lora } from "next/font/google";
 import "./globals.css";
 
+// Заголовки и крупные числа — Cormorant Garamond, текст — Lora.
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
-  weight: ["400", "600"],
   subsets: ["latin", "cyrillic"],
+  weight: ["400", "600"],
 });
 
 const lora = Lora({
   variable: "--font-lora",
-  weight: ["400", "600"],
   subsets: ["latin", "cyrillic"],
+  weight: ["400", "600"],
 });
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="ru"
       className={`${cormorant.variable} ${lora.variable} h-full antialiased`}
     >
-      <body className="flex h-full flex-col font-body">{children}</body>
+      <body className="flex h-full flex-col font-sans">{children}</body>
     </html>
   );
 }

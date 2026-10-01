@@ -3,6 +3,7 @@ import type {
   SectionFlow,
   StationFlow,
   Train,
+  TrainFlow,
   TrainStop,
 } from "./types";
 
@@ -29,25 +30,30 @@ export function sectionFlow(trains: Train[], section: Section): SectionFlow {
   };
 }
 
-// К нам = остановятся у нас, от нас = стояли у нас и уходят,
-// проездом = идут к нам без остановки. Сумма «к нам» по всем соседям
-// в карточке равна «к нам» + «проездом».
+// Каждый поезд станции попадает ровно в одну категорию, поэтому сумма
+// счётчиков равна числу поездов в карточке станции.
 export function stationFlow(trains: Train[], stationId: string): StationFlow {
-  const legs = activeLegs(trains);
-  const incoming = legs.filter((leg) => leg.to.stationId === stationId);
-  const outgoing = legs.filter((leg) => leg.from.stationId === stationId);
-
-  return {
-    arriving: incoming.filter((leg) => !leg.passesTo).length,
-    departing: outgoing.filter((leg) => !leg.passesFrom).length,
-    passing: incoming.filter((leg) => leg.passesTo).length,
-  };
+  const flow = { arriving: 0, departing: 0, passing: 0 };
+  for (const stationTrain of stationTrains(trains, stationId)) {
+    flow[stationTrain.flow] += 1;
+  }
+  return flow;
 }
 
-export function legsBetween(trains: Train[], fromId: string, toId: string) {
-  return activeLegs(trains).filter(
-    (leg) => leg.from.stationId === fromId && leg.to.stationId === toId,
-  );
+// Поезда станции — те, у кого есть активное движение к ней или от неё.
+// incoming / outgoing — эти движения; их же считают стрелки участков.
+export function stationTrains(trains: Train[], stationId: string) {
+  return trains.flatMap((train) => {
+    const legs = legsOf(train).filter(isActive);
+    const incoming = legs.find((leg) => leg.to.stationId === stationId) ?? null;
+    const outgoing =
+      legs.find((leg) => leg.from.stationId === stationId) ?? null;
+    const stop = incoming?.to ?? outgoing?.from;
+    if (stop == null) return [];
+
+    const passes = incoming?.passesTo ?? outgoing?.passesFrom ?? false;
+    return { train, stop, incoming, outgoing, flow: flowOf(passes, incoming) };
+  });
 }
 
 // Поезд сейчас на станции из набора или на участке, касающемся набора.
@@ -63,6 +69,19 @@ export function isTrainWithin(train: Train, stationIds: Set<string>) {
   if (moving == null) return false;
   const { from, to } = moving;
   return stationIds.has(from.stationId) || stationIds.has(to.stationId);
+}
+
+// Проездом — не останавливается у нас, где бы поезд ни был. Иначе по тому,
+// прибыл ли он: активное движение к станции есть, только пока поезд не приехал.
+function flowOf(passes: boolean, incoming: Leg | null): TrainFlow {
+  if (passes) return "passing";
+  return incoming != null ? "arriving" : "departing";
+}
+
+function legsBetween(trains: Train[], fromId: string, toId: string) {
+  return activeLegs(trains).filter(
+    (leg) => leg.from.stationId === fromId && leg.to.stationId === toId,
+  );
 }
 
 function activeLegs(trains: Train[]) {

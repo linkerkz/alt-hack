@@ -9,15 +9,15 @@ import {
 import { AccountMenu } from "@/features/auth/components/AccountMenu";
 import { requireUser } from "@/features/auth/queries";
 import { getStation } from "@/features/network-map/queries";
-import { AttentionList } from "@/features/station-console/components/AttentionList";
-import { EfficiencyHistoryChart } from "@/features/station-console/components/EfficiencyHistoryChart";
-import { EfficiencyPanel } from "@/features/station-console/components/EfficiencyPanel";
-import { OperationsGantt } from "@/features/station-console/components/OperationsGantt";
-import { PlanProgressCard } from "@/features/station-console/components/PlanProgressCard";
-import { ReportHeader } from "@/features/station-console/components/ReportHeader";
-import { Statistics } from "@/features/station-console/components/Statistics";
-import { SummaryCards } from "@/features/station-console/components/SummaryCards";
-import { getStationDashboard } from "@/features/station-console/queries";
+import { AttentionList } from "@/features/station-dashboard/components/AttentionList";
+import { EfficiencyHistoryChart } from "@/features/station-dashboard/components/EfficiencyHistoryChart";
+import { EfficiencyPanel } from "@/features/station-dashboard/components/EfficiencyPanel";
+import { OperationsGantt } from "@/features/station-dashboard/components/OperationsGantt";
+import { PlanProgressCard } from "@/features/station-dashboard/components/PlanProgressCard";
+import { ReportHeader } from "@/features/station-dashboard/components/ReportHeader";
+import { Statistics } from "@/features/station-dashboard/components/Statistics";
+import { SummaryCards } from "@/features/station-dashboard/components/SummaryCards";
+import { getStationDashboard } from "@/features/station-dashboard/queries";
 
 export default async function StationDashboardPage({
   params,

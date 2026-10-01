@@ -1,4 +1,7 @@
-import { STATUS_COLOR, toStatus } from "@/lib/status";
+import { Card } from "@/components/ui/Card";
+import { Kicker } from "@/components/ui/Kicker";
+import { TONE_COLOR } from "@/components/ui/tone";
+import { toStatus } from "../status";
 import type { EfficiencyPoint } from "../types";
 
 const WIDTH = 480;
@@ -13,13 +16,11 @@ export function EfficiencyHistoryChart({
   if (points.length === 0) return null;
 
   const lastValue = points[points.length - 1].value;
-  const color = STATUS_COLOR[toStatus(lastValue)];
+  const color = TONE_COLOR[toStatus(lastValue)];
 
   return (
-    <section className="space-y-3 rounded-md border border-line p-5">
-      <p className="text-[10px] text-muted uppercase tracking-widest">
-        Динамика индекса эффективности
-      </p>
+    <Card className="space-y-3 p-5">
+      <Kicker>Динамика индекса эффективности</Kicker>
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         className="w-full"
@@ -40,7 +41,7 @@ export function EfficiencyHistoryChart({
           <span key={point.time}>{point.time}</span>
         ))}
       </div>
-    </section>
+    </Card>
   );
 }
 

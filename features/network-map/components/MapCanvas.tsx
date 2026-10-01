@@ -9,6 +9,7 @@ import { SelectedStationFocus } from "./SelectedStationFocus";
 import { StationMarker } from "./StationMarker";
 
 // Светлая подложка Esri без подписей: работает без API-ключа (CARTO теперь его требует).
+// В тёплый серый её переводит фильтр в globals.css.
 const TILE_URL =
   "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}";
 const TILE_ATTRIBUTION = "Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ";

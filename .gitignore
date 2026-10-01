@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# дизайн-бандл из Claude Design — локальный референс, не код
+/untitled/

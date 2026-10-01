@@ -61,3 +61,22 @@
   заглушка `/stations/dostyk` и карта сети не сломались; `/dashboard/<неизвестная-станция>` → 404
 - Коммит: будет создан после ревью пользователем (не коммитил сам —
   явного запроса на коммит не было)
+
+## Обновление после merge с main
+
+На main независимо появились своя дизайн-система «Classical»
+(`components/ui/*`, `components/ui/tone.ts`, см. `docs/ui.md`) и настоящая
+фича `features/station-console` (пульт ДСЦС: схема станции, сценарий
+инцидента) — по тому же пути, что и этот dashboard. При слиянии:
+
+- Фича переименована в `features/station-dashboard`, чтобы не конфликтовать
+  с `features/station-console`.
+- `lib/status.ts` удалён: статус/цвета теперь берутся из
+  `components/ui/tone.ts` (общий для всех фич), пороги индекса — в
+  собственном `features/station-dashboard/status.ts` (как и у network-map,
+  по паттерну «status.ts — словарь фичи»).
+- Все 8 компонентов переписаны на компоненты дизайн-системы (`Card`,
+  `Kicker`, `Heading`, `IndexValue`, `StatusBadge`, `StatusGlyph`, `Metric`,
+  `Meter`, `Table`, `ButtonLink`) вместо самодельных классов Tailwind.
+- `StationSnapshot` (структурный тип вместо импорта `Station`) не изменился —
+  реальный `Station` по-прежнему совместим с ним напрямую.

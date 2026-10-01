@@ -1,69 +1,44 @@
-// Структурный тип вместо импорта Station из network-map: фичи не
-// импортируют друг друга напрямую (см. docs/core.md, app-structure).
-// Реальный Station из network-map ему структурно соответствует.
-export type StationSnapshot = {
-  id: string;
-  name: string;
-  code: string;
-  efficiencyIndex: number;
-  trainCount: number;
-  trackLoad: number;
-  avgDelayMinutes: number;
-  conflictCount: number;
-  incidents: { id: string; title: string; startedAt: string }[];
+// Что показывает пульт: шаг сценария, выбранный вариант, вкладка панели.
+// Всё хранится в URL, чтобы экран открывался в том же состоянии.
+export type ConsoleState = {
+  step: number;
+  option: ChosenOption;
+  tab: ConsoleTab;
+  // Фокус на инциденте: остальная станция приглушена.
+  focus: boolean;
+  // Правая панель (обзор, инцидент) открыта; свёрнутая — освобождает место схеме.
+  panel: boolean;
 };
 
-export type PlanProgress = {
-  completed: number;
-  inProgress: number;
-  problems: number;
-  total: number;
-};
+// Вариант перепланирования; none — исходный сценарий «ничего не менять».
+export type OptionId = "none" | ChosenOption;
+export type ChosenOption = "A" | "B";
 
-export type OperationStatus =
-  | "planned"
-  | "in-progress"
-  | "completed"
-  | "delayed";
+export type ConsoleTab = "overview" | "incident";
 
-export type Operation = {
-  id: string;
-  title: string;
-  plannedStart: string;
-  plannedEnd: string;
-  actualStart?: string;
-  actualEnd?: string;
-  status: OperationStatus;
-  delayMinutes?: number;
-};
+export type Status = "normal" | "warning" | "critical";
 
-export type AttentionSeverity = "critical" | "warning" | "pending";
+// Соседние станции: нечётная горловина — от кого поезда идут к нам, чётная — к кому.
+export type Neighbors = { odd: string; even: string };
 
-export type AttentionItem = {
-  id: string;
-  severity: AttentionSeverity;
-  title: string;
-  detail?: string;
-  time?: string;
-};
-
-export type StationStatistics = {
-  trainsProcessed: number;
-  avgProcessingMinutes: number;
-  delayCount: number;
-  avgDelayMinutes: number;
-  operationsCompleted: number;
-};
-
-export type EfficiencyPoint = {
+export type ScenarioEvent = {
+  step: number;
   time: string;
-  value: number;
+  text: string;
+  level?: Status;
+  // Событие относится к инциденту и попадает в его хронологию.
+  incident?: boolean;
 };
 
-export type StationDashboard = {
-  planProgress: PlanProgress;
-  operations: Operation[];
-  attentionItems: AttentionItem[];
-  statistics: StationStatistics;
-  efficiencyHistory: EfficiencyPoint[];
+export type ReplanOption = {
+  id: OptionId;
+  name: string;
+  // Показатели индекса после варианта — в порядке METRICS.
+  values: number[];
+  index: number;
+  maxDelay: number;
+  passengerDelay: number;
+  dncApproval: string;
+  changes: { train: string; text: string }[];
+  why: string;
 };
