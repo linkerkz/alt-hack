@@ -19,16 +19,17 @@ export async function getStationConsole(
   neighbors: Neighbors,
   live: Live,
 ) {
+  const clock = clockAt(STEP_MINUTE[state.step]);
   return {
     stationId,
-    clock: clockAt(STEP_MINUTE[state.step]),
+    clock,
     efficiency: stationEfficiency(state.step),
     schema: stationSchema(state, neighbors),
     plan: trackPlan(state),
     incident: incidentCard(state, neighbors, live),
     comparison: optionComparison(state, neighbors),
     objects: dspObjects(state),
-    pager: pagerCard(live.pager),
+    pager: pagerCard(live, clock),
     workOrder: live.workOrder,
   };
 }

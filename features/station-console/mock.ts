@@ -1,10 +1,4 @@
-import type {
-  Neighbors,
-  OptionId,
-  PagerTask,
-  ReplanOption,
-  ScenarioEvent,
-} from "./types";
+import type { Neighbors, OptionId, ReplanOption, ScenarioEvent } from "./types";
 
 // Демо-сценарий «предмет в стрелке С3», пока нет симулятора. Ход инцидента —
 // в базе, а здесь — что показывать на каждом шаге. Время — минуты после
@@ -58,16 +52,6 @@ export const METRIC_VALUES = [
   { values: [97, 2.8, 66, 0, 6], scores: [19, 16, 15, 20, 11] },
   { values: [98, 2.1, 60, 0, 4], scores: [19, 17, 17, 20, 13] },
   { values: [99, 1.2, 58, 0, 3], scores: [20, 18, 18, 20, 14] },
-];
-
-// Готовые задачи бригаде на пейджер: ДСП отправляет их с пульта.
-export const PAGER_TASKS: { id: PagerTask; text: string }[] = [
-  {
-    id: "train",
-    text: "Сформировать состав 2114 на пути 4 к отправлению 14:45",
-  },
-  { id: "unload", text: "Разгрузить три вагона на пути 6 (тупик)" },
-  { id: "couple", text: "Собрать вагоны с пути 5 и подать на путь 6" },
 ];
 
 // Индекс до инцидента — с ним сравниваем текущий.

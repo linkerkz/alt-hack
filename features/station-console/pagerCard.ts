@@ -1,13 +1,14 @@
-import { PAGER_TASKS } from "./mock";
+import { upcomingOperations } from "./operations";
 import type {
   Command,
+  Live,
   PagerMessage,
   PagerMessageStatus,
   Status,
 } from "./types";
 
-// Пейджер бригады на панели ДСП: что отправлено и как ответили, и готовые
-// задачи, которые можно отправить одной кнопкой.
+// Работа бригады на вкладке «Станция»: ближайшие операции плана с кнопкой
+// «Поручить» и журнал пейджера — что отправлено и как бригада ответила.
 
 const STATUS: Record<PagerMessageStatus, { label: string; tone: Status }> = {
   sent: { label: "Отправлено", tone: "warning" },
@@ -17,17 +18,27 @@ const STATUS: Record<PagerMessageStatus, { label: string; tone: Status }> = {
   cancelled: { label: "Отбой, камера: свободно", tone: "normal" },
 };
 
-export function pagerCard(messages: PagerMessage[]) {
+// now — время станции «14:05»: операции показываем от него вперёд.
+export function pagerCard({ plan, pager }: Live, now: string) {
   return {
-    messages: messages.map((message) => ({
+    operations: upcomingOperations(plan, now, pager).map((operation) => ({
+      id: operation.id,
+      time: operation.time,
+      text: operation.text,
+      status:
+        operation.message == null ? null : STATUS[operation.message.status],
+      command: { kind: "assign", operation: operation.id } satisfies Command,
+    })),
+    messages: pager.map((message) => ({
       id: message.id,
-      kind: message.incidentId == null ? "Задача" : "Вызов",
+      kind: kindOf(message),
       text: message.text,
       ...STATUS[message.status],
     })),
-    tasks: PAGER_TASKS.map(({ id, text }) => ({
-      text,
-      command: { kind: "page", task: id } satisfies Command,
-    })),
   };
+}
+
+function kindOf(message: PagerMessage) {
+  if (message.incidentId != null) return "Вызов";
+  return message.operation == null ? "Поручение ДСП" : "По плану";
 }

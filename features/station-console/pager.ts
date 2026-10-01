@@ -5,21 +5,25 @@ import type { PagerMessage, PagerMessageStatus } from "./types";
 // задачу, камера даёт отбой. Ответы бригады с пейджера двигают инцидент в
 // базе (триггер pager_message_answer). Пишет сервер секретным ключом.
 
-// Сколько сообщений пейджера держит пульт.
-const PAGER_LIMIT = 6;
+// Сколько сообщений пейджера держит пульт: хватает и на журнал, и на
+// статусы поручений по ближайшим операциям.
+const PAGER_LIMIT = 12;
 
 // Пока бригада не ответила окончательно, вызов можно закрыть.
 const OPEN: PagerMessageStatus[] = ["sent", "accepted"];
 
-// Сообщение бригаде; incidentId: null — обычная задача ДСП.
+// Сообщение бригаде: вызов по инциденту, поручение по операции плана или
+// своё поручение ДСП (без инцидента и операции).
 export async function sendToPager(
   stationId: string,
-  text: string,
-  incidentId: string | null,
+  message: Pick<PagerMessage, "text" | "incidentId" | "operation">,
 ) {
-  const { error } = await supabaseAdmin()
-    .from("pager_messages")
-    .insert({ station_id: stationId, incident_id: incidentId, text });
+  const { error } = await supabaseAdmin().from("pager_messages").insert({
+    station_id: stationId,
+    incident_id: message.incidentId,
+    operation: message.operation,
+    text: message.text,
+  });
   if (error != null) throw error;
 }
 
@@ -41,7 +45,7 @@ export async function closeCall(
 export async function stationPager(stationId: string) {
   const { data } = await supabaseAdmin()
     .from("pager_messages")
-    .select("id, incident_id, text, status")
+    .select("id, incident_id, operation, text, status")
     .eq("station_id", stationId)
     .order("created_at", { ascending: false })
     .limit(PAGER_LIMIT)
@@ -51,6 +55,7 @@ export async function stationPager(stationId: string) {
     (row): PagerMessage => ({
       id: row.id,
       incidentId: row.incident_id,
+      operation: row.operation,
       text: row.text,
       status: row.status,
     }),
@@ -60,6 +65,7 @@ export async function stationPager(stationId: string) {
 type MessageRow = {
   id: string;
   incident_id: string | null;
+  operation: string | null;
   text: string;
   status: PagerMessageStatus;
 };

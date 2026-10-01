@@ -2,17 +2,17 @@ import { Kicker } from "@/components/ui/Kicker";
 import { StatusGlyph } from "@/components/ui/StatusGlyph";
 import { TONE_TEXT_CLASS } from "@/components/ui/tone";
 import type { StationConsoleData } from "../queries";
-import { CommandButton } from "./CommandButton";
+import { NoteForm } from "./NoteForm";
 
 type Props = {
   stationId: string;
   pager: StationConsoleData["pager"];
-  // Отправлять задачи бригаде может только ДСП; остальные видят ответы.
+  // Поручать бригаде может только ДСП; остальные видят ответы.
   canSend: boolean;
 };
 
 // Пейджер станционной бригады: что ДСП отправил и как бригада ответила,
-// и готовые задачи — одна кнопка, и задача уже на пейджере.
+// и своё поручение — то, чего нет в плане путей.
 export function PagerCard({ stationId, pager, canSend }: Props) {
   return (
     <section className="flex flex-col gap-1">
@@ -40,23 +40,9 @@ export function PagerCard({ stationId, pager, canSend }: Props) {
         </ul>
       )}
       {canSend && (
-        <>
-          <p className="mt-1.5 text-[11px] text-muted uppercase tracking-[0.08em]">
-            Отправить задачу
-          </p>
-          <div className="flex flex-col gap-1.5">
-            {pager.tasks.map((task) => (
-              <CommandButton
-                key={task.text}
-                stationId={stationId}
-                command={task.command}
-                className="w-full justify-start text-left"
-              >
-                {task.text}
-              </CommandButton>
-            ))}
-          </div>
-        </>
+        <div className="mt-2">
+          <NoteForm stationId={stationId} />
+        </div>
       )}
     </section>
   );
