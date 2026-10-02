@@ -63,6 +63,8 @@ export type EfficiencyPoint = {
 };
 
 export type StationDashboard = {
+  // Время отчёта «14:08» (Алматы) — от него шкала операций ведёт линию «сейчас».
+  now: string;
   planProgress: PlanProgress;
   operations: Operation[];
   attentionItems: AttentionItem[];

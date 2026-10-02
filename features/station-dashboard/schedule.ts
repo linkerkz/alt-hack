@@ -158,7 +158,7 @@ function statusOf(train: RadarTrain): OperationStatus {
   return "planned";
 }
 
-function nowMinutes() {
+export function nowMinutes() {
   const almaty = new Date().toLocaleTimeString("ru-RU", {
     hour: "2-digit",
     minute: "2-digit",

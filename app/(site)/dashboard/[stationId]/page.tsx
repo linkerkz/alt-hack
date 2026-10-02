@@ -6,7 +6,6 @@ import { requireUser } from "@/features/auth/queries";
 import { getStation, getStationTrains } from "@/features/network-map/queries";
 import { getLiveIndexes } from "@/features/station-console/queries";
 import { AttentionList } from "@/features/station-dashboard/components/AttentionList";
-import { EfficiencyHistoryChart } from "@/features/station-dashboard/components/EfficiencyHistoryChart";
 import { EfficiencyPanel } from "@/features/station-dashboard/components/EfficiencyPanel";
 import { OperationsGantt } from "@/features/station-dashboard/components/OperationsGantt";
 import { PlanProgressCard } from "@/features/station-dashboard/components/PlanProgressCard";
@@ -34,6 +33,7 @@ export default async function StationDashboardPage({
   const trains = await getStationTrains(station.id);
   const dashboard = await getStationDashboard(station, trains);
   const {
+    now,
     planProgress,
     operations,
     attentionItems,
@@ -49,7 +49,7 @@ export default async function StationDashboardPage({
         dashboardHref={`/dashboard/${station.id}`}
         account={<AccountMenu user={user} />}
       />
-      <main className="mx-auto w-full max-w-5xl flex-1 space-y-4 overflow-y-auto p-6">
+      <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-6 overflow-y-auto px-4 py-8 sm:px-8">
         <ReportHeader
           stationId={station.id}
           stationName={station.name}
@@ -57,27 +57,34 @@ export default async function StationDashboardPage({
           efficiencyIndex={station.efficiencyIndex}
         />
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <EfficiencyPanel value={station.efficiencyIndex} />
+        <section className="grid gap-6 lg:grid-cols-[5fr_4fr_3fr]">
+          <EfficiencyPanel
+            value={station.efficiencyIndex}
+            history={efficiencyHistory}
+            isLive={liveIndexes.has(station.id)}
+          />
           <PlanProgressCard progress={planProgress} />
-        </div>
+          <SummaryCards
+            trainCount={station.trainCount}
+            delayCount={statistics.delayCount}
+            trackLoad={station.trackLoad}
+          />
+        </section>
 
-        <SummaryCards
-          trainCount={station.trainCount}
-          delayCount={statistics.delayCount}
-          trackLoad={station.trackLoad}
-        />
+        <section className="grid gap-6 xl:grid-cols-[7fr_5fr]">
+          <TrainRadar trains={trains} />
+          <div className="flex min-w-0 flex-col gap-6">
+            <AttentionList items={attentionItems} />
+            <Statistics stats={statistics} />
+          </div>
+        </section>
 
-        <OperationsGantt operations={operations} />
+        <OperationsGantt operations={operations} now={now} />
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <Statistics stats={statistics} />
-          <AttentionList items={attentionItems} />
-        </div>
-
-        <EfficiencyHistoryChart points={efficiencyHistory} />
-
-        <TrainRadar trains={trains} />
+        <footer className="text-[12px] text-muted">
+          Время — Алматы. Поезда проездом станцию не занимают и в операции не
+          входят.
+        </footer>
       </main>
     </>
   );

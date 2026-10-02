@@ -17,17 +17,16 @@ export const TRAIN_KIND_LABEL: Record<RadarTrain["kind"], string> = {
   freight: "Грузовой",
 };
 
-const SECTOR_SPAN_DEG = 360 / FLOW_ORDER.length;
+export const SECTOR_SPAN_DEG = 360 / FLOW_ORDER.length;
 const SECTOR_MARGIN_DEG = 14;
 
-// Точка радара в полярных координатах echarts: angle — градусы по часовой
-// стрелке от 12 часов (startAngle: 90, clockwise: true — значения по умолчанию
-// у angleAxis), radiusMinutes — минуты до события, 0…RADAR_HORIZON_MINUTES.
+// Точка радара в полярных координатах: angle — градусы по часовой стрелке
+// от 12 часов, radiusMinutes — минуты до события, 0…RADAR_HORIZON_MINUTES.
 type RadarPoint = RadarTrain & { angle: number; radiusMinutes: number };
 
 // Три равных сектора по направлению (К нам / От нас / Проездом). Внутри
 // сектора поезда разложены по углу равномерно, чтобы не накладывались друг
-// на друга, — радиус (echarts сам переведёт его в пиксели) несёт время.
+// на друга, — радиус несёт время.
 export function layoutRadar(trains: RadarTrain[]): RadarPoint[] {
   return FLOW_ORDER.flatMap((flow, sectorIndex) =>
     placeInSector(
@@ -37,21 +36,47 @@ export function layoutRadar(trains: RadarTrain[]): RadarPoint[] {
   );
 }
 
-function eventMinutes(train: RadarTrain) {
+// Полярные координаты → точка SVG: 0° — вверх, по часовой стрелке.
+// Округляем: Math.sin на сервере и в браузере расходится в последнем знаке,
+// и атрибуты SVG не совпали бы при гидратации.
+export function toCartesian(angle: number, radius: number, center: number) {
+  const radians = (angle * Math.PI) / 180;
+  return {
+    x: round(center + radius * Math.sin(radians)),
+    y: round(center - radius * Math.cos(radians)),
+  };
+}
+
+function round(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
+// На радаре — только то, что случится за горизонт: прошедшее и дальнее
+// легло бы в центр и на край кучей и закрыло бы подписи секторов.
+export function isInHorizon(train: RadarTrain) {
+  const minutes = eventMinutes(train);
+  return minutes >= 0 && minutes <= RADAR_HORIZON_MINUTES;
+}
+
+export function eventMinutes(train: RadarTrain) {
   return train.flow === "departing" ? train.departure : train.arrival;
 }
 
 export function radarPointTitle(train: RadarTrain): string {
-  const minutes = eventMinutes(train);
-  const when = minutes <= 0 ? "сейчас" : `через ${formatHours(minutes)}`;
   const { icon, label } = FLOW_LABEL[train.flow];
-  return `№ ${train.number} · ${TRAIN_KIND_LABEL[train.kind]} · ${icon} ${label} · ${when}`;
+  return `№ ${train.number} · ${TRAIN_KIND_LABEL[train.kind].toLowerCase()} · ${icon} ${label.toLowerCase()} · ${whenLabel(train)}`;
+}
+
+export function whenLabel(train: RadarTrain): string {
+  const minutes = eventMinutes(train);
+  return minutes <= 0 ? "сейчас" : `через ${formatHours(minutes)}`;
 }
 
 function formatHours(minutes: number): string {
   if (minutes < 60) return `${minutes} мин`;
-  const hours = minutes / 60;
-  return `${Number.isInteger(hours) ? hours : hours.toFixed(1)} ч`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest === 0 ? `${hours} ч` : `${hours} ч ${rest} мин`;
 }
 
 function placeInSector(

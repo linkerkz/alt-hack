@@ -1,7 +1,5 @@
 import { ButtonLink } from "@/components/ui/ButtonLink";
-import { Heading } from "@/components/ui/Heading";
 import { Kicker } from "@/components/ui/Kicker";
-import { LiveClock } from "@/components/ui/LiveClock";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { STATUS_LABEL, toStatus } from "../status";
 
@@ -13,11 +11,14 @@ type Props = {
 };
 
 const REPORT_DATE_FORMAT = new Intl.DateTimeFormat("ru-RU", {
+  weekday: "long",
   day: "numeric",
   month: "long",
   year: "numeric",
+  timeZone: "Asia/Almaty",
 });
 
+// Часы — только в шапке приложения (docs/ui.md), здесь — дата смены.
 export function ReportHeader({
   stationId,
   stationName,
@@ -27,23 +28,25 @@ export function ReportHeader({
   const status = toStatus(efficiencyIndex);
 
   return (
-    <header className="flex flex-wrap items-end justify-between gap-4 border-line border-b pb-5">
-      <div className="space-y-1">
+    <header className="flex flex-wrap items-end justify-between gap-6 border-line border-b pb-6">
+      <div className="flex min-w-0 flex-col gap-2">
         <Kicker tone="accent">Оперативный отчёт · ЕСР {stationCode}</Kicker>
-        <div className="flex flex-wrap items-center gap-3">
-          <Heading level={1}>{stationName}</Heading>
-          <StatusBadge tone={status} label={STATUS_LABEL[status]} />
-        </div>
-        <p className="text-[13px] text-muted">
+        <h1 className="font-heading font-semibold text-[40px] leading-none tracking-[-0.015em] sm:text-[52px]">
+          {stationName}
+        </h1>
+        <p className="text-[13px] text-muted first-letter:uppercase">
           {REPORT_DATE_FORMAT.format(new Date())}
         </p>
       </div>
 
-      <div className="flex items-center gap-4">
-        <LiveClock />
+      <div className="flex flex-wrap items-end gap-6">
         <ButtonLink href={`/?station=${stationId}`} size="sm">
           ← К карте сети
         </ButtonLink>
+        <div className="flex flex-col items-end gap-1.5 border-line border-l pl-6">
+          <Kicker>Состояние станции</Kicker>
+          <StatusBadge tone={status} label={STATUS_LABEL[status]} size="lg" />
+        </div>
       </div>
     </header>
   );

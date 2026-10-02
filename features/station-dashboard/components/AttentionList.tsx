@@ -1,50 +1,68 @@
 import { Card } from "@/components/ui/Card";
 import { Kicker } from "@/components/ui/Kicker";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { StatusGlyph } from "@/components/ui/StatusGlyph";
+import { Tag } from "@/components/ui/Tag";
+import { STATUS_LABEL } from "../status";
 import type { AttentionItem } from "../types";
 
 export function AttentionList({ items }: { items: AttentionItem[] }) {
-  if (items.length === 0) {
-    return (
-      <Card className="space-y-2 p-5">
-        <Kicker>Требует внимания</Kicker>
-        <p className="rounded border border-normal px-3 py-2 text-[13px] text-normal">
+  return (
+    <Card className="flex flex-col gap-2 p-6">
+      <div className="flex items-baseline justify-between gap-2">
+        <Kicker tone="accent">V · Требует внимания</Kicker>
+        <span className="text-[13px] text-muted">
+          {items.length} {pluralItems(items.length)}
+        </span>
+      </div>
+
+      {items.length === 0 ? (
+        <p className="py-2 font-heading text-[20px] text-normal">
           <StatusGlyph tone="normal" /> Активных проблем нет
         </p>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="space-y-3 p-5">
-      <Kicker>Требует внимания · {items.length}</Kicker>
-      <ul className="space-y-2">
-        {items.map((item) => (
-          <li
-            key={item.id}
-            className="border-line border-t pt-2 first:border-t-0 first:pt-0"
-          >
-            <div className="flex items-baseline justify-between gap-2 text-[13px]">
-              <span className="font-medium">
+      ) : (
+        <ul>
+          {items.map((item) => (
+            <li
+              key={item.id}
+              className="flex items-start gap-3 border-line border-t py-2.5 first:border-t-0"
+            >
+              <span className="w-3 pt-0.5 text-[15px] leading-tight">
                 {item.severity === "pending" ? (
                   <span className="text-muted">○</span>
                 ) : (
                   <StatusGlyph tone={item.severity} />
-                )}{" "}
-                {item.title}
+                )}
               </span>
-              {item.time != null && (
-                <span className="shrink-0 text-[11px] text-muted">
-                  {item.time}
-                </span>
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="text-[15px] leading-snug">{item.title}</span>
+                <span className="text-[12.5px] text-muted">{metaOf(item)}</span>
+              </div>
+              {item.severity === "pending" ? (
+                <Tag>Ожидает</Tag>
+              ) : (
+                <StatusBadge
+                  tone={item.severity}
+                  label={STATUS_LABEL[item.severity]}
+                />
               )}
-            </div>
-            {item.detail != null && (
-              <p className="mt-0.5 text-[12px] text-muted">{item.detail}</p>
-            )}
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
+      )}
     </Card>
   );
+}
+
+function metaOf(item: AttentionItem) {
+  const parts = [item.detail, item.time == null ? null : `в ${item.time}`];
+  return parts.filter((part) => part != null).join(" · ");
+}
+
+function pluralItems(count: number) {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 === 1 && mod100 !== 11) return "пункт";
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "пункта";
+  return "пунктов";
 }
