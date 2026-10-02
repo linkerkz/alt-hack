@@ -2,7 +2,7 @@ import { type RefObject, useEffect, useState } from "react";
 
 // Камера ещё включается, показывает видео или недоступна (нет разрешения,
 // нет камеры, страница открыта не по HTTPS).
-export type CameraStatus = "starting" | "live" | "unavailable";
+type CameraStatus = "starting" | "live" | "unavailable";
 
 // Задняя камера телефона в <video>: включается при открытии экрана,
 // выключается при уходе с него.

@@ -23,11 +23,7 @@ export function departureState(
 // Минута, когда ДСП дал отправление этому заходу поезда; null — не давал.
 // Отправление с тем же номером до прибытия — прошлый заход: прошлый прогон
 // сценария или вчерашний поезд симуляции.
-export function givenAt(
-  train: string,
-  arrival: number,
-  departures: GivenDeparture[],
-) {
+function givenAt(train: string, arrival: number, departures: GivenDeparture[]) {
   const key = departureKey(train);
   const given = departures.find(
     (item) => item.operation === key && item.at >= arrival,

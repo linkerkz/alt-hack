@@ -1,36 +1,110 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Цифровая станция
 
-## Getting Started
+Система поддержки решений дежурного по железнодорожной станции. Камера сама
+замечает сбой, система оценивает влияние и предлагает варианты
+перепланирования, ведёт путейцев и ремонтную бригаду до восстановления и
+собирает отчёт. Решение всегда за человеком.
 
-First, run the development server:
+**[Живое демо](https://alt-hack.vercel.app)** · [Презентация](#) · [Видео](#) ·
+кейс «Цифровая станция», ALT Хакатон 2026
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Чем отличается
+
+- **Сбой обнаруживает устройство, а не человек.** Обычный телефон над стрелкой
+  работает как камера: сам видит изменение в кадре, ИИ проверяет снимок, и
+  на пульте открывается инцидент. Маршруты через стрелку закрываются сразу.
+- **Весь цикл кейса, а не только перепланирование.** Вызов путейцев на
+  пейджер, варианты против исхода «ничего не менять», согласование с ДНЦ,
+  печатный наряд с QR на чеклист, возврат стрелки в работу, отчёт начальнику
+  станции.
+- **Настоящие роли КТЖ.** ДСП, ДСЦС, ДНЦ, начальник станции: у каждого свой
+  экран и свои полномочия. «Работы выполнены» от бригады не открывает
+  движение — это делает дежурный.
+- **Сеть, а не одна станция.** Карта 38 станций с поездами в пути и индексом
+  каждой станции.
+
+## Попробовать
+
+Демо: **https://alt-hack.vercel.app**. Пароль у всех ролей — `demo2026`.
+
+| Роль | Логин | Что видит |
+| --- | --- | --- |
+| ДСП — дежурный по станции | `dsp@station.demo` | пульт Алматы-1: схема, план путей, индекс, инцидент |
+| ДСЦС — станционный диспетчер | `dscs@station.demo` | тот же пульт, выбирает вариант перепланирования |
+| ДНЦ — поездной диспетчер | `dnc@station.demo` | карта своего диспетчерского круга, согласование вариантов |
+| ДС — начальник станции | `ds@station.demo` | пульт без команд, оперативный отчёт и отчёты по инцидентам |
+
+Сценарий «предмет в стрелке» (5 минут):
+
+1. Войдите как ДСП и откройте
+   [полевые устройства](https://alt-hack.vercel.app/stations/almaty-1/devices).
+2. Откройте камеру С3 на телефоне по QR или прямо на ноутбуке и дайте доступ
+   к камере. Поставьте в рамку стрелки любой предмет — на пульте откроется
+   инцидент.
+3. На пульте пройдите ход инцидента: вызов путейцев, «нужен ремонт», выбор
+   варианта, согласование, план работ и наряд, возврат стрелки. Кнопка
+   «Далее» отвечает за участников, которых нет рядом.
+4. Войдите как начальник станции и откройте отчёт по инциденту.
+
+«Сброс» на пульте возвращает станцию в начало сценария.
+
+## Как устроено
+
+```
+Телефон-камера ──┐                      ┌── Пульт ДСП / ДСЦС
+Пейджер путейцев ┤── Next.js (сервер) ──┼── Карта сети ДНЦ
+Чеклист по QR ───┘     │        │       └── Отчёты начальника станции
+                 Supabase    OpenRouter
+              (Postgres+RLS)  (снимок, план работ)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Next.js 16, React 19, TypeScript strict, Tailwind CSS 4.** Чтение — в
+  серверных компонентах, запись — Server Actions; пульт перечитывает данные
+  раз в 3 с.
+- **Supabase** — Postgres с RLS, миграции в `supabase/migrations`.
+- **OpenRouter** — vision-модель разбирает снимок камеры, текстовая составляет
+  план работ; у каждой есть запасная.
+- **Полевые устройства** — PWA, открываются по ссылке без входа; права
+  проверяет сервер.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Код разложен по вертикальным срезам: `app/` — только роуты, `features/{name}` —
+сценарий целиком, `components/ui` и `lib` — общее.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Требование кейса | Где в продукте | Где в коде |
+| --- | --- | --- |
+| Показывать состояние станции | пульт: схема, план путей, индекс, лента событий | `features/station-console` |
+| Выявлять проблемы | камера и ИИ, инцидент «подозрение» | `features/devices` |
+| Оценивать влияние | прогноз «ничего не менять», затронутые поезда | `features/station-console/forecast.ts` |
+| Предлагать варианты | варианты А и Б, согласование ДНЦ | `features/station-console/options.ts` |
+| Показывать последствия | сравнение по пяти показателям и индексу | `features/station-console/metrics.ts` |
+| Контролировать выполнение | пейджер, наряд с QR, ход инцидента | `features/work-orders` |
+| Формировать историю | хронология, отчёт по инциденту, PDF | `features/incident-report` |
+| Обзор сети | карта станций и поездов в пути | `features/network-map` |
 
-## Learn More
+## Запуск локально
 
-To learn more about Next.js, take a look at the following resources:
+Нужны Node.js 20.9+ и проект в [Supabase](https://supabase.com).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. `npm ci`
+2. В SQL Editor проекта выполните по порядку все файлы из
+   `supabase/migrations`, затем `supabase/seed.sql` и
+   `supabase/seed-network.sql`. Seed создаёт демо-пользователей, станцию
+   Алматы-1 и сеть.
+3. Скопируйте `.env.example` в `.env.local` и заполните ключи.
+4. `npm run dev` — приложение на http://localhost:3000.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Проверки — `npm run lint` (Biome), `npm run typecheck`, `npm run build`. Хук
+`pre-push` гоняет все три.
 
-## Deploy on Vercel
+## Документация
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- [`docs/case_solution.md`](docs/case_solution.md) — продуктовые решения: роли,
+  модель станции, индекс, варианты, сценарий демо
+- [`docs/hackathon_case.md`](docs/hackathon_case.md) — исходный кейс
+- [`docs/core.md`](docs/core.md) — правила кода, структура и словарь терминов
+- [`docs/ui.md`](docs/ui.md) — тема и компоненты интерфейса
+- [`docs/git_workflow.md`](docs/git_workflow.md) — ветки, коммиты, хуки
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Прототип: не заменяет СЦБ и электрическую централизацию. Магистрали, коды и
+координаты станций реальные, показатели станций кроме Алматы-1 —
+демонстрационные.

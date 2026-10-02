@@ -20,7 +20,7 @@ export type Run = {
 export type Span = { from: number; to: number };
 
 // Закрытая стрелка: маршруты через неё недоступны на этом окне.
-export type Closure = { switchId: string; span: Span };
+type Closure = { switchId: string; span: Span };
 
 type Params = {
   plan: PlannedTrain[];

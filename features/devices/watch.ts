@@ -17,7 +17,7 @@ const CLEAR_TICKS = 8;
 
 const SNAPSHOT_WIDTH = 480;
 
-export type Watch = { state: CameraState; streak: number };
+type Watch = { state: CameraState; streak: number };
 
 export const INITIAL_WATCH: Watch = { state: "clear", streak: 0 };
 

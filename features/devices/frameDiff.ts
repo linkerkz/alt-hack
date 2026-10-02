@@ -7,7 +7,7 @@ import { WATCH_REGION } from "./watch";
 
 // Порог доли изменившихся клеток: «предмет есть» и «снова свободно» разнесены,
 // чтобы состояние не дрожало на границе.
-export const OBSTRUCTION_SHARE = 0.12;
+const OBSTRUCTION_SHARE = 0.12;
 const CLEAR_SHARE = 0.05;
 
 const GRID_WIDTH = 64;

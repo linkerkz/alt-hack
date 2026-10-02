@@ -23,7 +23,7 @@ const SECTOR_MARGIN_DEG = 14;
 // Точка радара в полярных координатах echarts: angle — градусы по часовой
 // стрелке от 12 часов (startAngle: 90, clockwise: true — значения по умолчанию
 // у angleAxis), radiusMinutes — минуты до события, 0…RADAR_HORIZON_MINUTES.
-export type RadarPoint = RadarTrain & { angle: number; radiusMinutes: number };
+type RadarPoint = RadarTrain & { angle: number; radiusMinutes: number };
 
 // Три равных сектора по направлению (К нам / От нас / Проездом). Внутри
 // сектора поезда разложены по углу равномерно, чтобы не накладывались друг
@@ -37,7 +37,7 @@ export function layoutRadar(trains: RadarTrain[]): RadarPoint[] {
   );
 }
 
-export function eventMinutes(train: RadarTrain) {
+function eventMinutes(train: RadarTrain) {
   return train.flow === "departing" ? train.departure : train.arrival;
 }
 
@@ -48,7 +48,7 @@ export function radarPointTitle(train: RadarTrain): string {
   return `№ ${train.number} · ${TRAIN_KIND_LABEL[train.kind]} · ${icon} ${label} · ${when}`;
 }
 
-export function formatHours(minutes: number): string {
+function formatHours(minutes: number): string {
   if (minutes < 60) return `${minutes} мин`;
   const hours = minutes / 60;
   return `${Number.isInteger(hours) ? hours : hours.toFixed(1)} ч`;

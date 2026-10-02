@@ -15,7 +15,7 @@ import type {
 // Участники инцидента и что с их частью работы: путейцы, ДНЦ, ДСП,
 // машинисты, ремонтная бригада. Появляются по мере того, как их зовут.
 
-export type Participant = {
+type Participant = {
   who: string;
   what: string;
   status: string;

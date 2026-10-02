@@ -6,7 +6,7 @@ import type { IncidentStatus } from "./types";
 // Сигнал камеры горловины над стрелкой С3. Камера приходит без входа, поэтому
 // инцидент читаем и пишем секретным ключом; устройство уже проверил вызывающий.
 
-export type CameraSignal = {
+type CameraSignal = {
   deviceId: string;
   state: "obstruction" | "clear";
   // Кадр в момент сигнала (data URL JPEG).
@@ -18,7 +18,7 @@ export type CameraSignal = {
 };
 
 // Ответ камере: что сделала система — его показывает экран камеры.
-export type CameraReply = { text: string; incidentCode: string | null };
+type CameraReply = { text: string; incidentCode: string | null };
 
 export async function reportCamera(
   stationId: string,

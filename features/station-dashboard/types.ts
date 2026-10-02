@@ -39,7 +39,7 @@ export type Operation = {
   delayMinutes?: number;
 };
 
-export type AttentionSeverity = "critical" | "warning" | "pending";
+type AttentionSeverity = "critical" | "warning" | "pending";
 
 export type AttentionItem = {
   id: string;
