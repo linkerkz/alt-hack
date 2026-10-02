@@ -3,7 +3,7 @@
 // «Внимание», ниже — «Критично».
 export const INDEX_THRESHOLDS = { normal: 80, warning: 60 };
 
-export type IndexStatus = "normal" | "warning" | "critical";
+type IndexStatus = "normal" | "warning" | "critical";
 
 export function indexStatus(index: number): IndexStatus {
   if (index >= INDEX_THRESHOLDS.normal) return "normal";
