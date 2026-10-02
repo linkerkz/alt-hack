@@ -1,12 +1,19 @@
-import { Card } from "@/components/ui/Card";
-import { Kicker } from "@/components/ui/Kicker";
+import { Tag } from "@/components/ui/Tag";
 import { TONE_COLOR } from "@/components/ui/tone";
+import { INDEX_THRESHOLDS } from "@/lib/efficiencyIndex";
 import { toStatus } from "../status";
 import type { EfficiencyPoint } from "../types";
 
-const WIDTH = 480;
-const HEIGHT = 96;
-const PADDING = 8;
+// Координаты графика в единицах viewBox: ось значений — от FLOOR до 100.
+const WIDTH = 320;
+const HEIGHT = 130;
+const LEFT = 28;
+const RIGHT = 308;
+const TOP = 12;
+const BASELINE = 110;
+const FLOOR = 30;
+
+type Point = EfficiencyPoint & { x: number; y: number };
 
 export function EfficiencyHistoryChart({
   points,
@@ -15,50 +22,108 @@ export function EfficiencyHistoryChart({
 }) {
   if (points.length === 0) return null;
 
-  const lastValue = points[points.length - 1].value;
-  const color = TONE_COLOR[toStatus(lastValue)];
+  const placed = placePoints(points);
+  const color = TONE_COLOR[toStatus(placed[placed.length - 1].value)];
+  const line = placed.map(({ x, y }, i) => `${i ? "L" : "M"}${x} ${y}`);
+  const path = line.join(" ");
 
   return (
-    <Card className="space-y-3 p-5">
-      <Kicker>Динамика индекса эффективности</Kicker>
+    <>
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 className="font-heading font-semibold text-[17px]">
+          Динамика за смену
+        </h3>
+        {/* Истории замеров в базе нет — ряд выведен из текущих показателей (mock.ts). */}
+        <Tag>модельный ряд</Tag>
+      </div>
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-        className="w-full"
+        className="block h-auto w-full overflow-visible"
         role="img"
-        aria-label="Динамика индекса эффективности"
+        aria-label="Динамика индекса эффективности за смену"
       >
-        <polyline
-          points={toPolylinePoints(points)}
-          fill="none"
-          stroke={color}
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
+        <Threshold value={INDEX_THRESHOLDS.normal} />
+        <Threshold value={INDEX_THRESHOLDS.warning} />
+        <line
+          x1={LEFT}
+          x2={RIGHT}
+          y1={BASELINE}
+          y2={BASELINE}
+          className="stroke-neutral-400"
         />
-      </svg>
-      <div className="flex justify-between text-[11px] text-muted">
-        {points.map((point) => (
-          <span key={point.time}>{point.time}</span>
+        <path
+          d={`${path} L${RIGHT} ${BASELINE} L${LEFT} ${BASELINE} Z`}
+          fill={color}
+          opacity={0.1}
+        />
+        <path d={path} fill="none" stroke={color} strokeWidth={1.6} />
+        {placed.map((point) => (
+          <g key={point.time} className="text-[9px]">
+            <circle
+              cx={point.x}
+              cy={point.y}
+              r={2.6}
+              stroke={color}
+              strokeWidth={1.4}
+              className="fill-card"
+            />
+            <text
+              x={point.x}
+              y={point.y - 7}
+              textAnchor="middle"
+              className="fill-ink"
+            >
+              {point.value}
+            </text>
+            <text
+              x={point.x}
+              y={HEIGHT - 6}
+              textAnchor="middle"
+              className="fill-muted"
+            >
+              {point.time}
+            </text>
+          </g>
         ))}
-      </div>
-    </Card>
+      </svg>
+    </>
   );
 }
 
-function toPolylinePoints(points: EfficiencyPoint[]): string {
-  const values = points.map((point) => point.value);
-  const min = Math.min(...values);
-  const span = Math.max(Math.max(...values) - min, 1);
-  const innerWidth = WIDTH - PADDING * 2;
-  const innerHeight = HEIGHT - PADDING * 2;
-  const lastIndex = Math.max(points.length - 1, 1);
+function Threshold({ value }: { value: number }) {
+  const y = toY(value);
+  return (
+    <g>
+      <line
+        x1={LEFT}
+        x2={RIGHT}
+        y1={y}
+        y2={y}
+        strokeDasharray="2 3"
+        className="stroke-neutral-300"
+      />
+      <text
+        x={LEFT - 6}
+        y={y + 3}
+        textAnchor="end"
+        className="fill-muted text-[9px]"
+      >
+        {value}
+      </text>
+    </g>
+  );
+}
 
-  return points
-    .map((point, index) => {
-      const x = PADDING + (index / lastIndex) * innerWidth;
-      const y =
-        PADDING + innerHeight - ((point.value - min) / span) * innerHeight;
-      return `${x},${y}`;
-    })
-    .join(" ");
+function placePoints(points: EfficiencyPoint[]): Point[] {
+  const step = (RIGHT - LEFT) / Math.max(points.length - 1, 1);
+  return points.map((point, index) => ({
+    ...point,
+    x: LEFT + index * step,
+    y: toY(point.value),
+  }));
+}
+
+function toY(value: number) {
+  const share = (Math.max(value, FLOOR) - FLOOR) / (100 - FLOOR);
+  return BASELINE - share * (BASELINE - TOP);
 }

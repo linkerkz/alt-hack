@@ -1,221 +1,166 @@
 "use client";
 
-import * as echarts from "echarts";
-import dynamic from "next/dynamic";
-import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { type ReactNode, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Kicker } from "@/components/ui/Kicker";
-import { LegendItem } from "@/components/ui/LegendItem";
+import { ToggleButton } from "@/components/ui/ToggleButton";
 import {
+  eventMinutes,
   FLOW_LABEL,
   FLOW_ORDER,
-  layoutRadar,
-  RADAR_HORIZON_MINUTES,
   radarPointTitle,
   TRAIN_KIND_LABEL,
+  whenLabel,
 } from "../radar";
 import type { RadarTrain, TrainFlow, TrainKind } from "../types";
-
-// Канвас echarts не умеет рисовать на сервере — переносим монтирование в браузер.
-const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
-
-const KIND_COLOR: Record<TrainKind, string> = {
-  passenger: "#b68235", // accent — тот же акцент, что и в остальном интерфейсе
-  freight: "#3a6ea5",
-};
+import { RadarChart } from "./RadarChart";
 
 type KindFilter = "all" | TrainKind;
 type FlowFilter = "all" | TrainFlow;
 
+const NEAREST_COUNT = 5;
+
 export function TrainRadar({ trains }: { trains: RadarTrain[] }) {
   const [kind, setKind] = useState<KindFilter>("all");
   const [flow, setFlow] = useState<FlowFilter>("all");
+  const [hovered, setHovered] = useState<RadarTrain | null>(null);
 
   const visible = trains.filter(
     (train) =>
       (kind === "all" || train.kind === kind) &&
       (flow === "all" || train.flow === flow),
   );
+  const nearest = visible
+    .filter((train) => eventMinutes(train) >= 0)
+    .toSorted((a, b) => eventMinutes(a) - eventMinutes(b))
+    .slice(0, NEAREST_COUNT);
 
-  const option = useMemo(() => buildOption(visible), [visible]);
+  function pickKind(value: KindFilter) {
+    setKind(value);
+    setHovered(null);
+  }
+
+  function pickFlow(value: FlowFilter) {
+    setFlow(value);
+    setHovered(null);
+  }
 
   return (
-    <Card className="space-y-4 p-5">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <Kicker>Радар движения поездов · горизонт 3 ч</Kicker>
-        <span className="text-[11px] text-muted">
+    <Card className="flex min-w-0 flex-col gap-4 p-6">
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <Kicker tone="accent">IV · Радар движения поездов</Kicker>
+          <h2 className="font-heading font-semibold text-[22px]">
+            Горизонт 3 часа
+          </h2>
+        </div>
+        <span className="whitespace-nowrap text-[13px] text-muted">
           Показано {visible.length} из {trains.length}
         </span>
       </div>
 
-      <div className="flex flex-wrap gap-4">
-        <FilterGroup label="Поезда">
-          <FilterButton active={kind === "all"} onClick={() => setKind("all")}>
-            Все
-          </FilterButton>
-          <FilterButton
-            active={kind === "passenger"}
-            onClick={() => setKind("passenger")}
-          >
-            {TRAIN_KIND_LABEL.passenger}
-          </FilterButton>
-          <FilterButton
-            active={kind === "freight"}
-            onClick={() => setKind("freight")}
-          >
-            {TRAIN_KIND_LABEL.freight}
-          </FilterButton>
-        </FilterGroup>
-
-        <FilterGroup label="Направление">
-          <FilterButton active={flow === "all"} onClick={() => setFlow("all")}>
-            Все
-          </FilterButton>
-          {FLOW_ORDER.map((value) => (
-            <FilterButton
-              key={value}
-              active={flow === value}
-              onClick={() => setFlow(value)}
-            >
-              {FLOW_LABEL[value].icon} {FLOW_LABEL[value].label}
-            </FilterButton>
-          ))}
-        </FilterGroup>
-      </div>
-
-      {trains.length === 0 ? (
-        <p className="py-6 text-center text-[13px] text-muted">
-          Поездов за горизонт нет
-        </p>
-      ) : visible.length === 0 ? (
-        <p className="py-6 text-center text-[13px] text-muted">
-          Нет поездов по выбранному фильтру
-        </p>
-      ) : (
-        <div className="flex flex-col items-center gap-2">
-          <ReactECharts
-            option={option}
-            style={{ height: 420, width: "100%" }}
-            opts={{ renderer: "svg" }}
-          />
-          <ul className="flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-muted">
-            <LegendItem
-              swatch={
-                <span
-                  className="size-2.5 rounded-full"
-                  style={{ background: KIND_COLOR.passenger }}
-                />
-              }
-            >
-              {TRAIN_KIND_LABEL.passenger}
-            </LegendItem>
-            <LegendItem
-              swatch={
-                <span
-                  className="size-2.5 rounded-full"
-                  style={{ background: KIND_COLOR.freight }}
-                />
-              }
-            >
-              {TRAIN_KIND_LABEL.freight}
-            </LegendItem>
-          </ul>
+      <div className="flex flex-wrap items-start gap-6">
+        <div className="max-w-[500px] flex-[1_1_340px]">
+          <RadarChart trains={visible} hovered={hovered} onHover={setHovered} />
         </div>
-      )}
+
+        <div className="flex min-w-0 flex-[1_1_220px] flex-col gap-4">
+          <FilterGroup label="Вид поезда">
+            <ToggleButton
+              active={kind === "all"}
+              onClick={() => pickKind("all")}
+            >
+              Все
+            </ToggleButton>
+            <ToggleButton
+              active={kind === "passenger"}
+              onClick={() => pickKind("passenger")}
+            >
+              Пассажирские
+            </ToggleButton>
+            <ToggleButton
+              active={kind === "freight"}
+              onClick={() => pickKind("freight")}
+            >
+              Грузовые
+            </ToggleButton>
+          </FilterGroup>
+
+          <FilterGroup label="Направление">
+            <ToggleButton
+              active={flow === "all"}
+              onClick={() => pickFlow("all")}
+            >
+              Все
+            </ToggleButton>
+            {FLOW_ORDER.map((value) => (
+              <ToggleButton
+                key={value}
+                active={flow === value}
+                onClick={() => pickFlow(value)}
+              >
+                {FLOW_LABEL[value].label}
+              </ToggleButton>
+            ))}
+          </FilterGroup>
+
+          <ul className="flex gap-4 text-[13px] text-neutral-800">
+            <li className="flex items-center gap-1.5">
+              <KindSwatch kind="passenger" />
+              {TRAIN_KIND_LABEL.passenger}
+            </li>
+            <li className="flex items-center gap-1.5">
+              <KindSwatch kind="freight" />
+              {TRAIN_KIND_LABEL.freight}
+            </li>
+          </ul>
+
+          <div className="min-h-16 border-line border-t pt-3">
+            <Kicker className="mb-1">Отметка</Kicker>
+            <p className="font-heading text-[17px] leading-snug">
+              {hovered == null
+                ? "Наведите на отметку на радаре"
+                : radarPointTitle(hovered)}
+            </p>
+          </div>
+
+          <div className="border-line border-t pt-3">
+            <Kicker className="mb-1.5">Ближайшие</Kicker>
+            {nearest.length === 0 ? (
+              <p className="text-[13px] text-muted">
+                Нет поездов по выбранному фильтру
+              </p>
+            ) : (
+              <ul>
+                {nearest.map((train) => (
+                  <li
+                    key={`${train.number}-${train.flow}`}
+                    className="flex items-center gap-2 border-line border-b py-1.5 text-[13.5px]"
+                  >
+                    <KindSwatch kind={train.kind} />
+                    <span className="min-w-12">№ {train.number}</span>
+                    <span className="min-w-0 flex-1 text-muted">
+                      {FLOW_LABEL[train.flow].label}
+                    </span>
+                    <span>{whenLabel(train)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
     </Card>
   );
 }
 
-function buildOption(trains: RadarTrain[]) {
-  const points = layoutRadar(trains);
-  const kinds: TrainKind[] = ["passenger", "freight"];
-
-  return {
-    polar: { center: ["50%", "52%"], radius: "70%" },
-    angleAxis: {
-      type: "value",
-      min: 0,
-      max: 360,
-      interval: 120,
-      axisLabel: { show: false },
-      axisLine: { show: false },
-      axisTick: { show: false },
-      splitLine: {
-        lineStyle: { color: "#201f1d", opacity: 0.16, type: "dashed" },
-      },
-    },
-    radiusAxis: {
-      type: "value",
-      min: 0,
-      max: RADAR_HORIZON_MINUTES,
-      interval: 60,
-      axisLabel: {
-        formatter: (value: number) =>
-          value === 0 ? "сейчас" : `${value / 60} ч`,
-        color: "#605d5d",
-        fontFamily: "Lora, Georgia, serif",
-        fontSize: 11,
-      },
-      axisLine: { lineStyle: { color: "#201f1d", opacity: 0.16 } },
-      splitLine: { lineStyle: { color: "#201f1d", opacity: 0.12 } },
-      splitArea: {
-        show: true,
-        areaStyle: { color: ["rgba(182,130,53,0.05)", "rgba(182,130,53,0)"] },
-      },
-    },
-    tooltip: {
-      trigger: "item",
-      backgroundColor: "#f3f2f2",
-      borderColor: "#201f1d",
-      borderWidth: 1,
-      textStyle: { color: "#201f1d", fontFamily: "Lora, Georgia, serif" },
-      formatter: (params: { data: { title: string } }) => params.data.title,
-    },
-    series: kinds.map((seriesKind) => ({
-      name: TRAIN_KIND_LABEL[seriesKind],
-      type: "scatter",
-      coordinateSystem: "polar",
-      symbolSize: (value: number[]) => symbolSizeFor(value[0]),
-      itemStyle: {
-        color: glow(KIND_COLOR[seriesKind]),
-        shadowBlur: 10,
-        shadowColor: `${KIND_COLOR[seriesKind]}55`,
-      },
-      emphasis: {
-        scale: 1.3,
-        itemStyle: { shadowBlur: 18, shadowColor: KIND_COLOR[seriesKind] },
-      },
-      data: points
-        .filter((point) => point.kind === seriesKind)
-        .map((point) => ({
-          // Полярный scatter в echarts ждёт [радиус, угол], а не [угол, радиус].
-          value: [point.radiusMinutes, point.angle],
-          title: radarPointTitle(point),
-        })),
-    })),
-  };
-}
-
-// Ближе к «сейчас» — крупнее точка: подчёркивает, что скоро произойдёт.
-function symbolSizeFor(radiusMinutes: number) {
-  return 16 - (radiusMinutes / RADAR_HORIZON_MINUTES) * 8;
-}
-
-// Объёмная точка вместо плоской заливки — чуть светлее по центру.
-function glow(color: string) {
-  return new echarts.graphic.RadialGradient(0.35, 0.3, 0.7, [
-    { offset: 0, color: lighten(color) },
-    { offset: 1, color },
-  ]);
-}
-
-function lighten(hex: string) {
-  const value = Number.parseInt(hex.slice(1), 16);
-  const channel = (shift: number) =>
-    Math.min(255, ((value >> shift) & 0xff) + 70);
-  return `rgb(${channel(16)}, ${channel(8)}, ${channel(0)})`;
+// Тот же знак, что на радаре: пассажирский — заливка, грузовой — кольцо.
+function KindSwatch({ kind }: { kind: TrainKind }) {
+  return kind === "passenger" ? (
+    <span className="size-2.5 shrink-0 rounded-full bg-neutral-800" />
+  ) : (
+    <span className="size-2.5 shrink-0 rounded-full border-2 border-neutral-800" />
+  );
 }
 
 function FilterGroup({
@@ -226,31 +171,9 @@ function FilterGroup({
   children: ReactNode;
 }) {
   return (
-    <div className="space-y-1.5">
-      <p className="text-[10px] uppercase tracking-[0.08em] text-muted">
-        {label}
-      </p>
-      <div className="flex flex-wrap gap-1.5">{children}</div>
+    <div className="flex flex-col gap-1.5">
+      <Kicker>{label}</Kicker>
+      <div className="flex flex-wrap gap-1">{children}</div>
     </div>
-  );
-}
-
-function FilterButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <Button
-      size="sm"
-      variant={active ? "primary" : "secondary"}
-      onClick={onClick}
-    >
-      {children}
-    </Button>
   );
 }

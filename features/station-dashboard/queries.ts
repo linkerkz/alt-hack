@@ -1,9 +1,11 @@
+import { toClock } from "@/lib/clock";
 import { buildEfficiencyHistory } from "./mock";
 import {
   buildAttentionItems,
   buildOperations,
   buildPlanProgress,
   buildStatistics,
+  nowMinutes,
 } from "./schedule";
 import type { RadarTrain, StationDashboard, StationSnapshot } from "./types";
 
@@ -16,6 +18,7 @@ export async function getStationDashboard(
   const operations = buildOperations(trains);
 
   return {
+    now: toClock(nowMinutes()),
     planProgress: buildPlanProgress(operations, station),
     operations,
     attentionItems: buildAttentionItems(station, operations),
