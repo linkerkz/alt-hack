@@ -9,7 +9,7 @@ import type { WorkPlan } from "./workPlan";
 // вызывающие: команды пульта и сигнал камеры.
 
 // Что увидела камера.
-export type Sighting = {
+type Sighting = {
   deviceId: string;
   snapshot: string;
   // Вывод ИИ по снимку; null — без анализа.

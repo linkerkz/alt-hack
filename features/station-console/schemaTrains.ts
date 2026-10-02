@@ -22,7 +22,7 @@ export type SchemaTrain = {
 // Откуда схема берёт поезда: прогноз плана и отправления, которые дал ДСП.
 export type Source = PlanSource & Pick<Live, "departures">;
 
-export type TrackNumber = 1 | 2 | 3 | 4 | 5 | 6;
+type TrackNumber = 1 | 2 | 3 | 4 | 5 | 6;
 
 // Пути сверху вниз: ось y и края на схеме 1000×360.
 export const TRACKS: { n: TrackNumber; y: number; from: number; to: number }[] =

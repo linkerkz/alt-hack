@@ -31,7 +31,7 @@ export type Turn = {
 };
 
 // ДС ход не получает: он только наблюдает за пультом.
-export type TurnOwner = ConsoleRole | "dnc" | "crew" | "repair";
+type TurnOwner = ConsoleRole | "dnc" | "crew" | "repair";
 
 export type TurnItem = {
   text: string;
@@ -40,7 +40,7 @@ export type TurnItem = {
   action: CommandLink | null;
 };
 
-export type CommandLink = { label: string; command: Command };
+type CommandLink = { label: string; command: Command };
 
 const WHO: Record<TurnOwner, string> = {
   dsp: "ДСП",

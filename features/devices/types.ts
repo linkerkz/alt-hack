@@ -2,13 +2,13 @@
 // бригаде вызовы и задачи ДСП. Доступ к устройству даёт его uuid в ссылке.
 export type Device = Camera | Pager;
 
-export type Camera = DeviceBase & {
+type Camera = DeviceBase & {
   kind: "camera";
   // Объект наблюдения: «С3».
   objectId: string;
 };
 
-export type Pager = DeviceBase & { kind: "pager" };
+type Pager = DeviceBase & { kind: "pager" };
 
 type DeviceBase = {
   id: string;

@@ -26,7 +26,7 @@ const FEED_LIMIT = 40;
 const DEPARTURES_HOURS = 3;
 
 // Поля инцидента, из которых складывается ход сценария.
-export const INCIDENT_COLUMNS =
+const INCIDENT_COLUMNS =
   "id, code, station_id, status, option, route_tasks, dnc_rejected_at, dnc_comment, analysis, detected_at";
 
 // Ход станции из базы: последний инцидент, его наряд, пейджер, план путей

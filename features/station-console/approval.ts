@@ -31,7 +31,7 @@ export type ApprovalRequest = {
 };
 
 // pending — ждёт ответа ДНЦ, rejected — отклонён, approved — согласован.
-export type ApprovalState = "pending" | "rejected" | "approved";
+type ApprovalState = "pending" | "rejected" | "approved";
 
 // Поезд, которого касается удержание: задержка с удержанием и без него.
 export type ApprovalTrain = {

@@ -18,7 +18,7 @@ import type {
 
 // Сравнение вариантов перепланирования с исходным сценарием «ничего не менять».
 
-export type ComparisonCell = {
+type ComparisonCell = {
   text: string;
   // Лучшее значение в строке — выделяем начертанием.
   best: boolean;

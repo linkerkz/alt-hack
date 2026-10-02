@@ -56,7 +56,7 @@ export async function toggleItem(
 }
 
 // Рабочий сообщил о выполнении: все пункты отмечены, итог для ДСП — по желанию.
-export async function completeWork(
+async function completeWork(
   orderId: string,
   note: string | null,
 ): Promise<ActionResult> {
