@@ -37,12 +37,25 @@ export function layoutRadar(trains: RadarTrain[]): RadarPoint[] {
 }
 
 // Полярные координаты → точка SVG: 0° — вверх, по часовой стрелке.
+// Округляем: Math.sin на сервере и в браузере расходится в последнем знаке,
+// и атрибуты SVG не совпали бы при гидратации.
 export function toCartesian(angle: number, radius: number, center: number) {
   const radians = (angle * Math.PI) / 180;
   return {
-    x: center + radius * Math.sin(radians),
-    y: center - radius * Math.cos(radians),
+    x: round(center + radius * Math.sin(radians)),
+    y: round(center - radius * Math.cos(radians)),
   };
+}
+
+function round(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
+// На радаре — только то, что случится за горизонт: прошедшее и дальнее
+// легло бы в центр и на край кучей и закрыло бы подписи секторов.
+export function isInHorizon(train: RadarTrain) {
+  const minutes = eventMinutes(train);
+  return minutes >= 0 && minutes <= RADAR_HORIZON_MINUTES;
 }
 
 export function eventMinutes(train: RadarTrain) {

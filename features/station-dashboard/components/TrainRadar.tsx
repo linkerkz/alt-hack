@@ -8,6 +8,7 @@ import {
   eventMinutes,
   FLOW_LABEL,
   FLOW_ORDER,
+  isInHorizon,
   radarPointTitle,
   TRAIN_KIND_LABEL,
   whenLabel,
@@ -25,13 +26,13 @@ export function TrainRadar({ trains }: { trains: RadarTrain[] }) {
   const [flow, setFlow] = useState<FlowFilter>("all");
   const [hovered, setHovered] = useState<RadarTrain | null>(null);
 
-  const visible = trains.filter(
+  const inHorizon = trains.filter(isInHorizon);
+  const visible = inHorizon.filter(
     (train) =>
       (kind === "all" || train.kind === kind) &&
       (flow === "all" || train.flow === flow),
   );
   const nearest = visible
-    .filter((train) => eventMinutes(train) >= 0)
     .toSorted((a, b) => eventMinutes(a) - eventMinutes(b))
     .slice(0, NEAREST_COUNT);
 
@@ -55,7 +56,7 @@ export function TrainRadar({ trains }: { trains: RadarTrain[] }) {
           </h2>
         </div>
         <span className="whitespace-nowrap text-[13px] text-muted">
-          Показано {visible.length} из {trains.length}
+          Показано {visible.length} из {inHorizon.length}
         </span>
       </div>
 

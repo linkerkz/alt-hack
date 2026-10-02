@@ -38,7 +38,7 @@ export function EfficiencyHistoryChart({
       </div>
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-        className="block h-auto w-full overflow-visible"
+        className="mx-auto block h-auto max-h-[220px] w-full overflow-visible"
         role="img"
         aria-label="Динамика индекса эффективности за смену"
       >

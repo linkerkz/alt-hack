@@ -27,10 +27,16 @@ const BAR_CLASS: Record<OperationStatus, string> = {
 
 const LEGEND: OperationStatus[] = ["completed", "in-progress", "planned"];
 
+// Окно шкалы вокруг «сейчас»: последний час и горизонт прогноза (3 ч).
+// Операции смены растянуты на сутки — во всю ширину бруски стали бы точками.
+const WINDOW_BEFORE_MINUTES = 60;
+const WINDOW_AFTER_MINUTES = 180;
+
 export function OperationsGantt({ operations, now }: Props) {
-  const bounds = getBounds(operations, toMinutes(now));
+  const bounds = getBounds(toMinutes(now));
   const hours = getHourTicks(bounds);
   const nowLeft = toPercent(toMinutes(now), bounds);
+  const visible = operations.filter((operation) => overlaps(operation, bounds));
 
   return (
     <Card className="flex min-w-0 flex-col gap-4 p-6">
@@ -40,6 +46,10 @@ export function OperationsGantt({ operations, now }: Props) {
           <h2 className="font-heading font-semibold text-[22px]">
             Временная шкала
           </h2>
+          <p className="text-[13px] text-muted">
+            {toHourLabel(bounds.min)}–{toHourLabel(bounds.max)} · показано{" "}
+            {visible.length} из {operations.length}
+          </p>
         </div>
         <ul className="flex flex-wrap gap-4 text-[13px] text-neutral-800">
           {LEGEND.map((status) => (
@@ -53,14 +63,14 @@ export function OperationsGantt({ operations, now }: Props) {
         </ul>
       </div>
 
-      {operations.length === 0 ? (
+      {visible.length === 0 ? (
         <p className="font-heading text-[20px] text-muted">
           За горизонт прогноза (3 ч) операций нет
         </p>
       ) : (
         <div className="flex min-w-0 overflow-x-auto">
           <ul className="flex w-[250px] shrink-0 flex-col pt-6.5">
-            {operations.map((operation) => (
+            {visible.map((operation) => (
               <li
                 key={operation.id}
                 className="flex h-9.5 flex-col justify-center border-line border-t pr-3"
@@ -100,7 +110,7 @@ export function OperationsGantt({ operations, now }: Props) {
                 сейчас {now}
               </span>
             </div>
-            {operations.map((operation) => (
+            {visible.map((operation) => (
               <div
                 key={operation.id}
                 className="relative h-9.5 border-line border-t"
@@ -119,15 +129,17 @@ export function OperationsGantt({ operations, now }: Props) {
   );
 }
 
-// Шкала — целые часы вокруг всех операций и момента отчёта.
-function getBounds(operations: Operation[], now: number): Bounds {
-  const starts = operations.map((operation) =>
-    toMinutes(operation.plannedStart),
-  );
-  const ends = operations.map((operation) => toMinutes(endOf(operation)));
-  const min = Math.floor(Math.min(now, ...starts) / 60) * 60;
-  const max = Math.ceil(Math.max(now, ...ends) / 60) * 60;
-  return { min, max: max === min ? min + 60 : max };
+// Шкала — целые часы окна вокруг момента отчёта.
+function getBounds(now: number): Bounds {
+  return {
+    min: Math.floor((now - WINDOW_BEFORE_MINUTES) / 60) * 60,
+    max: Math.ceil((now + WINDOW_AFTER_MINUTES) / 60) * 60,
+  };
+}
+
+function overlaps(operation: Operation, { min, max }: Bounds) {
+  const start = toMinutes(operation.plannedStart);
+  return start <= max && toMinutes(endOf(operation)) >= min;
 }
 
 function getHourTicks({ min, max }: Bounds): number[] {
@@ -147,9 +159,10 @@ function toPercent(minutes: number, { min, max }: Bounds): number {
   return ((minutes - min) / (max - min)) * 100;
 }
 
+// Брусок, начатый до окна или идущий за него, обрезаем по краю шкалы.
 function barStyle(operation: Operation, bounds: Bounds) {
-  const left = toPercent(toMinutes(operation.plannedStart), bounds);
-  const right = toPercent(toMinutes(endOf(operation)), bounds);
+  const left = clamp(toPercent(toMinutes(operation.plannedStart), bounds));
+  const right = clamp(toPercent(toMinutes(endOf(operation)), bounds));
   return { left: `${left}%`, width: `${Math.max(right - left, 0.9)}%` };
 }
 
@@ -174,6 +187,10 @@ function operationTooltip(operation: Operation): string {
       ? ""
       : ` · Задержка: +${operation.delayMinutes} мин`;
   return `${plan}\n${fact}${delay}`;
+}
+
+function clamp(percent: number) {
+  return Math.min(100, Math.max(0, percent));
 }
 
 function toHourLabel(minutes: number): string {
