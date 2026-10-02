@@ -9,9 +9,8 @@
     - terminology-policy — читаемость через единый словарь проекта (один термин — одно понятие).
 
     Стек: Next.js 16 (App Router), React 19, TypeScript strict, Tailwind CSS 4,
-    Biome (линтер + форматтер, конфиг `biome.json`). Проект `alt-hack` пока в начале пути:
-    сейчас это заготовка `create-next-app`, продуктовый контекст появится в
-    `docs/about_the_project.md`.
+    Biome (линтер + форматтер, конфиг `biome.json`), Supabase (Postgres + RLS).
+    Продуктовые решения — в `docs/case_solution.md`.
   </readability-first>
 
   <code-style>
